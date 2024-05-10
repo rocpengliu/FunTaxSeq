@@ -255,7 +255,7 @@ typedef struct QuerySetUpOptions {
 
 /** Options needed for initial word finding and processing */
 typedef struct BlastInitialWordOptions {
-   double gap_trigger; /**< Score in bits for starting gapped extension */
+   double gap_trigger; /**< Score in bits for start gapped extension */
    Int4 window_size; /**< Maximal allowed distance between 2 hits in case 2 
                         hits are required to trigger the extension */
    Int4 scan_range;  /**< Maximal number of gaps allowed between 2 hits */
@@ -402,7 +402,7 @@ typedef struct BlastScoringOptions {
    Boolean gapped_calculation; /**< gap-free search if FALSE */
    Boolean complexity_adjusted_scoring; /**< Use cross_match-like complexity
                                            adjustment on raw scores. -RMH- */
-   Int4 gap_open;    /**< Extra penalty for starting a gap */
+   Int4 gap_open;    /**< Extra penalty for start a gap */
    Int4 gap_extend;  /**< Penalty for each gap residue */
 
    /* only blastx and tblastn (When query & subj are diff) */

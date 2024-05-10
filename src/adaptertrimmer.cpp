@@ -69,35 +69,6 @@ bool AdapterTrimmer::trimByMultiSequences(Read* r, FilterResult* fr, vector<stri
     return trimmed;
 }
 
-
-bool AdapterTrimmer::trimPolyA(Read* r, FilterResult* fr, bool isR2, bool incTrimmedCounter) {
-    std::vector<std::string> adapterList;
-    adapterList.push_back("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-    adapterList.push_back("TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT");
-    
-    int matchReq = 4;
-    if(adapterList.size() > 16)
-        matchReq = 5;
-    if(adapterList.size() > 256)
-        matchReq = 6;
-    bool trimmed = false;
-
-    string originalSeq = r->mSeq.mStr;
-    for(int i=0; i<adapterList.size(); i++) {
-        trimmed |= trimBySequence(r, NULL, adapterList[i], isR2, matchReq);
-    }
-
-    if(trimmed) {
-        string adapter = originalSeq.substr(r->length(), originalSeq.length() - r->length());
-        if(fr)
-            fr->addAdapterTrimmed(adapter, isR2, incTrimmedCounter);
-        else
-            cerr << adapter << endl;
-    }
-
-    return trimmed;
-}
-
 bool AdapterTrimmer::trimBySequence(Read* r, FilterResult* fr, string& adapterseq, bool isR2, int matchReq) {
     const int allowOneMismatchForEach = 8;
 

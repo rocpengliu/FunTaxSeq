@@ -6,16 +6,15 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <unordered_map>
-#include <fstream>
 #include <iostream>
-#include <sstream>
-#include <set>
-#include <unordered_set>
-#include <tuple>
-#include <atomic>
+#include <fstream>
+#include <string.h>
+#include <functional>
 
+#include "fastareader.h"
+#include "util.h"
 #include "common.h"
+#include "edlib.h"
 
 using namespace std;
 
@@ -27,23 +26,8 @@ using namespace std;
 #define UMI_LOC_PER_INDEX 5
 #define UMI_LOC_PER_READ 6
 
-class MergeOptions {
-public:
-
-    MergeOptions() {
-        enabled = false;
-        includeUnmerged = false;
-        out = "";
-    }
-public:
-    bool enabled;
-    bool includeUnmerged;
-    string out;
-};
-
 class DuplicationOptions {
 public:
-
     DuplicationOptions() {
         enabled = true;
         keylen = 12;
@@ -55,23 +39,8 @@ public:
     int histSize;
 };
 
-class IndexFilterOptions {
-public:
-
-    IndexFilterOptions() {
-        enabled = false;
-        threshold = 0;
-    }
-public:
-    vector<string> blacklist1;
-    vector<string> blacklist2;
-    bool enabled;
-    int threshold;
-};
-
 class LowComplexityFilterOptions {
 public:
-
     LowComplexityFilterOptions() {
         enabled = false;
         threshold = 0.3;
@@ -81,21 +50,8 @@ public:
     double threshold;
 };
 
-class OverrepresentedSequenceAnasysOptions {
-public:
-
-    OverrepresentedSequenceAnasysOptions() {
-        enabled = false;
-        sampling = 20;
-    }
-public:
-    bool enabled;
-    int sampling;
-};
-
 class PolyGTrimmerOptions {
 public:
-
     PolyGTrimmerOptions() {
         enabled = false;
         minLen = 10;
@@ -107,7 +63,6 @@ public:
 
 class PolyXTrimmerOptions {
 public:
-
     PolyXTrimmerOptions() {
         enabled = false;
         minLen = 10;
@@ -119,7 +74,6 @@ public:
 
 class UMIOptions {
 public:
-
     UMIOptions() {
         enabled = false;
         location = UMI_LOC_NONE;
@@ -137,7 +91,6 @@ public:
 
 class CorrectionOptions {
 public:
-
     CorrectionOptions() {
         enabled = true;
     }
@@ -147,7 +100,6 @@ public:
 
 class QualityCutOptions {
 public:
-
     QualityCutOptions() {
         enabledFront = false;
         enabledTail = false;
@@ -186,45 +138,18 @@ public:
     int qualityRight;
 };
 
-class SplitOptions {
-public:
-
-    SplitOptions() {
-        enabled = false;
-        needEvaluation = false;
-        number = 0;
-        size = 0;
-        digits = 4;
-        byFileNumber = false;
-        byFileLines = false;
-    }
-public:
-    bool enabled;
-    // number of files
-    int number;
-    // lines of each file
-    long size;
-    // digits number of file name prefix, for example 0001 means 4 digits
-    int digits;
-    // need evaluation?
-    bool needEvaluation;
-    bool byFileNumber;
-    bool byFileLines;
-};
-
 class AdapterOptions {
 public:
-
     AdapterOptions() {
         enabled = true;
-        polyA = true;
         hasSeqR1 = false;
         hasSeqR2 = false;
         detectAdapterForPE = false;
+        hasFasta = false;
     }
+
 public:
     bool enabled;
-    bool polyA;
     string sequence;
     string sequenceR2;
     string detectedAdapter1;
@@ -239,7 +164,6 @@ public:
 
 class TrimmingOptions {
 public:
-
     TrimmingOptions() {
         front1 = 0;
         tail1 = 0;
@@ -265,7 +189,6 @@ public:
 
 class QualityFilteringOptions {
 public:
-
     QualityFilteringOptions() {
         enabled = true;
         // '0' = Q15
@@ -288,10 +211,9 @@ public:
 
 class ReadLengthFilteringOptions {
 public:
-
     ReadLengthFilteringOptions() {
         enabled = false;
-        requiredLength = 15;
+        requiredLength = 50;
         maxLength = 0;
     }
 public:
@@ -302,7 +224,6 @@ public:
     // length limit, 0 for no limitation
     int maxLength;
 };
-
 enum Mode {
     tMEM,
     tGREEDY,
@@ -343,22 +264,17 @@ public:
         useEvalue = false;
         minEvalue = 0.01;
         minAAFragLength = 0;
-
-        misMatches = 2;
-        minScore = 50;
+        misMatches = 3;
+        minScore = 65;
         seedLength = 7;
-        allFragments = false;
-
-        max_matches_SI = 10000;
-        max_match_ids = 10000;
-
+        max_matches_SI = 100000;
+        max_match_ids = 100000;
         timeLapse = 0;
     }
-
     void reset2Default() {
         timeLapse = 0;
     }
-    
+
 public:
     string tfmi;
     string tmode;
@@ -371,17 +287,14 @@ public:
     unsigned int minScore;
     unsigned int seedLength;
     unsigned int maxTransLength;
-    bool allFragments;
 
     size_t max_matches_SI;
     size_t max_match_ids;
-
     time_t startTime;
     time_t endTime;
     long timeLapse;
     Mode mode;
     CodonTable codonTable;
-
 };
 
 class DNASearchOptions {
@@ -392,18 +305,18 @@ public:
         useEvalue = false;
         minEvalue = 0.01;
         minFragLength = 50;
-        misMatches = 5;
+        misMatches = 6;
         minScore = 50;
         seedLength = 7;
         allFragments = false;
-        max_matches_SI = 10000;
-        max_match_ids = 10000;
+        max_matches_SI = 100000;
+        max_match_ids = 100000;
         DNASearchFinished = false;
     }
 
     void reset2Default() {
     }
-    
+
 public:
     string dfmi;
     string dmode;
@@ -416,7 +329,6 @@ public:
     unsigned int seedLength;
     unsigned int maxTransLength;
     bool allFragments;
-    
     size_t max_matches_SI;
     size_t max_match_ids;
     Mode mode;
@@ -426,17 +338,52 @@ public:
 class HomoSearchOptions {
 public:
     HomoSearchOptions() {
-        prefix = "";
+        mappedReads = 0;
+    }
+    void reset2Default() {
+        mappedReads = 0;
+        totReads = 0;
+        totCleanReads = 0;
+        mappedReadPer = 0.0;
     }
 
-    void reset2Default() {
+    void calculate(){
+        mappedReadPer = std::round((static_cast<double>(mappedReads * 100.0)/totCleanReads) * 10000.0) / 10000.0;
     }
 
 public:
-    std::string prefix;
+    uint32 mappedReads;
+    long totReads;
+    long totCleanReads;
+    double mappedReadPer;
 };
 
-class Options {
+class Sample{
+public: 
+    Sample(){
+        prefix = "";
+        ff = "";
+        rf = "";
+    }
+
+    Sample(const std::string & p, const std::string & f, const std::string & r){
+        prefix = p;
+        ff = f;
+        rf = r;
+    };
+
+public:
+    std::string prefix;
+    std::string ff;
+    std::string rf;
+};
+
+struct Evaluation{
+    bool supportEvaluation = false;
+    bool disable_trim_poly_g = false;
+};
+
+class Options{
 public:
     Options();
     ~Options();
@@ -447,10 +394,10 @@ public:
     bool polyXTrimmingEnabled();
     string getAdapter1();
     string getAdapter2();
-    void initIndexFiltering(string blacklistFile1, string blacklistFile2, int threshold = 0);
-    vector<string> makeListFromFileByLine(string filename);
     bool shallDetectAdapter(bool isR2 = false);
     void loadFastaAdapters();
+    void deterCodonTable();
+    void parseSampleTable();
 
 public:
     // file name of read1 input
@@ -461,24 +408,10 @@ public:
     string out1;
     // file name of read2 output
     string out2;
-    // enable output mapped reads
-
-    //FunTaxSeq file dir;
-    string funtaxseqProgPath;
-    //funtaxseq dir;
-    string funtaxseqDir;
-    
-    string internalDBDir;
-    //for internal database
-
-    bool screenout;
-
-    // file name of unpaired read1 output
-    string unpaired1;
-    // file name of unpaired read2 output
-    string unpaired2;
-    // file name of failed reads output
-    string failedOut;
+    //output failed reads
+    bool outFR;
+    //file name of failed reads;
+    string outFRFile;
     // json file
     string jsonFile;
     // html file
@@ -499,12 +432,8 @@ public:
     bool interleavedInput;
     // only process first N reads
     int readsToProcess;
-    // fix the MGI ID tailing issue
-    bool fixMGI;
     // worker thread number
     int thread;
-    // fastq reads buffer size
-    size_t fastqBufferSize;
     // trimming options
     TrimmingOptions trim;
     // quality filtering options
@@ -513,8 +442,6 @@ public:
     ReadLengthFilteringOptions lengthFilter;
     // adapter options
     AdapterOptions adapter;
-    // multiple file splitting options
-    SplitOptions split;
     // options for quality cutting
     QualityCutOptions qualityCut;
     // options for base correction
@@ -525,19 +452,13 @@ public:
     PolyGTrimmerOptions polyGTrim;
     // 3' end polyX trimming
     PolyXTrimmerOptions polyXTrim;
-    // for overrepresentation analysis
-    OverrepresentedSequenceAnasysOptions overRepAnalysis;
-    map<string, long> overRepSeqs1;
-    map<string, long> overRepSeqs2;
     int seqLen1;
     int seqLen2;
     // low complexity filtering
     LowComplexityFilterOptions complexityFilter;
-    // black lists for filtering by index
-    IndexFilterOptions indexFilter;
     // options for duplication profiling
     DuplicationOptions duplicate;
-    // max value of insert size
+    // options for duplication profiling
     int insertSizeMax;
     // overlap analysis threshold
     int overlapRequire;
@@ -545,10 +466,24 @@ public:
     int overlapDiffPercentLimit;
     // output debug information
     bool verbose;
+    // the length of KMER, default is 25
     bool debug;
-    bool longlog;
-    // merge options
-    MergeOptions merge;
+
+    std::string sampleTable;
+    string prefix;
+    std::vector<Sample> samVec;
+    Evaluation mEvaluation;
+
+    //merge overlapped PE read;
+    bool mergerOverlappedPE;
+    
+    //FunTaxSeq file dir;
+    string funtaxseqProgPath;
+    //funtaxseq dir;
+    string funtaxseqDir;
+
+    string internalDBDir;
+    //for internal database
     TransSearchOptions* mTransSearchOptions;
     HomoSearchOptions* mHomoSearchOptions;
     DNASearchOptions* mDNASearchOptions;

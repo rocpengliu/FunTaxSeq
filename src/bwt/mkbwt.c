@@ -399,10 +399,10 @@ void repeatSuffixSort(char **s, int l, char a, int jump) {
 
   // fprintf(stderr,"repeatSuffixSort %d\n",a);
 
-  /* Identify all suffixes starting with letter different from a
+  /* Identify all suffixes start with letter different from a
      and move to appropriate location in array
      Note that if a suffix starts with a it is ignored, because it'll be handled later by
-     "back-propagation" of those suffixes starting with a letter != a
+     "back-propagation" of those suffixes start with a letter != a
      (here a suffix is the suffix coming after the word that defines the bucket)
   */
   test = low = s;
@@ -791,7 +791,7 @@ static int compare_SEQstruct_reverse(const void *x1, const void *x2) {
 
 
 /*
-  The suffixes starting with 0 are reverse sorted.
+  The suffixes start with 0 are reverse sorted.
 
   In order to be able to recover the sequence, it is therefore necesary to
   know the sort order of the zeros.

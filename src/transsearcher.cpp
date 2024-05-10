@@ -1,5 +1,3 @@
-#include <valarray>
-
 #include "transsearcher.hpp"
 
 TransSearcher::TransSearcher(Options * & opt, BwtFmiDB* & mBwtfmiDB) {
@@ -708,6 +706,9 @@ TransSearcher::TransSearcher(Options * & opt, BwtFmiDB* & mBwtfmiDB) {
     }
 }
 
+TransSearcher::~TransSearcher(){
+}
+
 Fragment *TransSearcher::getNextFragment(unsigned int min_score) {
     if (fragments.empty()) {
         return NULL;
@@ -1080,13 +1081,19 @@ void TransSearcher::eval_match_scores(SI *si, Fragment *frag) {
 }
 
 void TransSearcher::clearFragments() {
-    while (!fragments.empty()) {
-        auto it = fragments.begin();
-        Fragment *f = it->second;
-        delete f;
-        fragments.erase(it);
+    for(auto it = fragments.begin(); it != fragments.end(); ++it){
+        delete it->second;
     }
     fragments.clear();
+}
+
+void TransSearcher::clearMatchedIds(){
+    for(auto it = match_ids.begin(); it != match_ids.end(); ++it) {
+        if(*it){
+            delete *it;
+        }
+    }
+    match_ids.clear();
 }
 
 inline uint8_t TransSearcher::codon_to_int(const char *codon) {
@@ -1202,6 +1209,7 @@ void TransSearcher::classify_greedyblosum() {
         if (Evalue > mOptions->mTransSearchOptions->minEvalue) {
             for (auto itm : best_matches_SI) {
                 free(itm);
+                //recursive_free_SI(itm);
             }
             return;
         }
@@ -1213,8 +1221,8 @@ void TransSearcher::classify_greedyblosum() {
         ids_from_SI(itm);
     }
     for (auto itm : best_matches_SI) {
-        //recursive_free_SI(itm);
-        free(itm);
+        //recursive_free_SI(itm); // why not use this one;
+         free(itm);
     }
 }
 
@@ -1295,15 +1303,24 @@ void TransSearcher::classify_length() {
 
 void TransSearcher::postProcess() {
     if (mOptions->verbose) {
-        cCout(match_ids.size(), 'g');
+        ss.str("");
+        ss << readName << "\t";
         for (const auto it : match_ids) {
-            std::cout << it << "\t";
+            if (it == *(match_ids.rbegin())) {
+                ss << it;
+            } else {
+                ss << it << ";";
+            }
         }
-        cCout('\n');
+        cCout(ss.str(), 'y');
     }
 }
 
-int TransSearcher::transSearchWuKong(Read* & item) {
+std::set<char *>& TransSearcher::transSearchWuKong(Read* & item) {
+    clearFragments();
+    //clearMatchedIds();
+    match_ids.clear();
+    readName = item->mName;
     query_len = static_cast<double> (item->length()) / 3.0;
     if (item->length() >= mOptions->mTransSearchOptions->minAAFragLength * 3) {
         if (mOptions->debug) {
@@ -1311,12 +1328,7 @@ int TransSearcher::transSearchWuKong(Read* & item) {
             ss << "Getting fragments for read: " << item->mName << "\t" << item->mSeq.mStr;
             cCout(ss.str(), 'g');
         }
-
-        if (!mOptions->mTransSearchOptions->allFragments) {
-            getLongestFragmentsBits(item->mSeq.mStr);
-        } else {
-            getAllFragmentsBits(item->mSeq.mStr);
-        }
+        getAllFragmentsBits(item->mSeq.mStr);
     }
 
     if (mOptions->debug) {
@@ -1335,12 +1347,16 @@ int TransSearcher::transSearchWuKong(Read* & item) {
 
     clearFragments();
     if (!match_ids.empty()) {
-        postProcess();
+        //postProcess();
     }
-    return (match_ids.size());
+    return (match_ids);
 }
 
-int TransSearcher::transSearchWuKong(Read* & item1, Read* & item2) {
+std::set<char *>& TransSearcher::transSearchWuKong(Read* & item1, Read* & item2) {
+    clearFragments();
+    //clearMatchedIds();
+    match_ids.clear();
+    readName = item1->mName;
     query_len = static_cast<double> (item1->length()) / 3.0;
     if (item1->length() >= mOptions->mTransSearchOptions->minAAFragLength * 3) {
         if (mOptions->debug) {
@@ -1348,11 +1364,7 @@ int TransSearcher::transSearchWuKong(Read* & item1, Read* & item2) {
             ss << "Getting fragments for read1: " << item1->mName << "\t" << item1->mSeq.mStr;
             cCout(ss.str(), 'g');
         }
-        if (!mOptions->mTransSearchOptions->allFragments) {
-            getLongestFragmentsBits(item1->mSeq.mStr);
-        } else {
-            getAllFragmentsBits(item1->mSeq.mStr);
-        }
+        getAllFragmentsBits(item1->mSeq.mStr);
     }
 
     query_len += static_cast<double> (item2->length()) / 3.0;
@@ -1362,12 +1374,7 @@ int TransSearcher::transSearchWuKong(Read* & item1, Read* & item2) {
             ss << "Getting fragments for read2: " << item2->mName << "\t" << item2->mSeq.mStr;
             cCout(ss.str(), 'g');
         }
-
-        if (!mOptions->mTransSearchOptions->allFragments) {
-            getLongestFragmentsBits(item2->mSeq.mStr);
-        } else {
-            getAllFragmentsBits(item2->mSeq.mStr);
-        }
+        getAllFragmentsBits(item2->mSeq.mStr);
     }
 
     if (mOptions->debug) {
@@ -1386,10 +1393,9 @@ int TransSearcher::transSearchWuKong(Read* & item1, Read* & item2) {
     clearFragments();
 
     if (!match_ids.empty()) {
-        postProcess();
+        //postProcess();
     }
-
-    return (match_ids.size());
+    return (match_ids);
 }
 
 void TransSearcher::ids_from_SI(SI *si) {

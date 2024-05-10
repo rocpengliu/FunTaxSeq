@@ -1,17 +1,18 @@
-
 #include "homosearcher.h"
 
 HomoSearcher::HomoSearcher(Options * & opt, BwtFmiDBPair* & bwtfmiDBPair) {
     mOptions = opt;
-    if(bwtfmiDBPair->transSearch){
+    match_ids.clear();
+    locus = new std::string("");
+    if (bwtfmiDBPair->transSearch){
         mTransSearcher = new TransSearcher(mOptions, bwtfmiDBPair->tBwtfmiDB);
         transSearch = true;
     } else {
         mTransSearcher = nullptr;
         transSearch = false;
     }
-    
-    if(bwtfmiDBPair->dnaSearch){
+
+    if (bwtfmiDBPair->dnaSearch) {
         mDNASearcher = new DNASearcher(mOptions, bwtfmiDBPair->dBwtfmiDB);
         dnaSearch = true;
     } else {
@@ -21,271 +22,99 @@ HomoSearcher::HomoSearcher(Options * & opt, BwtFmiDBPair* & bwtfmiDBPair) {
 }
 
 HomoSearcher::~HomoSearcher() {
-    if(mTransSearcher){
+    if (mTransSearcher) {
         delete mTransSearcher;
         mTransSearcher = nullptr;
     }
-    
-    if(mDNASearcher){
+
+    if (mDNASearcher) {
         delete mDNASearcher;
         mDNASearcher = nullptr;
     }
-}
-
-void HomoSearcher::homoSearch(Read* & item) {
-    if (mOptions->mDNASearchOptions->minFragLength <= item->length()) {
-        
-        if(dnaSearch && transSearch){
-            auto idd = mDNASearcher->dnaSearchWuNeng(item);
-
-            if (idd == 0) {
-                auto idp = mTransSearcher->transSearchWuKong(item);
-                
-                if(idp != 0 && mOptions->verbose){
-                    cCout("protein", idp, 'b');
-                }
-                
-            } else {
-                
-                if (mOptions->verbose) {
-                     cCout("dna", idd, 'r');
-                }
-                
-            }
-            
-        } else if(dnaSearch) {
-            auto idd = mDNASearcher->dnaSearchWuNeng(item);
-            if(idd != 0 && mOptions->verbose) {
-                cCout("dna", idd, 'r');
-                cCout(item->mSeq.mStr, 'r');
-            }
-        } else if(transSearch){
-            auto idp = mTransSearcher->transSearchWuKong(item);
-            if(idp != 0 && mOptions->verbose){
-                 cCout("protein", idp, 'b');
-            }
-        }
+    if(locus){
+        delete locus;
+        locus = nullptr;
     }
 }
 
-void HomoSearcher::homoSearch(Read* & item1, Read* & item2) {
-    if (mOptions->mDNASearchOptions->minFragLength <= item1->length() && mOptions->mDNASearchOptions->minFragLength <= item2->length()) {
-        if(dnaSearch && transSearch){
-            auto idd = mDNASearcher->dnaSearchWuNeng(item1, item2);
-
-            if (idd == 0) {
-                auto idp = mTransSearcher->transSearchWuKong(item1, item2);
-
-                if (idp != 0 && mOptions->verbose) {
-                    cCout("protein", idp, 'b');
-                }
-
-            } else {
-
-                if (mOptions->verbose) {
-                    cCout("dna", idd, 'r');
-                }
-
+std::string* HomoSearcher::homoSearch(Read* & item) {
+    locus->clear();
+    match_ids.clear();
+    if (mOptions->mDNASearchOptions->minFragLength < item->length())
+        return locus;
+    if (dnaSearch && transSearch) {
+            match_ids = mDNASearcher->dnaSearchWuNeng(item);
+            if (match_ids.empty()) {
+                match_ids = mTransSearcher->transSearchWuKong(item);
             }
-            
-            
-        } else if(dnaSearch) {
-            auto idd = mDNASearcher->dnaSearchWuNeng(item1, item2);
-            if(idd != 0 && mOptions->verbose) {
-                cCout("dna", idd, 'r');
-            }
-        } else if(transSearch){
-            auto idp = mTransSearcher->transSearchWuKong(item1, item2);
-            if(idp != 0 && mOptions->verbose){
-                 cCout("protein", idp, 'b');
-            }
-        }
+    } else if (dnaSearch) {
+            match_ids = mDNASearcher->dnaSearchWuNeng(item);
+    } else if (transSearch) {
+            match_ids = mTransSearcher->transSearchWuKong(item);
+    }
 
-    } else if(mOptions->mDNASearchOptions->minFragLength <= item1->length() && mOptions->mDNASearchOptions->minFragLength > item2->length()){
-        if(dnaSearch && transSearch){
-
-            auto idd = mDNASearcher->dnaSearchWuNeng(item1);
-
-            if (idd == 0) {
-                auto idp = mTransSearcher->transSearchWuKong(item1);
-
-                if (idp != 0 && mOptions->verbose) {
-                    cCout("protein", idp, 'b');
-                }
-
-            } else {
-
-                if (mOptions->verbose) {
-                    cCout("dna", idd, 'r');
-                }
-
-            }
-            
-        } else if(dnaSearch) {
-            auto idd = mDNASearcher->dnaSearchWuNeng(item1);
-            if(idd != 0 && mOptions->verbose) {
-                cCout("dna", idd, 'r');
-            }
-        } else if(transSearch){
-            auto idp = mTransSearcher->transSearchWuKong(item1);
-            if(idp != 0 && mOptions->verbose){
-                 cCout("protein", idp, 'b');
-            }
-        }
-
-    } else if(mOptions->mDNASearchOptions->minFragLength > item1->length() && mOptions->mDNASearchOptions->minFragLength <= item2->length()){
-        if(dnaSearch && transSearch) {
-
-            auto idd = mDNASearcher->dnaSearchWuNeng(item2);
-
-            if (idd == 0) {
-                auto idp = mTransSearcher->transSearchWuKong(item2);
-
-                if (idp != 0 && mOptions->verbose) {
-                    cCout("protein", idp, 'b');
-                }
-
-            } else {
-
-                if (mOptions->verbose) {
-                    cCout("dna", idd, 'r');
-                }
-
-            }
-            
-        } else if(dnaSearch) {
-            auto idd = mDNASearcher->dnaSearchWuNeng(item2);
-            if(idd != 0 && mOptions->verbose) {
-                cCout("dna", idd, 'r');
-            }
-        } else if(transSearch){
-            auto idp = mTransSearcher->transSearchWuKong(item2);
-            if(idp != 0 && mOptions->verbose){
-                 cCout("protein", idp, 'b');
-            }
+    if (!match_ids.empty()) {
+       // runFunTax();
+       for(const auto &match : match_ids){
+            locus->append(match);
+            locus->append(";");
         }
     }
+    return locus;
 }
 
-//void HomoSearcher::homoSearch(Read * item) {
-//    if (mOptions->mDNASearchOptions->minFragLength <= item->length()) {
-//        
-//        if(dnaSearch && transSearch){
-//            auto idd = mDNASearcher->dnaSearchWuNeng(item);
-//            auto idp = mTransSearcher->transSearchWuKong(item);
-//
-//            if (mOptions->verbose) {
-//                if (idd != 0 && idp != 0) {
-//                    cCout("same", idd, 'g');
-//                } else if (idd != 0 && idp == 0) {
-//                    cCout("dna", idd, 'r');
-//                } else if (idd == 0 && idp != 0) {
-//                    cCout("protein", idp, 'b');
-//                } else {
-//
-//                }
-//            }
-//            
-//        } else if(dnaSearch) {
-//            auto idd = mDNASearcher->dnaSearchWuNeng(item);
-//            if(idd != 0 && mOptions->verbose) {
-//                cCout("dna", idd, 'r');
-//            }
-//        } else if(transSearch){
-//            auto idp = mTransSearcher->transSearchWuKong(item);
-//            if(idp != 0 && mOptions->verbose){
-//                 cCout("protein", idp, 'b');
-//            }
-//        }
-//    }
-//}
-//
-//void HomoSearcher::homoSearch(Read * item1, Read * item2) {
-//    if (mOptions->mDNASearchOptions->minFragLength <= item1->length() && mOptions->mDNASearchOptions->minFragLength <= item2->length()) {
-//        if(dnaSearch && transSearch){
-//            auto idd = mDNASearcher->dnaSearchWuNeng(item1, item2);
-//            auto idp = mTransSearcher->transSearchWuKong(item1, item2);
-//
-//            if (mOptions->verbose) {
-//                if (idd != 0 && idp != 0) {
-//                    cCout("same", idd, 'g');
-//                } else if (idd != 0 && idp == 0) {
-//                    cCout("dna", idd, 'r');
-//                } else if (idd == 0 && idp != 0) {
-//                    cCout("protein", idp, 'b');
-//                } else {
-//
-//                }
-//            }
-//            
-//        } else if(dnaSearch) {
-//            auto idd = mDNASearcher->dnaSearchWuNeng(item1, item2);
-//            if(idd != 0 && mOptions->verbose) {
-//                cCout("dna", idd, 'r');
-//            }
-//        } else if(transSearch){
-//            auto idp = mTransSearcher->transSearchWuKong(item1, item2);
-//            if(idp != 0 && mOptions->verbose){
-//                 cCout("protein", idp, 'b');
-//            }
-//        }
-//
-//    } else if(mOptions->mDNASearchOptions->minFragLength <= item1->length() && mOptions->mDNASearchOptions->minFragLength > item2->length()){
-//        if(dnaSearch && transSearch){
-//            auto idd = mDNASearcher->dnaSearchWuNeng(item1);
-//            auto idp = mTransSearcher->transSearchWuKong(item1);
-//
-//            if (mOptions->verbose) {
-//                if (idd != 0 && idp != 0) {
-//                    cCout("same", idd, 'g');
-//                } else if (idd != 0 && idp == 0) {
-//                    cCout("dna", idd, 'r');
-//                } else if (idd == 0 && idp != 0) {
-//                    cCout("protein", idp, 'b');
-//                } else {
-//
-//                }
-//            }
-//            
-//        } else if(dnaSearch) {
-//            auto idd = mDNASearcher->dnaSearchWuNeng(item1);
-//            if(idd != 0 && mOptions->verbose) {
-//                cCout("dna", idd, 'r');
-//            }
-//        } else if(transSearch){
-//            auto idp = mTransSearcher->transSearchWuKong(item1);
-//            if(idp != 0 && mOptions->verbose){
-//                 cCout("protein", idp, 'b');
-//            }
-//        }
-//
-//    } else if(mOptions->mDNASearchOptions->minFragLength > item1->length() && mOptions->mDNASearchOptions->minFragLength <= item2->length()){
-//        if(dnaSearch && transSearch){
-//            auto idd = mDNASearcher->dnaSearchWuNeng(item2);
-//            auto idp = mTransSearcher->transSearchWuKong(item2);
-//
-//            if (mOptions->verbose) {
-//                if (idd != 0 && idp != 0) {
-//                    cCout("same", idd, 'g');
-//                } else if (idd != 0 && idp == 0) {
-//                    cCout("dna", idd, 'r');
-//                } else if (idd == 0 && idp != 0) {
-//                    cCout("protein", idp, 'b');
-//                } else {
-//
-//                }
-//            }
-//            
-//        } else if(dnaSearch) {
-//            auto idd = mDNASearcher->dnaSearchWuNeng(item2);
-//            if(idd != 0 && mOptions->verbose) {
-//                cCout("dna", idd, 'r');
-//            }
-//        } else if(transSearch){
-//            auto idp = mTransSearcher->transSearchWuKong(item2);
-//            if(idp != 0 && mOptions->verbose){
-//                 cCout("protein", idp, 'b');
-//            }
-//        }
-//    }
-//}
+std::string* HomoSearcher::homoSearch(Read* & item1, Read* & item2) {
+    locus->clear();
+    match_ids.clear();
+    if (mOptions->mDNASearchOptions->minFragLength <= item1->length() && mOptions->mDNASearchOptions->minFragLength <= item2->length()){
+        if (dnaSearch && transSearch) {
+            match_ids = mDNASearcher->dnaSearchWuNeng(item1, item2);
+            if (match_ids.empty()) {
+                match_ids = mTransSearcher->transSearchWuKong(item1, item2);
+            }
+        } else if (dnaSearch) {
+            match_ids = mDNASearcher->dnaSearchWuNeng(item1, item2);
+        } else if (transSearch) {
+            match_ids = mTransSearcher->transSearchWuKong(item1, item2);
+        }
+    } else if (mOptions->mDNASearchOptions->minFragLength <= item1->length() && mOptions->mDNASearchOptions->minFragLength > item2->length()){
+        if (dnaSearch && transSearch) {
+            match_ids = mDNASearcher->dnaSearchWuNeng(item1);
+            if (match_ids.empty()) {
+                match_ids = mTransSearcher->transSearchWuKong(item1);
+            }
+        } else if (dnaSearch) {
+            match_ids = mDNASearcher->dnaSearchWuNeng(item1);
+        } else if (transSearch) {
+            match_ids = mTransSearcher->transSearchWuKong(item1);
+        }
+    } else if (mOptions->mDNASearchOptions->minFragLength > item1->length() && mOptions->mDNASearchOptions->minFragLength <= item2->length()){
+        if (dnaSearch && transSearch) {
+            match_ids = mDNASearcher->dnaSearchWuNeng(item2);
+            if (match_ids.empty()) {
+                match_ids = mTransSearcher->transSearchWuKong(item2);
+            }
+        } else if (dnaSearch) {
+            match_ids = mDNASearcher->dnaSearchWuNeng(item2);
+        } else if (transSearch) {
+            match_ids = mTransSearcher->transSearchWuKong(item2);
+        }
+    }
+
+    if (!match_ids.empty()) {
+        // runFunTax();
+        for(const auto &match : match_ids){
+            locus->append(match);
+            locus->append(";");
+        }
+    }
+    return locus;
+}
+void HomoSearcher::clearMatchedIds(){
+    for(auto it = match_ids.begin(); it != match_ids.end(); ++it) {
+        if(*it) {
+            delete *it; 
+        }
+    }
+    match_ids.clear();
+}

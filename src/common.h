@@ -2,8 +2,10 @@
 #define COMMON_H
 
 #include <string>
+#include <map>
+#include <utility>
 
-#define FUNTAXSEQ_VER "0.0.1"
+#define FUNTAXSEQ_VER "0.0.0.1"
 
 #define _DEBUG false
 
@@ -21,6 +23,8 @@ typedef unsigned char uint8;
 
 const char ATCG_BASES[] = {'A', 'T', 'C', 'G'};
 
+const std::string fileTypes[8] = {".fastq.gz", ".FASTQ.GZ", ".fq.gz", ".FQ.GZ", ".fastq", ".FASTQ", ".fq",  ".FQ"};
+
 #pragma pack(2) 
 
 
@@ -28,18 +32,18 @@ const char ATCG_BASES[] = {'A', 'T', 'C', 'G'};
 
 // the limit of the queue to store the packs
 // error may happen if it generates more packs than this number
-static const int PACK_NUM_LIMIT  = 10000000; 
+static const int PACK_NUM_LIMIT  = 10000000;
 
 // how many reads one pack has
-static const int PACK_SIZE = 1000;//1000000
+static const int PACK_SIZE = 1000;
 
 // if one pack is produced, but not consumed, it will be kept in the memory
 // this number limit the number of in memory packs
 // if the number of in memory packs is full, the producer thread should sleep
-static const int PACK_IN_MEM_LIMIT = 80;//500000
+static const int PACK_IN_MEM_LIMIT = 500;
 
 // if read number is more than this, warn it
-static const int WARN_STANDALONE_READ_LIMIT = 500000;//5000000
+static const int WARN_STANDALONE_READ_LIMIT = 10000;
 
 // different filtering results, bigger number means worse
 // if r1 and r2 are both failed, then the bigger one of the two results will be recorded
@@ -66,5 +70,6 @@ const static char* FAILED_TYPES[FILTER_RESULT_TYPES] = {
 	"failed_low_complexity", "", "", "",
 	"", "", "", ""
 };
+
 
 #endif /* COMMON_H */

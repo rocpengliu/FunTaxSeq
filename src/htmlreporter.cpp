@@ -5,13 +5,13 @@
 
 extern string command;
 
-HtmlReporter::HtmlReporter(Options* & opt){
+HtmlReporter::HtmlReporter(Options* opt) {
     mOptions = opt;
     mDupHist = NULL;
     mDupRate = 0.0;
 }
 
-HtmlReporter::~HtmlReporter(){
+HtmlReporter::~HtmlReporter() {
 }
 
 void HtmlReporter::setDupHist(int* dupHist, double* dupMeanGC, double dupRate) {
@@ -20,7 +20,7 @@ void HtmlReporter::setDupHist(int* dupHist, double* dupMeanGC, double dupRate) {
     mDupRate = dupRate;
 }
 
-void HtmlReporter::setInsertHist(atomic_long* insertHist, int insertSizePeak) {
+void HtmlReporter::setInsertHist(long* insertHist, int insertSizePeak) {
     mInsertHist = insertHist;
     mInsertSizePeak = insertSizePeak;
 }
@@ -33,12 +33,8 @@ void HtmlReporter::outputRow(ofstream& ofs, string key, string v) {
     ofs << "<tr><td class='col1'>" + key + "</td><td class='col2'>" + v + "</td></tr>\n";
 }
 
-void HtmlReporter::outputLongRow(ofstream& ofs, string key, string v) {
-    ofs << "<tr><td class='collarge'>" + key + "</td><td class='collarge'>" + v + "</td></tr>\n";
-}
-
 string HtmlReporter::formatNumber(long number) {
-    double num = (double)number;
+    double num = (double) number;
     string unit[6] = {"", "K", "M", "G", "T", "P"};
     int order = 0;
     while (num > 1000.0) {
@@ -53,55 +49,103 @@ string HtmlReporter::formatNumber(long number) {
 }
 
 string HtmlReporter::getPercents(long numerator, long denominator) {
-    if(denominator == 0)
+    if (denominator == 0)
         return "0.0";
     else
-        return to_string((double)numerator * 100.0 / (double)denominator);
+        return to_string((double) numerator * 100.0 / (double) denominator);
+}
+
+void HtmlReporter::report(FilterResult* result, Stats* preStats1, Stats* postStats1, Stats* preStats2, Stats* postStats2) {
+    ofstream ofs;
+    ofs.open(mOptions->htmlFile, ifstream::out);
+
+    printHeader(ofs);
+
+    ofs << "<h1 style='text-align:left;'><a href='https://github.com/seq2sat' target='_blank' style='color:#009900;text-decoration:none;'>FunTaxSeq Report</a </h1>" << endl;
+    //ofs << "<div style='font-size:12px;font-weight:normal;text-align:left;color:#666666;padding:5px;'>" << "Sample: " << basename(mOptions->prefix) << "</div>" << endl;
+
+    ofs << "<div class='section_div'>\n";
+
+    printSummary(ofs, result, preStats1, postStats1, preStats2, postStats2);
+
+    ofs << "<div class='section_div'>\n";
+    ofs << "<div class='section_title' onclick=showOrHide('before_filtering')><a name='summary'>Original data <font color='#88CCFF' > (click to show/hide) </font></a></div>\n";
+    ofs << "<div id='before_filtering'  style='display:none'>\n";
+
+    if (preStats1) {
+        preStats1 -> reportHtml(ofs, "Original data", "read1");
+    }
+
+    if (preStats2) {
+        preStats2 -> reportHtml(ofs, "Original data", "read2");
+    }
+
+    ofs << "</div>\n";
+    ofs << "</div>\n";
+
+    ofs << "<div class='section_div'>\n";
+    ofs << "<div class='section_title' onclick=showOrHide('after_filtering')><a name='summary'>Clean data used for detection <font color='#88CCFF' > (click to show/hide) </font></a></div>\n";
+    ofs << "<div id='after_filtering'  style='display:none'>\n";
+
+    if (postStats1) {
+        string name = "read1";
+        postStats1 -> reportHtml(ofs, "Clean data used for detection", name);
+    }
+
+    if (postStats2) {
+        postStats2 -> reportHtml(ofs, "Clean data used for detection", "read2");
+    }
+
+    ofs << "</div>\n";
+    ofs << "</div>\n";
+
+    printFooter(ofs);
+
 }
 
 void HtmlReporter::printSummary(ofstream& ofs, FilterResult* result, Stats* preStats1, Stats* postStats1, Stats* preStats2, Stats* postStats2) {
     long pre_total_reads = preStats1->getReads();
-    if(preStats2)
+    if (preStats2)
         pre_total_reads += preStats2->getReads();
 
     long pre_total_bases = preStats1->getBases();
-    if(preStats2)
+    if (preStats2)
         pre_total_bases += preStats2->getBases();
 
     long pre_q20_bases = preStats1->getQ20();
-    if(preStats2)
+    if (preStats2)
         pre_q20_bases += preStats2->getQ20();
 
     long pre_q30_bases = preStats1->getQ30();
-    if(preStats2)
+    if (preStats2)
         pre_q30_bases += preStats2->getQ30();
 
     long pre_total_gc = preStats1->getGCNumber();
-    if(preStats2)
+    if (preStats2)
         pre_total_gc += preStats2->getGCNumber();
 
     long post_total_reads = postStats1->getReads();
-    if(postStats2)
+    if (postStats2)
         post_total_reads += postStats2->getReads();
 
     long post_total_bases = postStats1->getBases();
-    if(postStats2)
+    if (postStats2)
         post_total_bases += postStats2->getBases();
 
     long post_q20_bases = postStats1->getQ20();
-    if(postStats2)
+    if (postStats2)
         post_q20_bases += postStats2->getQ20();
 
     long post_q30_bases = postStats1->getQ30();
-    if(postStats2)
+    if (postStats2)
         post_q30_bases += postStats2->getQ30();
 
     long post_total_gc = postStats1->getGCNumber();
-    if(postStats2)
+    if (postStats2)
         post_total_gc += postStats2->getGCNumber();
 
-    string sequencingInfo  = mOptions->isPaired()?"paired end":"single end";
-    if(mOptions->isPaired()) {
+    string sequencingInfo = mOptions->isPaired() ? "paired end" : "single end";
+    if (mOptions->isPaired()) {
         sequencingInfo += " (" + to_string(preStats1->getCycles()) + " cycles + " + to_string(preStats2->getCycles()) + " cycles)";
     } else {
         sequencingInfo += " (" + to_string(preStats1->getCycles()) + " cycles)";
@@ -110,7 +154,7 @@ void HtmlReporter::printSummary(ofstream& ofs, FilterResult* result, Stats* preS
     ofs << endl;
     ofs << "<div class='section_div'>\n";
     ofs << "<div class='section_title' onclick=showOrHide('summary')><a name='summary'>Data QC summary <font color='#88CCFF' > (click to show/hide) </font></a></div>\n";
-    ofs << "<div id='summary'>\n";
+    ofs << "<div id='summary' style='display:none'>\n";
 
     ofs << "<div class='subsection_title' onclick=showOrHide('general')>General</div>\n";
     ofs << "<div id='general'>\n";
@@ -118,26 +162,26 @@ void HtmlReporter::printSummary(ofstream& ofs, FilterResult* result, Stats* preS
     outputRow(ofs, "sequencing:", sequencingInfo);
 
     // report read length change
-    if(mOptions->isPaired()) {
+    if (mOptions->isPaired()) {
         outputRow(ofs, "mean length before filtering:", to_string(preStats1->getMeanLength()) + "bp, " + to_string(preStats2->getMeanLength()) + "bp");
     } else {
         outputRow(ofs, "mean length before filtering:", to_string(preStats1->getMeanLength()) + "bp");
         outputRow(ofs, "mean length after filtering:", to_string(postStats1->getMeanLength()) + "bp");
     }
 
-    if(mOptions->duplicate.enabled) {
-        string dupStr = to_string(mDupRate*100) + "%";
-        if(!mOptions->isPaired())
+    if (mOptions->duplicate.enabled) {
+        string dupStr = to_string(mDupRate * 100) + "%";
+        if (!mOptions->isPaired())
             dupStr += " (may be overestimated since this is SE data)";
         outputRow(ofs, "duplication rate:", dupStr);
     }
-    if(mOptions->isPaired()) {
+    if (mOptions->isPaired()) {
         outputRow(ofs, "Insert size peak:", mInsertSizePeak);
     }
-    if(mOptions->adapterCuttingEnabled()) {
-        if(!mOptions->adapter.detectedAdapter1.empty())
+    if (mOptions->adapterCuttingEnabled()) {
+        if (!mOptions->adapter.detectedAdapter1.empty())
             outputRow(ofs, "Detected read1 adapter:", mOptions->adapter.detectedAdapter1);
-        if(!mOptions->adapter.detectedAdapter2.empty())
+        if (!mOptions->adapter.detectedAdapter2.empty())
             outputRow(ofs, "Detected read2 adapter:", mOptions->adapter.detectedAdapter2);
     }
     ofs << "</table>\n";
@@ -148,9 +192,9 @@ void HtmlReporter::printSummary(ofstream& ofs, FilterResult* result, Stats* preS
     ofs << "<table class='summary_table'>\n";
     outputRow(ofs, "total reads:", formatNumber(pre_total_reads));
     outputRow(ofs, "total bases:", formatNumber(pre_total_bases));
-    outputRow(ofs, "Q20 bases:", formatNumber(pre_q20_bases) + " (" + getPercents(pre_q20_bases,pre_total_bases) + "%)");
+    outputRow(ofs, "Q20 bases:", formatNumber(pre_q20_bases) + " (" + getPercents(pre_q20_bases, pre_total_bases) + "%)");
     outputRow(ofs, "Q30 bases:", formatNumber(pre_q30_bases) + " (" + getPercents(pre_q30_bases, pre_total_bases) + "%)");
-    outputRow(ofs, "GC content:", getPercents(pre_total_gc,pre_total_bases) + "%");
+    outputRow(ofs, "GC content:", getPercents(pre_total_gc, pre_total_bases) + "%");
     ofs << "</table>\n";
     ofs << "</div>\n";
 
@@ -161,11 +205,11 @@ void HtmlReporter::printSummary(ofstream& ofs, FilterResult* result, Stats* preS
     outputRow(ofs, "total bases:", formatNumber(post_total_bases));
     outputRow(ofs, "Q20 bases:", formatNumber(post_q20_bases) + " (" + getPercents(post_q20_bases, post_total_bases) + "%)");
     outputRow(ofs, "Q30 bases:", formatNumber(post_q30_bases) + " (" + getPercents(post_q30_bases, post_total_bases) + "%)");
-    outputRow(ofs, "GC content:", getPercents(post_total_gc,post_total_bases) + "%");
+    outputRow(ofs, "GC content:", getPercents(post_total_gc, post_total_bases) + "%");
     ofs << "</table>\n";
     ofs << "</div>\n";
 
-    if(result) {
+    if (result) {
         ofs << "<div class='subsection_title' onclick=showOrHide('filtering_result')>Filtering result</div>\n";
         ofs << "<div id='filtering_result'>\n";
         result -> reportHtml(ofs, pre_total_reads, pre_total_bases);
@@ -175,7 +219,7 @@ void HtmlReporter::printSummary(ofstream& ofs, FilterResult* result, Stats* preS
     ofs << "</div>\n";
     ofs << "</div>\n";
 
-    if(result && mOptions->adapterCuttingEnabled()) {
+    if (result && mOptions->adapterCuttingEnabled()) {
         ofs << "<div class='section_div'>\n";
         ofs << "<div class='section_title' onclick=showOrHide('adapters')><a name='summary'>Adapters <font color='#88CCFF' > (click to show/hide) </font></a></div>\n";
         ofs << "<div id='adapters' style='display:none'>\n";
@@ -186,7 +230,7 @@ void HtmlReporter::printSummary(ofstream& ofs, FilterResult* result, Stats* preS
         ofs << "</div>\n";
     }
 
-    if(mOptions->duplicate.enabled) {
+    if (mOptions->duplicate.enabled) {
         ofs << "<div class='section_div'>\n";
         ofs << "<div class='section_title' onclick=showOrHide('duplication')><a name='summary'>Duplication <font color='#88CCFF' > (click to show/hide) </font></a></div>\n";
         ofs << "<div id='duplication' style='display:none'>\n";
@@ -197,7 +241,7 @@ void HtmlReporter::printSummary(ofstream& ofs, FilterResult* result, Stats* preS
         ofs << "</div>\n";
     }
 
-    if(mOptions->isPaired()) {
+    if (mOptions->isPaired()) {
         ofs << "<div class='section_div'>\n";
         ofs << "<div class='section_title' onclick=showOrHide('insert_size')><a name='summary'>Insert size estimation <font color='#88CCFF' > (click to show/hide) </font></a></div>\n";
         ofs << "<div id='insert_size' style='display:none'>\n";
@@ -210,37 +254,37 @@ void HtmlReporter::printSummary(ofstream& ofs, FilterResult* result, Stats* preS
 }
 
 void HtmlReporter::reportInsertSize(ofstream& ofs, int isizeLimit) {
-    if(isizeLimit<1)
+    if (isizeLimit < 1)
         isizeLimit = 1;
     int total = min(mOptions->insertSizeMax, isizeLimit);
     long *x = new long[total];
     double allCount = 0;
-    for(int i=0; i<total; i++) {
+    for (int i = 0; i < total; i++) {
         x[i] = i;
         allCount += mInsertHist[i];
     }
     allCount += mInsertHist[mOptions->insertSizeMax];
     double* percents = new double[total];
-    memset(percents, 0, sizeof(double)*total);
-    if(allCount > 0) {
-        for(int i=0; i<total; i++) {
-            percents[i] = (double)mInsertHist[i] * 100.0 / (double)allCount;
+    memset(percents, 0, sizeof (double)*total);
+    if (allCount > 0) {
+        for (int i = 0; i < total; i++) {
+            percents[i] = (double) mInsertHist[i] * 100.0 / (double) allCount;
         }
     }
 
-    double unknownPercents = (double)mInsertHist[mOptions->insertSizeMax] * 100.0 / (double)allCount;
+    double unknownPercents = (double) mInsertHist[mOptions->insertSizeMax] * 100.0 / (double) allCount;
 
     ofs << "<div id='insert_size_figure'>\n";
     ofs << "<div class='figure' id='plot_insert_size' style='height:400px;'></div>\n";
     ofs << "</div>\n";
 
     ofs << "<div class='sub_section_tips'>This estimation is based on paired-end overlap analysis, and there are ";
-    ofs << to_string(unknownPercents);
+    ofs << std::to_string(unknownPercents);
     ofs << "% reads found not overlapped. <br /> The nonoverlapped read pairs may have insert size &lt;" << mOptions->overlapRequire;
     ofs << " or &gt;" << isizeLimit;
     ofs << ", or contain too much sequencing errors to be detected as overlapped.";
-    ofs <<"</div>\n";
-    
+    ofs << "</div>\n";
+
     ofs << "\n<script type=\"text/javascript\">" << endl;
     string json_str = "var data=[";
 
@@ -254,7 +298,7 @@ void HtmlReporter::reportInsertSize(ofstream& ofs, int isizeLimit) {
 
     json_str += "];\n";
 
-    json_str += "var layout={title:'Insert size distribution (" + to_string(unknownPercents) + "% reads are with unknown length)', xaxis:{title:'Insert size'}, yaxis:{title:'Read percent (%)'}};\n";
+    json_str += "var layout={title:'Insert size distribution (" + std::to_string(unknownPercents) + "% reads are with unknown length)', xaxis:{title:'Insert size'}, yaxis:{title:'Read percent (%)'}};\n";
     json_str += "Plotly.newPlot('plot_insert_size', data, layout);\n";
 
     ofs << json_str;
@@ -269,30 +313,30 @@ void HtmlReporter::reportDuplication(ofstream& ofs) {
     ofs << "<div id='duplication_figure'>\n";
     ofs << "<div class='figure' id='plot_duplication' style='height:400px;'></div>\n";
     ofs << "</div>\n";
-    
+
     ofs << "\n<script type=\"text/javascript\">" << endl;
     string json_str = "var data=[";
 
     int total = mOptions->duplicate.histSize - 2;
     long *x = new long[total];
     double allCount = 0;
-    for(int i=0; i<total; i++) {
-        x[i] = i+1;
-        allCount += mDupHist[i+1];
+    for (int i = 0; i < total; i++) {
+        x[i] = i + 1;
+        allCount += mDupHist[i + 1];
     }
     double* percents = new double[total];
-    memset(percents, 0, sizeof(double)*total);
-    if(allCount > 0) {
-        for(int i=0; i<total; i++) {
-            percents[i] = (double)mDupHist[i+1] * 100.0 / (double)allCount;
+    memset(percents, 0, sizeof (double)*total);
+    if (allCount > 0) {
+        for (int i = 0; i < total; i++) {
+            percents[i] = (double) mDupHist[i + 1] * 100.0 / (double) allCount;
         }
     }
     int maxGC = total;
     double* gc = new double[total];
-    for(int i=0; i<total; i++) {
-        gc[i] = (double)mDupMeanGC[i+1] * 100.0;
+    for (int i = 0; i < total; i++) {
+        gc[i] = (double) mDupMeanGC[i + 1] * 100.0;
         // GC ratio will be not accurate if no enough reads to average
-        if(percents[i] <= 0.05 && maxGC == total)
+        if (percents[i] <= 0.05 && maxGC == total)
             maxGC = i;
     }
 
@@ -314,7 +358,7 @@ void HtmlReporter::reportDuplication(ofstream& ofs) {
 
     json_str += "];\n";
 
-    json_str += "var layout={title:'duplication rate (" + to_string(mDupRate*100.0) + "%)', xaxis:{title:'duplication level'}, yaxis:{title:'Read percent (%) & GC ratio'}};\n";
+    json_str += "var layout={title:'duplication rate (" + to_string(mDupRate * 100.0) + "%)', xaxis:{title:'duplication level'}, yaxis:{title:'Read percent (%) & GC ratio'}};\n";
     json_str += "Plotly.newPlot('plot_duplication', data, layout);\n";
 
     ofs << json_str;
@@ -325,51 +369,31 @@ void HtmlReporter::reportDuplication(ofstream& ofs) {
     delete[] gc;
 }
 
-
-void HtmlReporter::report(FilterResult* result, Stats* preStats1, Stats* postStats1, Stats* preStats2, Stats* postStats2) {
-    ofstream ofs;
-    ofs.open(mOptions->htmlFile, ifstream::out);
-
-    printHeader(ofs);
-    
-    printSummary(ofs, result, preStats1, postStats1, preStats2, postStats2);
-
-    ofs << "<div class='section_div'>\n";
-    ofs << "<div class='section_title' onclick=showOrHide('before_filtering')><a name='summary'>Original data <font color='#88CCFF' > (click to show/hide) </font></a></div>\n";
-    ofs << "<div id='before_filtering'  style='display:none'>\n";
-
-    if(preStats1) {
-        preStats1 -> reportHtml(ofs, "Original data", "read1");
+std::string HtmlReporter::highligher(std::string & str, std::map<int, std::string> & snpsMap) {
+    if (snpsMap.empty()) {
+        return str;
     }
-
-    if(preStats2) {
-        preStats2 -> reportHtml(ofs, "Original data", "read2");
+    std::string hstr = str;
+    for (auto it = snpsMap.rbegin(); it != snpsMap.rend(); it++) {
+        hstr.insert(it->first + 1, "</mark>");
+        hstr.insert(it->first, "<mark>");
     }
-
-    ofs << "</div>\n";
-    ofs << "</div>\n";
-
-    ofs << "<div class='section_div'>\n";
-    ofs << "<div class='section_title' onclick=showOrHide('after_filtering')><a name='summary'>Clean data used for detection <font color='#88CCFF' > (click to show/hide) </font></a></div>\n";
-    ofs << "<div id='after_filtering'  style='display:none'>\n";
-
-    if(postStats1) {  
-        string name = "read1";
-        postStats1 -> reportHtml(ofs, "Clean data used for detection", name);
-    }
-
-    if(postStats2) {
-        postStats2 -> reportHtml(ofs, "Clean data used for detection", "read2");
-    }
-
-    ofs << "</div>\n";
-    ofs << "</div>\n";
-
-    printFooter(ofs);
-
+    return hstr;
 }
 
-void HtmlReporter::printHeader(ofstream& ofs){
+std::string HtmlReporter::highligher(std::string & str, std::set<int> & snpsSet) {
+    if (snpsSet.empty()) {
+        return str;
+    }
+    std::string hstr = str;
+    for (auto it = snpsSet.rbegin(); it != snpsSet.rend(); it++) {
+        hstr.insert(*it + 1, "</mark>");
+        hstr.insert(*it, "<mark>");
+    }
+    return hstr;
+}
+
+void HtmlReporter::printHeader(ofstream& ofs) {
     ofs << "<html><head><meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\" />";
     ofs << "<title>FunTaxSeq report at " + getCurrentSystemTime() + " </title>";
     printJS(ofs);
@@ -378,86 +402,52 @@ void HtmlReporter::printHeader(ofstream& ofs){
     ofs << "<body><div id='container'>";
 }
 
-void HtmlReporter::printCSS(ofstream& ofs){
+void HtmlReporter::printCSS(ofstream& ofs) {
     ofs << "<style type=\"text/css\">" << endl;
-    ofs << "td {border:1px solid #dddddd;padding:5px;font-size:12px;}" << endl;
-    ofs << "table {border:1px solid #999999;padding:2x;border-collapse:collapse; width:800px}" << endl;
-    ofs << ".col1 {width:400px; font-weight:bold;}" << endl;
-    ofs << ".adapter_col {width:800px; font-size:10px;}" << endl;
-    ofs << ".ko_col {width:200px; font-weight:bold;}" << endl;
-    ofs << ".collarge {width:600px; font-weight:bold;}" << endl;
-    ofs << ".colmedium {width:400px; font-weight:bold;}" << endl;
+    //ofs << "td {border:1px solid #dddddd;padding:5px;font-size:12px;}" << endl;
+    ofs << "td {border:1px; solid #dddddd;padding:5px;font-size:12px; width:1px; white-space:nowrap; border:1px solid gray;}" << endl;
+    //ofs << "table {border:1px solid #999999;padding:2x;border-collapse:collapse; width:800px;}" << endl;
+    ofs << "table {border:1px solid #999999;padding:2px;border-collapse:collapse; table-layout:auto; border:1px solid gray;}" << endl;
+    ofs << ".col1 {width:320px; font-weight:bold;}" << endl;
+    ofs << ".adapter_col {width:500px; font-size:10px;}" << endl;
     ofs << "img {padding:30px;}" << endl;
     ofs << "#menu {font-family:Consolas, 'Liberation Mono', Menlo, Courier, monospace;}" << endl;
     ofs << "#menu a {color:#0366d6; font-size:18px;font-weight:600;line-height:28px;text-decoration:none;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'}" << endl;
     ofs << "a:visited {color: #999999}" << endl;
     ofs << ".alignleft {text-align:left;}" << endl;
     ofs << ".alignright {text-align:right;}" << endl;
-    ofs << ".figure {width:1200px;height:600px;}" << endl;
+    ofs << ".figure {width:auto; height:auto;}" << endl;
+    ofs << ".figurefull {width:80%; height:auto;}" << endl;
+    ofs << ".figurehalf {width:50%; height:auto;}" << endl;
+    //ofs << ".figure {width:800px;height:600px;}" << endl;
     ofs << ".header {color:#ffffff;padding:1px;height:20px;background:#000000;}" << endl;
-    ofs << ".section_title {color:#ffffff;font-size:20px;padding:5px;text-align:left;background:#008000; margin-top:10px;}" << endl;
-    ofs << ".subsection_title {font-size:16px;padding:5px;margin-top:10px;text-align:left;color:#008000}" << endl;
+    ofs << ".sub_section_div {font-size:13px;padding-left:10px;text-align:left; margin-top:10px;}" << endl;
+    ofs << ".sub_section_title {color:#ffffff;font-size:13px;padding-left:10px;text-align:left;background:#009900; margin-top:10px; width:20%;}" << endl;
+    ofs << ".section_title {color:#ffffff;font-size:14px;padding:7px;text-align:left;background:#009900; margin-top:10px;}" << endl;
+    ofs << ".subsection_title {font-size:12px;padding:12px;margin-top:10px;text-align:left;color:blue}" << endl;
     ofs << "#container {text-align:center;padding:3px 3px 3px 10px;font-family:Arail,'Liberation Mono', Menlo, Courier, monospace;}" << endl;
     ofs << ".menu_item {text-align:left;padding-top:5px;font-size:18px;}" << endl;
     ofs << ".highlight {text-align:left;padding-top:30px;padding-bottom:30px;font-size:20px;line-height:35px;}" << endl;
     ofs << "#helper {text-align:left;border:1px dotted #fafafa;color:#777777;font-size:12px;}" << endl;
-    ofs << "#footer {text-align:left;padding:15px;color:#ffffff;font-size:10px;background:#008000;font-family:Arail,'Liberation Mono', Menlo, Courier, monospace;}" << endl;
+    ofs << "#footer {text-align:left;padding:15px;color:#ffffff;font-size:10px;background:#009900;font-family:Arail,'Liberation Mono', Menlo, Courier, monospace;}" << endl;
     ofs << ".kmer_table {text-align:center;font-size:8px;padding:2px;}" << endl;
     ofs << ".kmer_table td{text-align:center;font-size:8px;padding:0px;color:#ffffff}" << endl;
-    ofs << ".sub_section_tips {color:#999999;font-size:10px;padding-left:5px;padding-bottom:3px;}" << endl;
+    ofs << ".sub_section_tips {color:#999999;font-size:10px;padding-left:12px;padding-bottom:3px;text-align:left;}" << endl;
+    ofs << ".left, .right{display: inline-block}" << endl;
+    ofs << "mark{background-color: red; color: white;}" << endl;
+    ofs << "mark2{background-color: orange; color: white;}" << endl;
+    ofs << "mark3{background-color: green; color: white;}" << endl;
+    ofs << "mark4{background-color: gray; color: white;}" << endl;
+    ofs << "fontA{color: green;}" << endl;
+    ofs << "fontC{color: red;}" << endl;
+    ofs << "fontG{color: gray;}" << endl;
+    ofs << "fontT{color: blue;}" << endl;
+    ofs << "pre{overflow: auto; width:0; min-width:100%;}" << endl;
     ofs << "</style>" << endl;
 }
 
-//void HtmlReporter::printCSS(ofstream& ofs){
-//    ofs << "<style type=\"text/css\">" << endl;
-//    ofs << "td {border:1px solid #dddddd;padding:5px;font-size:12px;}" << endl;
-//    ofs << "table {border:1px solid #999999;padding:2x;border-collapse:collapse; width:800px}" << endl;
-//    ofs << ".col1 {width:400px; font-weight:bold;}" << endl;
-//    ofs << ".adapter_col {width:800px; font-size:10px;}" << endl;
-//    ofs << ".ko_col {width:200px; font-weight:bold;}" << endl;
-//    ofs << ".collarge {width:600px; font-weight:bold;}" << endl;
-//    ofs << ".colmedium {width:400px; font-weight:bold;}" << endl;
-//    ofs << "img {padding:30px;}" << endl;
-//    ofs << "#menu {font-family:Consolas, 'Liberation Mono', Menlo, Courier, monospace;}" << endl;
-//    ofs << "#menu a {color:#0366d6; font-size:18px;font-weight:600;line-height:28px;text-decoration:none;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'}" << endl;
-//    ofs << "a:visited {color: #999999}" << endl;
-//    ofs << ".alignleft {text-align:left;}" << endl;
-//    ofs << ".alignright {text-align:right;}" << endl;
-//    ofs << ".figure {width:1200px;height:600px;}" << endl;
-//    ofs << ".header {color:#ffffff;padding:1px;height:20px;background:#000000;}" << endl;
-//    ofs << ".section_title {color:#ffffff;font-size:20px;padding:5px;text-align:left;background:#008000; margin-top:10px;}" << endl;
-//    ofs << ".subsection_title {font-size:16px;padding:5px;margin-top:10px;text-align:left;color:#008000}" << endl;
-//    ofs << "#container {text-align:center;padding:3px 3px 3px 10px;font-family:Arail,'Liberation Mono', Menlo, Courier, monospace;}" << endl;
-//    ofs << ".menu_item {text-align:left;padding-top:5px;font-size:18px;}" << endl;
-//    ofs << ".highlight {text-align:left;padding-top:30px;padding-bottom:30px;font-size:20px;line-height:35px;}" << endl;
-//    ofs << "#helper {text-align:left;border:1px dotted #fafafa;color:#777777;font-size:12px;}" << endl;
-//    ofs << "#footer {text-align:left;padding:15px;color:#ffffff;font-size:10px;background:#008000;font-family:Arail,'Liberation Mono', Menlo, Courier, monospace;}" << endl;
-//    ofs << ".kmer_table {text-align:center;font-size:8px;padding:2px;}" << endl;
-//    ofs << ".kmer_table td{text-align:center;font-size:8px;padding:0px;color:#ffffff}" << endl;
-//    ofs << ".sub_section_tips {color:#999999;font-size:10px;padding-left:5px;padding-bottom:3px;}" << endl;
-//    ofs << "</style>" << endl;
-//}
-
-const string HtmlReporter::getCurrentSystemTime(){
-  auto tt = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  struct tm* ptm = localtime(&tt);
-  char date[60] = {0};
-  sprintf(date, "%d-%02d-%02d      %02d:%02d:%02d",
-    (int)ptm->tm_year + 1900,(int)ptm->tm_mon + 1,(int)ptm->tm_mday,
-    (int)ptm->tm_hour,(int)ptm->tm_min,(int)ptm->tm_sec);
-  return std::string(date);
-}
-
-void HtmlReporter::printFooter(ofstream& ofs){
-    ofs << "\n</div>" << endl;
-    ofs << "<div id='footer'> ";
-    ofs << "<p>"<<command<<"</p>";
-    ofs << "FunTaxSeq " << FUNTAXSEQ_VER << ", at " << getCurrentSystemTime() << " </div>";
-    ofs << "</body></html>";
-}
-
-void HtmlReporter::printJS(ofstream& ofs){
-    ofs << "<script src='https://www.seq2fun.ca/resources/javascript/plotly-1.2.0.min.js'></script>" << endl;
+void HtmlReporter::printJS(ofstream& ofs) {
+    ofs << "<script src='https://cdn.plot.ly/plotly-2.23.2.min.js' charset='utf-8'></script>" << endl;
     ofs << "\n<script type=\"text/javascript\">" << endl;
     ofs << "    function showOrHide(divname) {" << endl;
     ofs << "        div = document.getElementById(divname);" << endl;
@@ -465,6 +455,24 @@ void HtmlReporter::printJS(ofstream& ofs){
     ofs << "            div.style.display = 'block';" << endl;
     ofs << "        else" << endl;
     ofs << "            div.style.display = 'none';" << endl;
-    ofs << "    }" << endl;
+    ofs << "    }\n" << endl;
     ofs << "</script>" << endl;
+}
+
+const string HtmlReporter::getCurrentSystemTime() {
+    auto tt = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    struct tm* ptm = localtime(&tt);
+    char date[60] = {0};
+    sprintf(date, "%d-%02d-%02d      %02d:%02d:%02d",
+            (int) ptm->tm_year + 1900, (int) ptm->tm_mon + 1, (int) ptm->tm_mday,
+            (int) ptm->tm_hour, (int) ptm->tm_min, (int) ptm->tm_sec);
+    return std::string(date);
+}
+
+void HtmlReporter::printFooter(ofstream& ofs) {
+    ofs << "\n</div>" << endl;
+    ofs << "<div id='footer'> ";
+    ofs << "<p>" << command << "</p>";
+    ofs << "FunTaxSeq " << FUNTAXSEQ_VER << ", at " << getCurrentSystemTime() << " </div>";
+    ofs << "</body></html>";
 }

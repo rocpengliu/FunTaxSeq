@@ -1,27 +1,28 @@
 #include "processor.h"
-#include "peprocessor.h"
-#include "seprocessor.h"
 
 Processor::Processor(Options* & opt){
     mOptions = opt;
-    mBwtfmiDBPair = new BwtFmiDBPair(mOptions);
+    //mBwtfmiDBPair = bwtfmiDBPair;
 }
 
 Processor::~Processor(){
-    if(mBwtfmiDBPair){
-        delete mBwtfmiDBPair;
-        mBwtfmiDBPair = nullptr;
-    }
 }
 
-bool Processor::process() {
-    if(mOptions->isPaired()) {
-        PairEndProcessor p(mOptions, mBwtfmiDBPair);
-        p.process();
+bool Processor::process(BwtFmiDBPair*& mBwtfmiDBPair) {
+    if (mOptions->isPaired()){
+        PairEndProcessor *p = new PairEndProcessor(mOptions, mBwtfmiDBPair);
+        p->process();
+        if (p){
+            delete p;
+            p = nullptr;
+        }
     } else {
-        SingleEndProcessor p(mOptions, mBwtfmiDBPair);
-        p.process();
+        SingleEndProcessor *p = new SingleEndProcessor(mOptions, mBwtfmiDBPair);
+        p->process();
+        if (p){
+            delete p;
+            p = nullptr;
+        }
     }
-
     return true;
 }

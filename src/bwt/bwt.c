@@ -45,13 +45,11 @@ void write_BWT_header(BWT *b, FILE *bwtfile) {
  */
 static BWT *read_BWT_header(FILE *bwtfile) {
     BWT *b = (BWT *) malloc(sizeof (BWT));
-
     fread(&(b->len), sizeof (IndexType), 1, bwtfile);
     fread(&(b->nseq), sizeof (int), 1, bwtfile);
     fread(&(b->alen), sizeof (int), 1, bwtfile);
     b->alphabet = (char *) calloc(sizeof (char), b->alen + 1);
     fread(b->alphabet, sizeof (char), b->alen, bwtfile);
-
     return b;
 }
 
@@ -70,13 +68,10 @@ BWT *read_BWT(FILE *bwtfile) {
  */
 BWT *readIndexes(FILE *fp) {
     BWT *b = read_BWT_header(fp);
-
     b->bwt = NULL;
-
     b->s = read_suffixArray_header(fp);
     read_suffixArray_body(b->s, fp);
     b->f = read_fmi(fp);
-
     return b;
 }
 

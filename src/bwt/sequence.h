@@ -35,10 +35,9 @@ static inline char number2letter(int i, AlphabetStruct *a) { return a->a[i];}
 /* FUNCTION PROTOTYPES BEGIN  ( by funcprototypes.pl ) */
 SEQstruct *alloc_SEQstruct();
 void free_SEQstruct(SEQstruct *ss);
+void recursive_free_SEQstruct(SEQstruct *base);
 AlphabetStruct *alloc_AlphabetStruct(char *a, int caseSens, int revcomp);
 void free_AlphabetStruct(AlphabetStruct *astruct);
 void translate2numbers(uchar *s, const IndexType slen, AlphabetStruct *astruct);
 /* FUNCTION PROTOTYPES END */
-
-
 #endif

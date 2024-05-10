@@ -52,13 +52,16 @@
       <in>bwtfmiDB.cpp</in>
       <in>dnasearcher.cpp</in>
       <in>duplicate.cpp</in>
+      <in>editdistance.cpp</in>
+      <in>edlib.cpp</in>
       <in>evaluator.cpp</in>
       <in>fastareader.cpp</in>
       <in>fastqreader.cpp</in>
       <in>filter.cpp</in>
       <in>filterresult.cpp</in>
       <in>fragment.cpp</in>
-      <in>funtaxseq.cpp</in>
+      <in>fts.cpp</in>
+      <in>genotype.cpp</in>
       <in>homosearcher.cpp</in>
       <in>htmlreporter.cpp</in>
       <in>jsonreporter.cpp</in>
@@ -66,7 +69,9 @@
       <in>options.cpp</in>
       <in>overlapanalysis.cpp</in>
       <in>peprocessor.cpp</in>
+      <in>phylotree.cpp</in>
       <in>polyx.cpp</in>
+      <in>primerTrimmer.cpp</in>
       <in>processor.cpp</in>
       <in>read.cpp</in>
       <in>seprocessor.cpp</in>
@@ -74,7 +79,6 @@
       <in>stats.cpp</in>
       <in>threadconfig.cpp</in>
       <in>transsearcher.cpp</in>
-      <in>tree.h</in>
       <in>umiprocessor.cpp</in>
       <in>unittest.cpp</in>
       <in>writer.cpp</in>
@@ -104,6 +108,7 @@
         <element flagsID="0" commonFlags="-O3"/>
         <element flagsID="1" commonFlags="-O3 -g"/>
         <element flagsID="2" commonFlags="-O3 -std=c++11"/>
+        <element flagsID="3" commonFlags="-std=c++14"/>
       </flagsDictionary>
       <codeAssistance>
         <resolveSymbolicLinks>true</resolveSymbolicLinks>
@@ -114,16 +119,6 @@
           <buildCommand>${MAKE} -f makefile</buildCommand>
           <cleanCommand>${MAKE} -f makefile clean</cleanCommand>
           <executablePath></executablePath>
-          <ccTool>
-            <incDir>
-              <pElem>include</pElem>
-              <pElem>include/ncbi-blast+</pElem>
-              <pElem>zlib</pElem>
-            </incDir>
-            <preprocessorList>
-              <Elem>NDEBUG</Elem>
-            </preprocessorList>
-          </ccTool>
         </makeTool>
         <preBuild>
           <preBuildCommandWorkingDir>.</preBuildCommandWorkingDir>
@@ -132,10 +127,26 @@
       </makefileType>
       <item path="adaptertrimmer.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
         </ccTool>
       </item>
       <item path="basecorrector.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
         </ccTool>
       </item>
       <item path="bwt/bwt.c" ex="false" tool="0" flavor2="0">
@@ -172,18 +183,58 @@
       </item>
       <item path="bwtfmiDB.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
         </ccTool>
       </item>
       <item path="dnasearcher.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
         </ccTool>
       </item>
       <item path="duplicate.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
+        </ccTool>
+      </item>
+      <item path="editdistance.cpp" ex="false" tool="1" flavor2="11">
+        <ccTool flags="3">
+        </ccTool>
+      </item>
+      <item path="edlib.cpp" ex="false" tool="1" flavor2="11">
+        <ccTool flags="3">
         </ccTool>
       </item>
       <item path="evaluator.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
         </ccTool>
       </item>
       <folder path="0/include">
@@ -201,237 +252,455 @@
       </folder>
       <item path="fastareader.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
         </ccTool>
       </item>
       <item path="fastqreader.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
         </ccTool>
       </item>
       <item path="filter.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
         </ccTool>
       </item>
       <item path="filterresult.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
         </ccTool>
       </item>
       <item path="fragment.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
         </ccTool>
       </item>
-      <item path="funtaxseq.cpp" ex="false" tool="1" flavor2="8">
+      <item path="fts.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
+        </ccTool>
+      </item>
+      <item path="genotype.cpp" ex="false" tool="1" flavor2="11">
+        <ccTool flags="3">
         </ccTool>
       </item>
       <item path="homosearcher.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
         </ccTool>
       </item>
       <item path="htmlreporter.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
         </ccTool>
       </item>
       <item path="include/ncbi-blast+/algo/blast/composition_adjustment/matrix_frequency_data.c"
             ex="false"
             tool="0"
-            flavor2="2">
+            flavor2="0">
         <cTool flags="0">
         </cTool>
       </item>
       <item path="include/ncbi-blast+/algo/blast/core/blast_dynarray.c"
             ex="false"
             tool="0"
-            flavor2="2">
+            flavor2="0">
         <cTool flags="0">
         </cTool>
       </item>
       <item path="include/ncbi-blast+/algo/blast/core/blast_encoding.c"
             ex="false"
             tool="0"
-            flavor2="2">
+            flavor2="0">
         <cTool flags="0">
         </cTool>
       </item>
       <item path="include/ncbi-blast+/algo/blast/core/blast_filter.c"
             ex="false"
             tool="0"
-            flavor2="2">
+            flavor2="0">
         <cTool flags="0">
         </cTool>
       </item>
       <item path="include/ncbi-blast+/algo/blast/core/blast_message.c"
             ex="false"
             tool="0"
-            flavor2="2">
+            flavor2="0">
         <cTool flags="0">
         </cTool>
       </item>
       <item path="include/ncbi-blast+/algo/blast/core/blast_options.c"
             ex="false"
             tool="0"
-            flavor2="2">
+            flavor2="0">
         <cTool flags="0">
         </cTool>
       </item>
       <item path="include/ncbi-blast+/algo/blast/core/blast_posit.c"
             ex="false"
             tool="0"
-            flavor2="2">
+            flavor2="0">
         <cTool flags="0">
         </cTool>
       </item>
       <item path="include/ncbi-blast+/algo/blast/core/blast_program.c"
             ex="false"
             tool="0"
-            flavor2="2">
+            flavor2="0">
         <cTool flags="0">
         </cTool>
       </item>
       <item path="include/ncbi-blast+/algo/blast/core/blast_psi_priv.c"
             ex="false"
             tool="0"
-            flavor2="2">
+            flavor2="0">
         <cTool flags="0">
         </cTool>
       </item>
       <item path="include/ncbi-blast+/algo/blast/core/blast_query_info.c"
             ex="false"
             tool="0"
-            flavor2="2">
+            flavor2="0">
         <cTool flags="0">
         </cTool>
       </item>
       <item path="include/ncbi-blast+/algo/blast/core/blast_seg.c"
             ex="false"
             tool="0"
-            flavor2="2">
+            flavor2="0">
         <cTool flags="0">
         </cTool>
       </item>
       <item path="include/ncbi-blast+/algo/blast/core/blast_stat.c"
             ex="false"
             tool="0"
-            flavor2="2">
+            flavor2="0">
         <cTool flags="0">
         </cTool>
       </item>
       <item path="include/ncbi-blast+/algo/blast/core/blast_util.c"
             ex="false"
             tool="0"
-            flavor2="2">
+            flavor2="0">
         <cTool flags="0">
         </cTool>
       </item>
       <item path="include/ncbi-blast+/algo/blast/core/matrix_freq_ratios.c"
             ex="false"
             tool="0"
-            flavor2="2">
+            flavor2="0">
         <cTool flags="0">
         </cTool>
       </item>
       <item path="include/ncbi-blast+/algo/blast/core/ncbi_erf.c"
             ex="false"
             tool="0"
-            flavor2="2">
+            flavor2="0">
         <cTool flags="0">
         </cTool>
       </item>
       <item path="include/ncbi-blast+/algo/blast/core/ncbi_math.c"
             ex="false"
             tool="0"
-            flavor2="2">
+            flavor2="0">
         <cTool flags="0">
         </cTool>
       </item>
       <item path="include/ncbi-blast+/algo/blast/core/ncbi_std.c"
             ex="false"
             tool="0"
-            flavor2="2">
+            flavor2="0">
         <cTool flags="0">
         </cTool>
       </item>
       <item path="include/ncbi-blast+/algo/blast/core/pattern.c"
             ex="false"
             tool="0"
-            flavor2="2">
+            flavor2="0">
         <cTool flags="0">
         </cTool>
       </item>
       <item path="include/ncbi-blast+/util/tables/raw_scoremat.c"
             ex="false"
             tool="0"
-            flavor2="2">
+            flavor2="0">
         <cTool flags="0">
         </cTool>
       </item>
       <item path="jsonreporter.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
         </ccTool>
       </item>
       <item path="nucleotidetree.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
         </ccTool>
       </item>
       <item path="options.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
         </ccTool>
       </item>
       <item path="overlapanalysis.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
         </ccTool>
       </item>
       <item path="peprocessor.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
+        </ccTool>
+      </item>
+      <item path="phylotree.cpp" ex="false" tool="1" flavor2="8">
+        <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
         </ccTool>
       </item>
       <item path="polyx.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
+        </ccTool>
+      </item>
+      <item path="primerTrimmer.cpp" ex="false" tool="1" flavor2="11">
+        <ccTool flags="3">
         </ccTool>
       </item>
       <item path="processor.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
         </ccTool>
       </item>
       <item path="read.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
         </ccTool>
       </item>
       <item path="seprocessor.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
         </ccTool>
       </item>
       <item path="sequence.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
         </ccTool>
       </item>
       <item path="stats.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
         </ccTool>
       </item>
       <item path="threadconfig.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
         </ccTool>
       </item>
       <item path="transsearcher.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
         </ccTool>
-      </item>
-      <item path="tree.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="umiprocessor.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
         </ccTool>
       </item>
       <item path="unittest.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
         </ccTool>
       </item>
       <item path="writer.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
         </ccTool>
       </item>
       <item path="writerthread.cpp" ex="false" tool="1" flavor2="8">
         <ccTool flags="2">
+          <incDir>
+            <pElem>include</pElem>
+            <pElem>include/ncbi-blast+</pElem>
+            <pElem>zlib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>NDEBUG</Elem>
+          </preprocessorList>
         </ccTool>
       </item>
     </conf>

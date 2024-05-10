@@ -87,6 +87,14 @@ void Read::trimFront(int len){
 	mQuality = mQuality.substr(len, mQuality.length() - len);
 }
 
+void Read::trimTail(int len) {
+    if (len > length() || len < 0)
+        return;
+    int oldLen = length();
+    mSeq.mStr.resize(oldLen - len);
+    mQuality.resize(oldLen - len);
+}
+
 string Read::lastIndex(){
 	int len = mName.length();
 	if(len<5)
@@ -131,25 +139,8 @@ string Read::toString() {
 	return mName + "\n" + mSeq.mStr + "\n" + mStrand + "\n" + mQuality + "\n";
 }
 
-string Read::toFastaR1() {
-    mName = trimName(mName);
-    return mName + "\n" + mSeq.mStr + "\n";
-}
-
-string Read::toFastaR2() {
-    return mSeq.mStr + "\n";
-}
-
 string Read::toStringWithTag(string tag) {
-	return mName + "\t" + tag + "\n" + mSeq.mStr + "\n" + mStrand + "\n" + mQuality + "\n";
-}
-
-string Read::toStringWithTag(uint32 * tag) {
-	return mName + "\t" + "s2f_" + paddingOs(std::to_string(*tag)) + "\n" + mSeq.mStr + "\n" + mStrand + "\n" + mQuality + "\n";
-}
-
-string Read::toStringWithTagRm() {
-	return removeStrs(mName) + "\n" + mSeq.mStr + "\n" + mStrand + "\n" + mQuality + "\n";
+	return mName + " " + tag + "\n" + mSeq.mStr + "\n" + mStrand + "\n" + mQuality + "\n";
 }
 
 bool Read::fixMGI() {
@@ -161,6 +152,22 @@ bool Read::fixMGI() {
 		}
 	}
 	return false;
+}
+
+vector<Read*> Read::split(int segment) {
+	vector<Read*> ret;
+	int splitted = 0;
+	string name = mName;
+	string strand = mStrand;
+	while(splitted < length()) {
+		int len = min(segment, length() - splitted);
+		string seq = mSeq.mStr.substr(splitted, len);
+		string quality = mQuality.substr(splitted, len);
+		Read* r = new Read(name, seq, strand, quality);
+		ret.push_back(r);
+		splitted += len;
+	}
+	return ret;
 }
 
 bool Read::test(){

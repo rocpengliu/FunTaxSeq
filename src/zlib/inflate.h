@@ -103,8 +103,8 @@ struct inflate_state {
         /* for table and code decoding */
     unsigned extra;             /* extra bits needed */
         /* fixed and dynamic code tables */
-    code const FAR *lencode;    /* starting table for length/literal codes */
-    code const FAR *distcode;   /* starting table for distance codes */
+    code const FAR *lencode;    /* start table for length/literal codes */
+    code const FAR *distcode;   /* start table for distance codes */
     unsigned lenbits;           /* index bits for lencode */
     unsigned distbits;          /* index bits for distcode */
         /* dynamic table building */

@@ -5,28 +5,28 @@
 #include <stdlib.h>
 #include <string>
 #include <vector>
+#include "util.h"
 #include "stats.h"
 #include "writer.h"
 #include "options.h"
 #include "filterresult.h"
 #include "homosearcher.h"
 #include "bwtfmiDB.h"
-#include <memory>
 
 using namespace std;
 
 class ThreadConfig{
 public:
-    ThreadConfig(Options* & opt, BwtFmiDBPair* & bwtfmiDBPair, int threadId, bool paired = false);
+    ThreadConfig(Options* opt, BwtFmiDBPair* & bwtfmiDBPair, int threadId, bool paired = false);
     ~ThreadConfig();
-    inline Stats* getPreStats1() {return mPreStats1;}
-    inline Stats* getPostStats1() {return mPostStats1;}
-    inline Stats* getPreStats2() {return mPreStats2;}
-    inline Stats* getPostStats2() {return mPostStats2;}
-    inline Writer* getWriter1() {return mWriter1;}
-    inline Writer* getWriter2() {return mWriter2;}
-    inline FilterResult* getFilterResult() {return mFilterResult;}
-    inline HomoSearcher* getHomoSearcher(){return mHomoSearcher;}
+    inline Stats* getPreStats1() {return mPreStats1;};
+    inline Stats* getPostStats1() {return mPostStats1;};
+    inline Stats* getPreStats2() {return mPreStats2;};
+    inline Stats* getPostStats2() {return mPostStats2;};
+    inline Writer* getWriter1() {return mWriter1;};
+    inline Writer* getWriter2() {return mWriter2;};
+    inline FilterResult* getFilterResult() {return mFilterResult;};
+    inline HomoSearcher* getHomoSearcher(){return mHomoSearcher;};
 
     void initWriter(string filename1);
     void initWriter(string filename1, string filename2);
@@ -42,13 +42,11 @@ public:
     // for splitting output
     // increase mCurrentSplitReads by readNum, and check it with options->split.size;
     void markProcessed(long readNum);
-    void initWriterForSplit();
     bool canBeStopped();
     void cleanup();
 
 private:
     void deleteWriter();
-    void writeEmptyFilesForSplitting();
 
 private:
     Stats* mPreStats1;
@@ -59,11 +57,7 @@ private:
     Writer* mWriter2;
     Options* mOptions;
     FilterResult* mFilterResult;
-
-    // for spliting output
     int mThreadId;
-    int mWorkingSplit;
-    long mCurrentSplitReads;
     bool mCanBeStopped;
     HomoSearcher* mHomoSearcher;
 };

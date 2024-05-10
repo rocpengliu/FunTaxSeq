@@ -3,7 +3,7 @@
 #include <memory.h>
 #include <math.h>
 
-Duplicate::Duplicate(Options* & opt) {
+Duplicate::Duplicate(Options* opt) {
     mOptions = opt;
     mKeyLenInBase = mOptions->duplicate.keylen;
     mKeyLenInBit = 1<<(2*mKeyLenInBase);
@@ -18,6 +18,7 @@ Duplicate::Duplicate(Options* & opt) {
 Duplicate::~Duplicate(){
     delete[] mDups;
     delete[] mCounts;
+    delete[] mGC;
 }
 
 uint64 Duplicate::seq2int(const char* data, int start, int keylen, bool& valid) {

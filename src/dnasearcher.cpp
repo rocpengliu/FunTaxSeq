@@ -3,8 +3,7 @@
 DNASearcher::DNASearcher(Options * & opt, BwtFmiDB* & bwtfmiDB) {
     mOptions = opt;
     mBwtfmiDB = bwtfmiDB;
-
-    std::memset(nuc2int, std::numeric_limits<uint8_t>::max(), sizeof (nuc2int));
+    std::memset(nuc2int, std::numeric_limits<uint8_t>::max(), sizeof(nuc2int));
     nuc2int['A'] = nuc2int['a'] = 0;
     nuc2int['C'] = nuc2int['c'] = 1;
     nuc2int['T'] = nuc2int['g'] = 2;
@@ -47,38 +46,52 @@ DNASearcher::DNASearcher(Options * & opt, BwtFmiDB* & bwtfmiDB) {
     b62[nuc2int[(uint8_t) 'T']][nuc2int[(uint8_t) 'G']] = 0;
 }
 
+DNASearcher::~DNASearcher(){
+    
+}
+
 void DNASearcher::clearFragments() {
-    while (!fragments.empty()) {
-        auto it = fragments.begin();
-        Fragment *f = it->second;
-        delete f;
-        fragments.erase(it);
+    for(auto it = fragments.begin(); it != fragments.end(); ++it){
+        delete it->second;
     }
     fragments.clear();
 }
 
+void DNASearcher::clearMatchedIds(){
+    for(auto it = match_ids.begin(); it != match_ids.end(); ++it) {
+        if(*it){
+            delete *it;
+        }
+    }
+    match_ids.clear();
+}
+
 void DNASearcher::getAllFragments(Read * & item) {
+    Read* rr1 = nullptr;
     if (mOptions->mDNASearchOptions->mode == dGREEDY) {
         uint32 score = calcScore(item->mSeq.mStr);
         if (score >= mOptions->mDNASearchOptions->minScore) {
             fragments.emplace(score, new Fragment(item->mSeq.mStr));
         }
-        score = calcScore(item->reverseComplement()->mSeq.mStr);
+        rr1 = item->reverseComplement();
+        score = calcScore(rr1->mSeq.mStr);
         if (score >= mOptions->mDNASearchOptions->minScore) {
-            fragments.emplace(score, new Fragment(item->reverseComplement()->mSeq.mStr));
+            fragments.emplace(score, new Fragment(rr1->mSeq.mStr));
         }
     } else {
+        rr1 = item->reverseComplement();
         fragments.emplace(item->length(), new Fragment(item->mSeq.mStr));
-        fragments.emplace(item->length(), new Fragment(item->reverseComplement()->mSeq.mStr));
+        fragments.emplace(rr1->length(), new Fragment(rr1->mSeq.mStr));
     }
+    if(rr1) delete rr1; rr1 = nullptr;
 }
 
-int DNASearcher::dnaSearchWuNeng(Read* & item) {
+std::set<char *>& DNASearcher::dnaSearchWuNeng(Read* & item) {
     clearFragments();
+    //clearMatchedIds();
     match_ids.clear();
-    query_len = static_cast<double> (item->length());
+    query_len = static_cast<double>(item->length());
     getAllFragments(item);
-
     if (mOptions->mDNASearchOptions->mode == dMEM) {
         classify_length();
     } else if (mOptions->mDNASearchOptions->mode == dGREEDY) {
@@ -86,25 +99,19 @@ int DNASearcher::dnaSearchWuNeng(Read* & item) {
     } else { // this should not happen
         assert(false);
     }
-
     clearFragments();
-
     if (!match_ids.empty()) {
-        postProcess();
-//        if (mOptions->debug) {
-//            std::stringstream ss;
-//            ss << "match for this fragment:" << item->mSeq.mStr << " : " << *(match_ids.begin());
-//            cCout(ss.str(), 'r');
-//        }
+        //postProcess();
     }
-
-    return (match_ids.size());
+    return (match_ids);
 }
 
-int DNASearcher::dnaSearchWuNeng(Read* & item1, Read* & item2) {
-    match_ids.clear();
+std::set<char *>& DNASearcher::dnaSearchWuNeng(Read* & item1, Read* & item2) {
     clearFragments();
-    query_len = static_cast<double> (item1->length());
+    //clearMatchedIds();
+    match_ids.clear();
+    readName = item1->mName;
+    query_len = static_cast<double>(item1->length());
     getAllFragments(item1);
     query_len += static_cast<double> (item2->length());
     getAllFragments(item2);
@@ -121,19 +128,24 @@ int DNASearcher::dnaSearchWuNeng(Read* & item1, Read* & item2) {
     clearFragments();
 
     if (!match_ids.empty()) {
-        postProcess();
+        //postProcess();
     }
-    return (match_ids.size());
+    return (match_ids);
 }
 
 void DNASearcher::postProcess() {
     if (mOptions->verbose) {
-        //match_ids.clear();
-        cCout(match_ids.size(), 'r');
+        ss.str("");
+        ss << readName << "\t";
+
         for (const auto it : match_ids) {
-            std::cout << it << "\t";
+            if (it == *(match_ids.rbegin())) {
+                ss << it;
+            } else {
+                ss << it << ";";
+            }
         }
-        cCout('\n');
+        cCout(ss.str(), 'g');
     }
 }
 
@@ -141,14 +153,10 @@ void DNASearcher::classify_length() {
     uint longest_match_length = 0;
     longest_matches_SI.clear();
     longest_fragments.clear();
-
     //if (mOptions->debug) std::cerr << "debug: classify_length: a" << "\n";
-
     while (1) {
-        Fragment* t = getNextFragment(longest_match_length);
-
+        Fragment* t = getNextFragment(longest_match_length);//need to delete t;
         if (!t) break;
-
         const std::string fragment = t->seq;
         const uint length = (uint) fragment.length();
 
@@ -158,11 +166,11 @@ void DNASearcher::classify_length() {
             cCout(ss.str(), 'y');
         }
 
-        char *seq = new char[length + 1];
+        char *seq = new char[length + 1];//need to delete seq
         std::strcpy(seq, fragment.c_str());
-
         translate2numbers((uchar*) seq, length, mBwtfmiDB->astruct);
 
+        //need to delete si;
         SI* si = maxMatches(mBwtfmiDB->fmi, seq, length, std::max(mOptions->mDNASearchOptions->minFragLength, longest_match_length), 1);
 
         if (!si) {
@@ -332,6 +340,7 @@ void DNASearcher::classify_greedyblosum() {
         if (Evalue > mOptions->mDNASearchOptions->minEvalue) {
             for (auto itm : best_matches_SI) {
                 free(itm);
+                //recursive_free_SI(itm);
             }
             return;
         }
@@ -343,7 +352,7 @@ void DNASearcher::classify_greedyblosum() {
         ids_from_SI(itm);
     }
     for (auto itm : best_matches_SI) {
-        //recursive_free_SI(itm);
+         //recursive_free_SI(itm); //why not this one;
         free(itm);
     }
 }

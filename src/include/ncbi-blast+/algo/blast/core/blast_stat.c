@@ -4398,7 +4398,7 @@ s_BlastSumP(Int4 r, double s)
 
 double
 BLAST_SmallGapSumE(
-    Int4 starting_points,      /* the number of starting points
+    Int4 start_points,      /* the number of start points
                                  * permitted between adjacent
                                  * alignments;
                                  * max_overlap + max_gap + 1 */
@@ -4429,7 +4429,7 @@ BLAST_SmallGapSumE(
         pair_search_space = (double)subject_length * (double)query_length;
 
         xsum -=
-            log(pair_search_space) + 2 * (num-1)*log((double)starting_points);
+            log(pair_search_space) + 2 * (num-1)*log((double)start_points);
 
         xsum -= BLAST_LnFactorial((double) num);
 
@@ -4452,10 +4452,10 @@ BLAST_SmallGapSumE(
  * sequence are possibly large (up to 4000 bp.)  This routine is used
  * for linking HSPs representing exons in the DNA sequence that are
  * separated by introns.
- * @param query_start_points  the number of starting points in
+ * @param query_start_points  the number of start points in
  *                            the query sequence permitted
  *                            between adjacent alignments [in]
- * @param subject_start_points the number of starting points in
+ * @param subject_start_points the number of start points in
  *                             the subject sequence permitted
  *                             between adjacent alignments [in]
  * @param num The number of distinct alignments in this collection [in]

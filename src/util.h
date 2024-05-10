@@ -14,7 +14,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <set>
-#include <stdio.h>  /* defines FILENAME_MAX */
+#include <stdio.h>
 #include <tuple>
 #include <utility>
 #include <numeric>
@@ -24,6 +24,8 @@
 #include <deque>
 #include <regex>
 #include <iomanip>
+#include <cmath>
+#include <cctype>
 
 #ifdef WINDOWS
 #include <direct.h>
@@ -45,9 +47,7 @@
 
 #include "options.h"
 
-
 using namespace std;
-
 extern mutex logmtx;
 
 inline void loginfo(const string & s, bool next = true) {
@@ -67,6 +67,23 @@ inline void loginfolong(const string & s) {
     time_t tt = time(NULL);
     tm* t = localtime(&tt);
     fprintf(stderr, "[%02d:%02d:%02d] %s\n", t->tm_hour, t->tm_min, t->tm_sec, s.c_str());
+    logmtx.unlock();
+}
+
+template <typename T>
+void ccCout(const T & str, bool first = true, bool last = true) {
+    logmtx.lock();
+    
+    if(first){
+        std::cout << str << "\t";
+    } else {
+        if (last) {
+            std::cout << str << "\n";
+        } else {
+            std::cout << str << ";";
+        }
+    }
+    
     logmtx.unlock();
 }
 
@@ -135,9 +152,9 @@ inline char complement(char base) {
     }
 }
 
-inline bool starts_with(string const & value, string const & starting) {
-    if (starting.size() > value.size()) return false;
-    return equal(starting.begin(), starting.end(), value.begin());
+inline bool starts_with(string const & value, string const & start) {
+    if (start.size() > value.size()) return false;
+    return equal(start.begin(), start.end(), value.begin());
 }
 
 inline bool ends_with(string const & value, string const & ending) {
@@ -157,33 +174,46 @@ inline string trim(const string& str) {
     return str.substr(pos);
 }
 
-inline string trimStr(const string& str) {
-    string::size_type pos = str.find_first_not_of(' ');
-    if (pos == string::npos) {
-        return string("");
+inline void trimLeft(string &str, std::string sep = ";"){
+    string::size_type pos = str.find_first_of(sep);
+    if (pos != string::npos) {
+        str.erase(0, pos + sep.length());
     }
-    string::size_type pos2 = str.find_last_not_of(' ');
-    if (pos2 != string::npos) {
-        return str.substr(pos, pos2 - pos + 1);
-    }
-    return str.substr(pos);
 }
 
-inline string trimEnd(char line[]) {
-    int readed = strlen(line);
-    if (readed >= 2) {
-        if (line[readed - 1] == '\n' || line[readed - 1] == '\r') {
-            line[readed - 1] = '\0';
-            if (line[readed - 2] == '\r') {
-                line[readed - 2] = '\0';
-            }
-        }
+inline void trimEnds(std::string* str) {
+    if(str == nullptr) return;
+    while (!str->empty() && (str->back() == '\n' || str->back() == '\r')) {
+        str->pop_back();
     }
-    string str(line);
-    return str;
 }
 
-inline int splitStr(const string& str, vector<string>& ret_, string sep = "\t") {
+// Trim whitespace characters at the end of a char buffer
+inline void trimEndsChar(char* buffer) {
+    if (buffer == nullptr) return;
+    // Find the length of the buffer
+    size_t length = strlen(buffer);
+    // Iterate from the end of the buffer backwards
+    while (length > 0 && std::isspace(static_cast<unsigned char>(buffer[length - 1]))) {
+        buffer[--length] = '\0'; // Replace whitespace with null terminator
+    }
+}
+
+inline void removeEnds(std::string &str, char end = ';'){
+    while (!str.empty() && str.back() == end) {
+        str.pop_back();
+    }
+}
+
+inline std::string removeExtension(std::string str, std::string extension){
+    size_t pos = str.find(extension);
+    if(pos == std::string::npos){
+        return str;
+    } else {
+        return str.substr(0, pos);
+    }
+}
+inline int splitStr(const string& str, vector<string> &ret_, string sep = "\t"){
     if (str.empty()) {
         return 0;
     }
@@ -206,14 +236,126 @@ inline int splitStr(const string& str, vector<string>& ret_, string sep = "\t") 
     return 0;
 }
 
-inline std::vector<std::string> split2(const std::string & s, const char delim) {
-    std::vector<std::string> tokens;
-    std::string token;
-    std::istringstream tokenStream(s);
-    while (std::getline(tokenStream, token, delim)) {
-        tokens.push_back(token);
+inline std::vector<std::string> splitStr(string& str, string sep = ";") {
+    std::vector<std::string> ret_;
+    if (str.empty()) {
+        return ret_;
     }
-    return tokens;
+    if(str[0] == sep[0]){
+        str.erase(0, 1);
+    }
+    int s = 0;
+    for(const char & c : str){
+        if(c == sep[0]){
+            s++;
+        }
+    }
+    ret_.reserve(s + 1);
+    string tmp = "";
+    string::size_type pos_begin = str.find_first_not_of(sep);
+    string::size_type comma_pos = 0;
+    while (pos_begin != string::npos) {
+        comma_pos = str.find(sep, pos_begin);
+        if (comma_pos != string::npos) {
+            tmp = str.substr(pos_begin, comma_pos - pos_begin);
+            pos_begin = comma_pos + sep.length();
+        } else {
+            tmp = str.substr(pos_begin);
+            pos_begin = comma_pos;
+        }
+        ret_.push_back(tmp);
+        tmp.clear();
+    }
+    return ret_;
+}
+
+template<typename T>
+inline std::string getStrVec(std::vector<T> vec, char sep = '|'){
+    std::stringstream ss;
+    for(const auto & it : vec){
+        ss << it;
+        if (&it != &(*vec.rbegin())) {
+            ss << sep;
+        }
+    }
+    return ss.str();
+}
+
+inline std::unordered_set<std::string> splitStr2(string str, string sep = ";") {
+    std::unordered_set<std::string> ret_;
+    if (str.empty()) {
+        return ret_;
+    }
+    if(str.back() == sep[0]) {
+        str.pop_back();
+    }
+    int s = 0;
+    for(const char & c : str){
+        if(c == sep[0]){
+            s++;
+        }
+    }
+    ret_.reserve(s + 1);
+    string tmp = "";
+    string::size_type pos_begin = str.find_first_not_of(sep);
+    string::size_type comma_pos = 0;
+    while (pos_begin != string::npos) {
+        comma_pos = str.find(sep, pos_begin);
+        if (comma_pos != string::npos) {
+            tmp = str.substr(pos_begin, comma_pos - pos_begin);
+            pos_begin = comma_pos + sep.length();
+        } else {
+            tmp = str.substr(pos_begin);
+            pos_begin = comma_pos;
+        }
+        ret_.insert(tmp);
+        tmp.clear();
+    }
+    return ret_;
+}
+
+inline std::string getFirstNsSeps(std::string str, int n, char sep = ';'){
+    std::size_t pos = str.find_first_of(sep);
+    int i = 1;
+    while(pos != std::string::npos){
+        if(i == n){
+            break;
+        } else {
+            pos = str.find_first_of(sep, pos + 1);
+             ++i;
+        }
+    }
+    if(i < n){
+        return "";
+    } else {
+        return str.substr(0, pos);
+    }
+}
+template <template<typename, typename...> class Container, typename T, typename... Args>
+inline Container<T, Args...> splitStrInt(string str, std::string sep = ";") {
+    Container<T, Args...> ret_;
+    if (str.empty()) {
+        return ret_;
+    }
+    if(str.back() == sep[0]) {
+        str.pop_back();
+    }
+    string tmp = "";
+    string::size_type pos_begin = str.find_first_not_of(sep);
+    string::size_type comma_pos = 0;
+    while (pos_begin != string::npos) {
+        comma_pos = str.find(sep, pos_begin);
+        if (comma_pos != string::npos) {
+            tmp = str.substr(pos_begin, comma_pos - pos_begin);
+            pos_begin = comma_pos + sep.length();
+        } else {
+            tmp = str.substr(pos_begin);
+            pos_begin = comma_pos;
+        }
+        ret_.insert(static_cast<T>(std::stoul(tmp)));
+        tmp.clear();
+    }
+    return ret_;
 }
 
 inline int countFreq(std::string & s, std::string p){
@@ -235,7 +377,6 @@ inline int countFreq(std::string & s, std::string p){
 
 inline string replace(const string& str, const string& src, const string& dest) {
     string ret;
-
     string::size_type pos_begin = 0;
     string::size_type pos = str.find(src);
     while (pos != string::npos) {
@@ -258,7 +399,7 @@ inline string reverse(const string& str) {
     return ret;
 }
 
-inline string basename(const string& filename) {
+inline string basename(string filename) {
     string::size_type pos = filename.find_last_of('/');
     if (pos == string::npos)
         return filename;
@@ -339,7 +480,6 @@ inline bool file_exists(const string& s) {
     return exists;
 }
 
-
 // check if a string is a directory
 
 inline bool is_directory(const string& path) {
@@ -397,9 +537,7 @@ inline string str_keep_alpha(const string& s) {
     return new_str;
 }
 
-
 // Remove invalid sequence characters from a string
-
 inline void str_keep_valid_sequence(string& s, bool forceUpperCase = false) {
     size_t total = 0;
     const char case_gap = 'a' - 'A';
@@ -416,10 +554,6 @@ inline void str_keep_valid_sequence(string& s, bool forceUpperCase = false) {
 
     s.resize(total);
 }
-
-//inline int convert_float2int(int & a, float & b){
-//    return((int)round(a * b));
-//}
 
 inline int find_with_right_pos(const string& str, const string& pattern, int start = 0) {
     int pos = str.find(pattern, start);
@@ -452,7 +586,6 @@ inline void error_exit(const string& msg) {
     exit(-1);
 }
 
-
 inline string trimName(string& str) {
     // string strnew;
     str.erase(str.begin());
@@ -463,39 +596,6 @@ inline string trimName(string& str) {
     } else {
         return str;
     }
-}
-
-template<typename T>
-T getMostFreqStrFromVec(std::vector< T > & vectorko) {
-    std::map<T, int> freq;
-
-    for (int i = 0; i < vectorko.size(); i++) {
-        freq[vectorko[i]]++;
-    }
-
-    int max_F = 0;
-    T res;
-    for (const auto & j : freq) {
-        if (max_F < j.second) {
-            res = j.first;
-            max_F = j.second;
-        }
-    }
-    freq.clear();
-    vectorko.clear();
-    return res;
-}
-
-inline std::string getUniqStrFromVec(std::vector<std::string> & vectorko) {
-    sort(vectorko.begin(), vectorko.end());
-    vectorko.erase(unique(vectorko.begin(), vectorko.end()), vectorko.end());
-
-    std::string uniq = "";
-    if (vectorko.size() == 1) {
-        uniq = vectorko[1];
-    }
-    vectorko.clear();
-    return uniq;
 }
 
 inline string removeStr(const string &str, const string &src) {
@@ -530,122 +630,24 @@ inline string removeStrs(const string &str) {
     return ret;
 }
 
-template<class T1, class T2>
-double getPercentage(T1 v1, T2 v2) {
-    double ret = double (v1 * 100) / (double) v2;
+template<typename T1, typename T2>
+double getPer(T1 v1, T2 v2, bool per = true) {
+    double ret = 0.00;
+    if(v1 == 0)
+        return ret;
+    if(per){
+        ret = std::round((static_cast<double>(v1 * 100.0)/v2) * 10000.0) / 10000.0;
+    } else {
+        ret = std::round((static_cast<double>(v1)/v2) * 10000.0) / 10000.0;
+    }
     return ret;
 }
-
-//inline double getPercetage(int v1, long v2){
-//   double ret = double (v1 * 100) / (double) v2;
-//   return ret;
-//}
-//
-//inline double getPercetageInt(int v1, int v2){
-//   double ret = double (v1 * 100) / (double) v2;
-//   return ret;
-//}
 
 template<typename T>
 std::string unkown2Str(const T & t) {
     std::ostringstream os;
     os << t;
     return os.str();
-}
-
-
-//bool cmp(std::pair<const uint32*, uint32>& l,
-//        std::pair<const uint32*, uint32>& r){
-//    return l.second > r.second;
-//}
-//
-//std::vector<std::pair<const uint32*, uint32> > sortMapToVector2(std::map<const uint32*, uint32> &unMap) {
-//    std::vector<std::pair < const uint32*, uint32 > > sortedVec;
-//    sortedVec.reserve(unMap.size());
-//    
-//    for(const auto & it : unMap){
-//        sortedVec.push_back(it);
-//    }
-//    std::sort(sortedVec.begin(), sortedVec.end(), cmp);
-//    
-//    for(const auto & it : sortedVec){
-//        std::cout << it.first << " : " << it.second << "\n";
-//    }
-//    return sortedVec;
-//}
-
-template <typename T1, typename T2>
-std::vector<std::pair<const T1*, T2> > sortMapToVector(std::map<const T1*, T2> &unMap) {
-    std::vector<std::pair < const T1*, T2 >> sortedVec;
-    sortedVec.reserve(unMap.size());
-    std::partial_sort_copy(unMap.begin(),
-            unMap.end(),
-            sortedVec.begin(),
-            sortedVec.end(),
-            [](std::pair<const T1*, float> const &l,
-            std::pair<const T1*, float> const &r) {
-                return l.second > r.second;
-            });
-    return sortedVec;
-}
-
-template <typename T1, typename T2>
-std::vector<std::pair<T1, T2> > sortUMapToVector(std::map<T1, T2> &unMap) {
-    int size = unMap.size();
-    std::vector<std::pair < T1, T2 >> sortedVec(size);
-    std::partial_sort_copy(unMap.begin(),
-            unMap.end(),
-            sortedVec.begin(),
-            sortedVec.end(),
-            [](std::pair<const T1, float> const &l,
-            std::pair<const T1, float> const &r) {
-                return l.second > r.second;
-            });
-    return sortedVec;
-}
-
-template <typename T1, typename T2>
-std::vector<std::pair<T1, T2> > sortUMapToVector(std::unordered_map<T1, T2> &unMap) {
-    int size = unMap.size();
-    std::vector<std::pair < T1, T2 >> sortedVec(size);
-    std::partial_sort_copy(unMap.begin(),
-            unMap.end(),
-            sortedVec.begin(),
-            sortedVec.end(),
-            [](std::pair<const T1, float> const &l,
-            std::pair<const T1, float> const &r) {
-                return l.second > r.second;
-            });
-    return sortedVec;
-}
-
-//template <const typename T1, typename T2>
-//std::vector<std::pair<T1, T2> > sortUMapToVector(std::map<T1, T2> &unMap) {
-//    int size = unMap.size();
-//    std::vector<std::pair <T1, T2 >> sortedVec(size);
-//    std::partial_sort_copy(unMap.begin(),
-//            unMap.end(),
-//            sortedVec.begin(),
-//            sortedVec.end(),
-//            [](std::pair<T1, float> const &l,
-//            std::pair<T1, float> const &r) {
-//                return *(l.second) > *(r.second);
-//            });
-//    return sortedVec;
-//}
-
-inline std::vector<std::tuple<std::string, double, int, int> > sortTupleVector(std::vector<std::tuple<std::string, double, int, int> > & OriVec) {
-    int size = OriVec.size();
-    std::vector<std::tuple<std::string, double, int, int> > sortedVec(size);
-    std::partial_sort_copy(OriVec.begin(),
-            OriVec.end(),
-            sortedVec.begin(),
-            sortedVec.end(),
-            [](const std::tuple<std::string, double, int, int > &l,
-            const std::tuple<std::string, double, int, int > &r) {
-                return get<1>(l) > get<1>(r);
-            });
-    return sortedVec;
 }
 
 inline void getUniqVec(std::vector<std::string> &orgVec) {
@@ -673,32 +675,8 @@ inline std::string convertSeconds(const T & t) {
     seconds = long(t);
     minutes = t / 60;
     hours = minutes / 60;
-
     std::stringstream ss;
     ss << hours << " hours " << minutes % 60 << " minutes " << seconds % 60 << " seconds";
     return ss.str();
 }
-
-template<typename T>
-vector<T> sliceVec(vector<T> vec, int x, int y) {
-    auto start = vec.begin() + x;
-    auto end = vec.begin() + y;
-    vector<T> res(y - x);
-    copy(start, end, res.begin());
-    return res;
-}
-
-template<typename T>
-int getVecIndex(vector<T> & v, T i) {
-    auto it = std::find(v.begin(), v.end(), i);
-    return (it != v.end() ? it - v.begin() : -1);
-}
-
-inline std::string paddingOs(std::string num){
-    stringstream ss;
-    ss << std::internal << std::setfill('0') << std::setw(10) << num;
-    return ss.str();
-}
-
-
 #endif /* UTIL_H */

@@ -149,7 +149,7 @@ _PHIBlastFindHitsShort(Int4 *hitArray, const Uint1* seq, Int4 len1,
  * of hits.
  * @param hitArray Array of hits to pass back [out]
  * @param seq The input sequence [in]
- * @param pos Starting position [in]
+ * @param pos start position [in]
  * @param len Length of sequence seq [in]
  * @param pattern_blk Carries variables that keep track of search 
  *                      parameters. [in]

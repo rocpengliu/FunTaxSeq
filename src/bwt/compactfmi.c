@@ -15,7 +15,7 @@
   The numbers in the FMI are further coded and checkpointed.
   Additionally, we use the actual suffix array (SA)
   position of the corresponding suffix rather than the number from the
-  first suffix starting with that letter (which is how the FMI is
+  first suffix start with that letter (which is how the FMI is
   normally described).
 
   So we supply these functions:

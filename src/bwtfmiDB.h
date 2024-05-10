@@ -6,6 +6,12 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <vector>
+#include <map>
+#include <set>
+#include <algorithm>
+#include <memory>
+#include <thread>
 
 #include "util.h"
 #include "options.h"
@@ -23,8 +29,13 @@ using namespace std;
 
 class BwtFmiDB {
 public:
-    BwtFmiDB(Options * & opt, std::string db);
+    BwtFmiDB(Options * & opt);
     ~BwtFmiDB();
+    
+    void free_BWT();
+    void free_FMI(FMI*& fmi);
+    void free_suffixArray(suffixArray*& sa);
+    void init(std::string db);
 
     BWT * bwt;
     FMI * fmi;
@@ -36,21 +47,22 @@ public:
     std::string fmiFile;
     
 private:
-    void init(std::string db);
-    
-private:
     Options * mOptions;
 };
 
 class BwtFmiDBPair{
 public:
     BwtFmiDBPair(Options* & opt);
+    void init();
     ~BwtFmiDBPair();
     bool transSearch;
     bool dnaSearch;
 public:
     BwtFmiDB* tBwtfmiDB;
     BwtFmiDB* dBwtfmiDB;
+
+private:
+    Options * mOptions;
 };
 #endif /* BWTFMIDB_H */
 

@@ -23,15 +23,30 @@ SEQstruct *alloc_SEQstruct() {
 
 void free_SEQstruct(SEQstruct *ss) {
   if (ss) {
-    if (ss->id) free(ss->id);
+    if (ss->id) {
+      free(ss->id);
+      ss->id = NULL;
+    }
+    if(ss->descr) {
+      free(ss->descr);
+      ss->descr = NULL; 
+    }            // added;
+    if(ss->start) {
+      free(ss->start);//added;
+      ss->start = NULL;
+    }
     free(ss);
+    ss = NULL;
   }
 }
 
 /* Assumes that base->start points to the whole sequence */
 void recursive_free_SEQstruct(SEQstruct *base) {
   SEQstruct *ss, *next;
-  if (base->start) free(base->start);
+  if (base->start){
+      free(base->start);
+      base->start = NULL;
+  }
   ss=base;
   next=ss->next;
   while (ss) {
@@ -86,17 +101,12 @@ static char *translation_table(char *alphabet, char *translation, char dummy, in
       table[toupper(alphabet[i])]=translation[i];
       table[tolower(alphabet[i])]=translation[i];
     }
-  }
-  else {
+  } else {
     for (i=0; i<l; ++i) table[alphabet[i]] = translation[i];
   }
-
   if (freetrans) free(translation);
-
   return table;
 }
-
-
 
 static char *dnaComplement(char *alphabet) {
   int l=strlen(alphabet);
@@ -119,9 +129,6 @@ static char *dnaComplement(char *alphabet) {
   return comp;
 }
 
-
-
-
 AlphabetStruct *alloc_AlphabetStruct(char *a, int caseSens, int revcomp) {
   AlphabetStruct *astruct = (AlphabetStruct *)malloc(sizeof(AlphabetStruct));
   astruct->a = strdup(a);
@@ -133,13 +140,19 @@ AlphabetStruct *alloc_AlphabetStruct(char *a, int caseSens, int revcomp) {
   return astruct;
 }
 
-
 void free_AlphabetStruct(AlphabetStruct *astruct) {
   if (astruct) {
-    if (astruct->a) free(astruct->a);
-    if (astruct->trans) free(astruct->trans);
-    if (astruct->comp) free(astruct->comp);
+    if (astruct->a){
+      free(astruct->a); astruct->a = NULL;
+    }
+    if (astruct->trans){
+      free(astruct->trans); astruct->trans = NULL;
+    }
+    if (astruct->comp) {
+      free(astruct->comp);astruct->comp = NULL;
+    }
     free(astruct);
+    astruct = NULL;
   }
 }
 

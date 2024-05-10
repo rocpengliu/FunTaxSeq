@@ -77,7 +77,7 @@ typedef struct Blast_KarlinBlk {
   erfc(x) = 1/2 + 1/sqrt(2*pi) * \int_0^x { exp(-y^2/2)} dy
   erfc(-\inf) = 0.0
   erfc(+\inf) = 1.0
-  The erfc(x) is tabulated in p with step h, starting from a to b
+  The erfc(x) is tabulated in p with step h, start from a to b
 */
 typedef struct erfc_table {
       double eps;
@@ -561,7 +561,7 @@ Int2 BLAST_Cutoffs (Int4 *S, double* E, Blast_KarlinBlk* kbp,
 
 /** Calculates the e-value for alignments with "small" gaps (typically
  *  under fifty residues/basepairs) following ideas of Stephen Altschul's.
- * @param start_points the number of starting points permitted between
+ * @param start_points the number of start points permitted between
  *    adjacent alignments; max_overlap + max_gap + 1 [in]
  * @param num the number of distinct alignments in this collection [in]
  * @param xsum the sum of the scores of these alignments each individually
@@ -586,10 +586,10 @@ double BLAST_SmallGapSumE (Int4 start_points, Int2 num,  double xsum,
  *   sequence are possibly large (up to 4000 bp.)  This routine is used
  *   for linking HSPs representing exons in the DNA sequence that are
  *   separated by introns.
- * @param query_start_points the number of starting points in
+ * @param query_start_points the number of start points in
  *     the query sequence permitted between adjacent alignments;
  *     max_overlap + max_gap + 1. [in]
- * @param subject_start_points  the number of starting points in
+ * @param subject_start_points  the number of start points in
  *     the subject sequence permitted between adjacent alignments [in]
  * @param num number of distinct alignments in one collection [in]
  * @param xsum the sum of the scores of these alignments each individually

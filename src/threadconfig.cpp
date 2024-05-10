@@ -1,11 +1,8 @@
 #include "threadconfig.h"
-#include "util.h"
 
-ThreadConfig::ThreadConfig(Options* & opt, BwtFmiDBPair* & bwtfmiDBPair, int threadId, bool paired){
+ThreadConfig::ThreadConfig(Options* opt, BwtFmiDBPair* & bwtfmiDBPair, int threadId, bool paired){
     mOptions = opt;
     mThreadId = threadId;
-    mWorkingSplit = threadId;
-    mCurrentSplitReads = 0;
     mPreStats1 = new Stats(mOptions, false);
     mPostStats1 = new Stats(mOptions, false);
     if(paired){
@@ -25,21 +22,33 @@ ThreadConfig::ThreadConfig(Options* & opt, BwtFmiDBPair* & bwtfmiDBPair, int thr
 
 ThreadConfig::~ThreadConfig() {
     cleanup();
+    if(mPreStats1){
+        delete mPreStats1;
+        mPreStats1 = NULL;
+    }
+    if(mPostStats1){
+        delete mPostStats1;
+        mPostStats1 = NULL;
+    }
+    if(mPreStats2){
+        delete mPreStats2;
+        mPreStats2 = NULL;
+    }
+    if(mPostStats2){
+        delete mPostStats2;
+        mPostStats2 = NULL;
+    }
     if(mFilterResult){
         delete mFilterResult;
-        mFilterResult = nullptr;
+        mFilterResult = NULL;
     }
     if(mHomoSearcher){
-        //cCout(mBwtfmiDB.use_count(), 'g');
         delete mHomoSearcher;
         mHomoSearcher = nullptr;
-        //cCout(mBwtfmiDB.use_count(), 'g');
     }
 }
 
 void ThreadConfig::cleanup() {
-    if(mOptions->split.enabled && mOptions->split.byFileNumber)
-        writeEmptyFilesForSplitting();
     deleteWriter();
 }
 
@@ -95,57 +104,7 @@ void ThreadConfig::addMergedPairs(int pairs) {
     mFilterResult->addMergedPairs(pairs);
 }
 
-void ThreadConfig::initWriterForSplit() {
-    if(mOptions->out1.empty())
-        return ;
-
-    // use 1-based naming
-    string num = to_string(mWorkingSplit + 1);
-    // padding for digits like 0001
-    if(mOptions->split.digits > 0){
-        while(num.size() < mOptions->split.digits)
-            num = "0" + num;
-    }
-
-    string filename1 = joinpath(dirname(mOptions->out1), num + "." + basename(mOptions->out1));
-    if(!mOptions->isPaired()) {
-        initWriter(filename1);
-    } else {
-        string filename2 = joinpath(dirname(mOptions->out2), num + "." + basename(mOptions->out2));
-        initWriter(filename1, filename2);
-    }
-}
-
 void ThreadConfig::markProcessed(long readNum) {
-    mCurrentSplitReads += readNum;
-    if(!mOptions->split.enabled)
-        return ;
-    // if splitting is enabled, check whether current file is full
-    if(mCurrentSplitReads >= mOptions->split.size) {
-        // if it's splitting by file number, totally we cannot exceed split.number
-        // if it's splitting by file lines, then we don't need to check
-        if(mOptions->split.byFileLines || mWorkingSplit + mOptions->thread < mOptions->split.number ){
-            mWorkingSplit += mOptions->thread;
-            initWriterForSplit();
-            mCurrentSplitReads = 0;
-        } else {
-            // this thread can be stoped now since all its tasks are done
-            // only a part of threads have to deal with the remaining reads
-            if(mOptions->split.number % mOptions->thread >0 
-                && mThreadId >= mOptions->split.number % mOptions->thread)
-                mCanBeStopped = true;
-        }
-    }
-}
-
-// if a task of writting N files is assigned to this thread, but the input file doesn't have so many reads to input
-// write some empty files so it will not break following pipelines
-void ThreadConfig::writeEmptyFilesForSplitting() {
-    while(mWorkingSplit + mOptions->thread < mOptions->split.number) {
-        mWorkingSplit += mOptions->thread;
-            initWriterForSplit();
-            mCurrentSplitReads = 0;
-    }
 }
 
 bool ThreadConfig::canBeStopped() {

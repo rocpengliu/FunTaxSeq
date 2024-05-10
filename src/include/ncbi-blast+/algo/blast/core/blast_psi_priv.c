@@ -701,7 +701,7 @@ s_PSIValidateNoGapsInQuery(const _PSIMsa* msa)
 
 /** Validate that there are no flanking gaps in the multiple sequence alignment
  * @param msa multiple sequence alignment data structure [in]
- * @return PSIERR_STARTINGGAP or PSIERR_ENDINGGAP if validation fails, 
+ * @return PSIERR_startGAP or PSIERR_ENDINGGAP if validation fails, 
  * else PSI_SUCCESS
  */
 static int
@@ -712,14 +712,14 @@ s_PSIValidateNoFlankingGaps(const _PSIMsa* msa)
     Int4 p = 0;            /* index on positions */
     ASSERT(msa);
 
-    /* Look for starting gaps in alignments */
+    /* Look for start gaps in alignments */
     for (s = 0; s < msa->dimensions->num_seqs + 1; s++) {
 
         /* find the first aligned residue */
         for (p = 0; p < (Int4) msa->dimensions->query_length; p++) {
             if (msa->cell[s][p].is_aligned) {
                 if (msa->cell[s][p].letter == kGapResidue) {
-                    return PSIERR_STARTINGGAP;
+                    return PSIERR_startGAP;
                 } else {
                     break;
                 }
@@ -1042,7 +1042,7 @@ typedef enum _EPSIPurgeFsmState {
  * manipulated by the finite state machine used in s_PSIPurgeSimilarAlignments.
  */
 typedef struct _PSIAlignmentTraits {
-    Uint4 start;            /**< starting offset of alignment w.r.t. query */
+    Uint4 start;            /**< start offset of alignment w.r.t. query */
     Uint4 effective_length; /**< length of alignment not including Xs */
     Uint4 n_x_residues;     /**< number of X residues in alignment */
     Uint4 n_identical;      /**< number of identical residues in alignment */
@@ -3008,7 +3008,7 @@ static void  s_fillColumnProbabilities(double *probabilities,
 /** adjust the probabilities by assigning observations weight
   to initialProbabilities and standardWeight to standardProbabilities
   copy of posit.c:adjustColumnProbabilities 
-  @param initialProbabilities starting probabilities [in]
+  @param initialProbabilities start probabilities [in]
   @param probabilitiesToReturn return value [out]
   @param standardWeight small number of pseudocounts to
                     avoid 0 probabilities [in]

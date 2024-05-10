@@ -3,7 +3,7 @@
 #include "seprocessor.h"
 #include "overlapanalysis.h"
 
-Filter::Filter(Options* & opt){
+Filter::Filter(Options* opt){
     mOptions = opt;
 }
 
@@ -217,24 +217,6 @@ Read* Filter::trimAndCut(Read* r, int front, int tail, int& frontTrimmed) {
     return r;
 }
 
-bool Filter::filterByIndex(Read* r) {
-    if(mOptions->indexFilter.enabled) {
-        if( match(mOptions->indexFilter.blacklist1, r->firstIndex(), mOptions->indexFilter.threshold) )
-            return true;
-    }
-    return false;
-}
-
-bool Filter::filterByIndex(Read* r1, Read* r2) {
-    if(mOptions->indexFilter.enabled) {
-        if( match(mOptions->indexFilter.blacklist1, r1->firstIndex(), mOptions->indexFilter.threshold) )
-            return true;
-        if( match(mOptions->indexFilter.blacklist2, r2->lastIndex(), mOptions->indexFilter.threshold) )
-            return true;
-    }
-    return false;
-}
-
 bool Filter::match(vector<string>& list, string target, int threshold) {
     for(int i=0; i<list.size(); i++) {
         int diff = 0;
@@ -254,23 +236,22 @@ bool Filter::match(vector<string>& list, string target, int threshold) {
 }
 
 bool Filter::test() {
-//    Read r("@name",
-//        "TTTTAACCCCCCCCCCCCCCCCCCCCCCCCCCCCAATTTT",
-//        "+",
-//        "/////CCCCCCCCCCCC////CCCCCCCCCCCCCC////E");
-//    Options opt;
-//    opt.qualityCut.enabledFront = true;
-//    opt.qualityCut.enabledTail = true;
-//    opt.qualityCut.windowSizeFront = 4;
-//    opt.qualityCut.qualityFront = 20;
-//    opt.qualityCut.windowSizeTail = 4;
-//    opt.qualityCut.qualityTail = 20;
-//    Filter filter(&opt);
-//    int frontTrimmed = 0;
-//    Read* ret = filter.trimAndCut(&r, 0, 1, frontTrimmed);
-//    ret->print();
-//    
-//    return ret->mSeq.mStr == "CCCCCCCCCCCCCCCCCCCCCCCCCCCC"
-//        && ret->mQuality == "CCCCCCCCCCC////CCCCCCCCCCCCC";
-    return true;
+    Read r("@name",
+        "TTTTAACCCCCCCCCCCCCCCCCCCCCCCCCCCCAATTTT",
+        "+",
+        "/////CCCCCCCCCCCC////CCCCCCCCCCCCCC////E");
+    Options opt;
+    opt.qualityCut.enabledFront = true;
+    opt.qualityCut.enabledTail = true;
+    opt.qualityCut.windowSizeFront = 4;
+    opt.qualityCut.qualityFront = 20;
+    opt.qualityCut.windowSizeTail = 4;
+    opt.qualityCut.qualityTail = 20;
+    Filter filter(&opt);
+    int frontTrimmed = 0;
+    Read* ret = filter.trimAndCut(&r, 0, 1, frontTrimmed);
+    ret->print();
+    
+    return ret->mSeq.mStr == "CCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+        && ret->mQuality == "CCCCCCCCCCC////CCCCCCCCCCCCC";
 }

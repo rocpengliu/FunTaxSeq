@@ -103,7 +103,7 @@ typedef struct BlastHSPPipeInfo {
    struct BlastHSPPipeInfo*     next;      /**< the next pipe inf in chain*/
 } BlastHSPPipeInfo;
 
-/** Adds node to the linked list starting a head, which should be NULL when
+/** Adds node to the linked list start a head, which should be NULL when
  * initializing the linked list, on subsequent calls, new nodes will be
  * appended to the list.
  * @param head head of the linked list [in|out]

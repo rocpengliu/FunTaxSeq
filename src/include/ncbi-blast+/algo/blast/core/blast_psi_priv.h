@@ -383,7 +383,7 @@ _PSISequenceWeightsFree(_PSISequenceWeights* seq_weights);
 /** Found an entire column full of GAP residues */
 #define PSIERR_COLUMNOFGAPS     (-9)
 /** Found flanking gap at start of alignment */
-#define PSIERR_STARTINGGAP      (-10)
+#define PSIERR_startGAP      (-10)
 /** Found flanking gap at end of alignment */
 #define PSIERR_ENDINGGAP        (-11)
 /** Errors in conserved domain profile */

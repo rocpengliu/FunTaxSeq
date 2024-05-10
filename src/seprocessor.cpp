@@ -1,48 +1,58 @@
 #include "seprocessor.h"
+#include "fastqreader.h"
+#include <iostream>
+#include <unistd.h>
+#include <functional>
+#include <thread>
+#include <memory.h>
+#include "util.h"
+#include "jsonreporter.h"
+#include "htmlreporter.h"
+#include "adaptertrimmer.h"
+#include "polyx.h"
 
-SingleEndProcessor::SingleEndProcessor(Options* & opt, BwtFmiDBPair* & bwtfmiDBPair){
+SingleEndProcessor::SingleEndProcessor(Options* opt, BwtFmiDBPair* & bwtfmiDBPair){
     mOptions = opt;
     mProduceFinished = false;
     mFinishedThreads = 0;
     mFilter = new Filter(opt);
-    mOutStream = NULL;
     mZipFile = NULL;
     mUmiProcessor = new UmiProcessor(opt);
     mLeftWriter =  NULL;
     mFailedWriter = NULL;
-    
+
     mDuplicate = NULL;
     if(mOptions->duplicate.enabled) {
         mDuplicate = new Duplicate(mOptions);
     }
     mBwtfmiDBPair = bwtfmiDBPair;
+    //mPhyloTree = phyloTree;
 }
 
 SingleEndProcessor::~SingleEndProcessor() {
-    if (mFilter) {
-        delete mFilter; 
+    if(mFilter){
+        delete mFilter;
         mFilter = NULL;
     }
-    
     if(mDuplicate) {
         delete mDuplicate;
         mDuplicate = NULL;
     }
     
-    if (mUmiProcessor) {
+    if(mUmiProcessor){
         delete mUmiProcessor;
         mUmiProcessor = NULL;
     }
-    
-    destroyPackRepository();
 }
 
 void SingleEndProcessor::initOutput() {
-    if(!mOptions->failedOut.empty())
-        mFailedWriter = new WriterThread(mOptions, mOptions->failedOut);
     if(mOptions->out1.empty())
         return;
     mLeftWriter = new WriterThread(mOptions, mOptions->out1);
+
+    if (!mOptions->outFRFile.empty()) {
+        mFailedWriter = new WriterThread(mOptions, mOptions->outFRFile);
+    }
 }
 
 void SingleEndProcessor::closeOutput() {
@@ -51,7 +61,7 @@ void SingleEndProcessor::closeOutput() {
         mLeftWriter = NULL;
     }
     
-    if(mFailedWriter) {
+    if (mFailedWriter) {
         delete mFailedWriter;
         mFailedWriter = NULL;
     }
@@ -60,15 +70,10 @@ void SingleEndProcessor::closeOutput() {
 void SingleEndProcessor::initConfig(ThreadConfig* config) {
     if(mOptions->out1.empty())
         return;
-
-    if(mOptions->split.enabled) {
-        config->initWriterForSplit();
-    }
 }
 
 bool SingleEndProcessor::process(){
-    if(!mOptions->split.enabled)
-        initOutput();
+    initOutput();
 
     initPackRepository();
     std::thread producer(std::bind(&SingleEndProcessor::producerTask, this));
@@ -76,53 +81,57 @@ bool SingleEndProcessor::process(){
     //TODO: get the correct cycles
     int cycle = 151;
     ThreadConfig** configs = new ThreadConfig*[mOptions->thread];
-    std::thread** threads = new thread*[mOptions->thread];
     for(int t=0; t<mOptions->thread; t++){
         configs[t] = new ThreadConfig(mOptions, mBwtfmiDBPair, t, false);
         initConfig(configs[t]);
+    }
+
+    std::thread** threads = new thread*[mOptions->thread];
+    for(int t=0; t<mOptions->thread; t++){
         threads[t] = new std::thread(std::bind(&SingleEndProcessor::consumerTask, this, configs[t]));
     }
 
     std::thread* leftWriterThread = NULL;
-    std::thread* failedWriterThread = NULL;
-    std::thread* readsKOMapWriterThread = NULL;
     if(mLeftWriter)
         leftWriterThread = new std::thread(std::bind(&SingleEndProcessor::writeTask, this, mLeftWriter));
-    if(mFailedWriter)
+
+    std::thread* failedWriterThread = NULL;
+    if (mFailedWriter) {
         failedWriterThread = new std::thread(std::bind(&SingleEndProcessor::writeTask, this, mFailedWriter));
+    }
 
     producer.join();
     for(int t=0; t<mOptions->thread; t++){
         threads[t]->join();
     }
 
-    if(!mOptions->split.enabled) {
-        if(leftWriterThread)
-            leftWriterThread->join();
-        if(failedWriterThread)
-            failedWriterThread->join();
-        if (readsKOMapWriterThread)
-            readsKOMapWriterThread->join();
-    }
+    if (leftWriterThread)
+        leftWriterThread->join();
+    
+    if (failedWriterThread)
+        failedWriterThread->join();
 
-    if(mOptions->verbose){
-        mOptions->longlog ? loginfolong("start to generate reports\n") : loginfo("start to generate reports\n");
-    }
+    destroyPackRepository();
+    
+    if(mOptions->verbose)
+        loginfo("start to generate reports\n");
 
     // merge stats and read filter results
     vector<Stats*> preStats;
     vector<Stats*> postStats;
     vector<FilterResult*> filterResults;
+
+    
     for(int t=0; t<mOptions->thread; t++){
         preStats.push_back(configs[t]->getPreStats1());
         postStats.push_back(configs[t]->getPostStats1());
         filterResults.push_back(configs[t]->getFilterResult());
     }
+    
     Stats* finalPreStats = Stats::merge(preStats);
     Stats* finalPostStats = Stats::merge(postStats);
     FilterResult* finalFilterResult = FilterResult::merge(filterResults);
-    
-    
+
     int* dupHist = NULL;
     double* dupMeanTlen = NULL;
     double* dupMeanGC = NULL;
@@ -136,14 +145,16 @@ bool SingleEndProcessor::process(){
         cerr << endl;
         cerr << "Duplication rate (may be overestimated since this is SE data): " << dupRate * 100.0 << "%" << endl;
     }
-    // make JSON report
+
     JsonReporter jr(mOptions);
     jr.setDupHist(dupHist, dupMeanGC, dupRate);
     jr.report(finalFilterResult, finalPreStats, finalPostStats);
+    cerr << "Finished Json report" << endl;
     // make HTML report
     HtmlReporter hr(mOptions);
     hr.setDupHist(dupHist, dupMeanGC, dupRate);
     hr.report(finalFilterResult, finalPreStats, finalPostStats);
+    cerr << "Finished Html report" << endl;
 
     // clean up
     for(int t=0; t<mOptions->thread; t++){
@@ -167,24 +178,20 @@ bool SingleEndProcessor::process(){
 
     if(leftWriterThread)
         delete leftWriterThread;
-    if(failedWriterThread)
-        delete failedWriterThread;
-    if (readsKOMapWriterThread)
-        delete readsKOMapWriterThread;
 
-    if(!mOptions->split.enabled)
-        closeOutput();
+    if (failedWriterThread)
+        delete failedWriterThread;
+
+    closeOutput();
 
     return true;
 }
 
 bool SingleEndProcessor::processSingleEnd(ReadPack* pack, ThreadConfig* config){
-    string * outstr = new string();
-    string failedOut;
+    string outstr;
+    string failedOutput;
+    string locus = "";
     int readPassed = 0;
-    
-    int mappedReads = 0;
-    
     for(int p=0;p<pack->count;p++){
 
         // original read1
@@ -197,29 +204,18 @@ bool SingleEndProcessor::processSingleEnd(ReadPack* pack, ThreadConfig* config){
         if(mDuplicate)
             mDuplicate->statRead(or1);
 
-        // filter by index
-        if(mOptions->indexFilter.enabled && mFilter->filterByIndex(or1)) {
-            delete or1;
-            continue;
-        }
-        
-                // fix MGI
-        if(mOptions->fixMGI) {
-            or1->fixMGI();
-        }
-        
         // umi processing
         if(mOptions->umi.enabled)
             mUmiProcessor->process(or1);
 
         int frontTrimmed = 0;
         // trim in head and tail, and apply quality cut in sliding window
-        Read* r1 = mFilter->trimAndCut(or1, mOptions->trim.front1, mOptions->trim.tail1, frontTrimmed);
-
+        //Read* r1 = mFilter->trimAndCut(or1, mOptions->trim.front1, mOptions->trim.tail1, frontTrimmed);
+        Read* r1 = mFilter->trimAndCut(or1, 0, 0, frontTrimmed);
         if(r1 != NULL) {
             if(mOptions->polyGTrim.enabled)
                 PolyX::trimPolyG(r1, config->getFilterResult(), mOptions->polyGTrim.minLen);
-        }
+        } 
 
         if(r1 != NULL && mOptions->adapter.enabled){
             bool trimmed = false;
@@ -228,10 +224,6 @@ bool SingleEndProcessor::processSingleEnd(ReadPack* pack, ThreadConfig* config){
             bool incTrimmedCounter = !trimmed;
             if(mOptions->adapter.hasFasta) {
                 AdapterTrimmer::trimByMultiSequences(r1, config->getFilterResult(), mOptions->adapter.seqsInFasta, false, incTrimmedCounter);
-            }
-
-            if (mOptions->adapter.polyA) {
-                AdapterTrimmer::trimPolyA(r1, config->getFilterResult(), false, incTrimmedCounter);
             }
         }
 
@@ -246,63 +238,54 @@ bool SingleEndProcessor::processSingleEnd(ReadPack* pack, ThreadConfig* config){
         }
 
         int result = mFilter->passFilter(r1);
-        
+
         config->addFilterResult(result, 1);
-        
-        if (r1 != NULL && result == PASS_FILTER) {
-            
+
+        if( r1 != NULL &&  result == PASS_FILTER) {
+            locus.clear();
             config->getHomoSearcher()->homoSearch(r1);
-            
-            // stats the read after filtering 
+            if (!locus.empty()) {
+                failedOutput += r1->toStringWithTag(locus);
+            } else {
+                outstr += r1->toString();
+            }
+            // stats the read after filtering
             config->getPostStats1()->statRead(r1);
             readPassed++;
-        } else if (mFailedWriter) {
-            failedOut += or1->toStringWithTag(FAILED_TYPES[result]);
         }
-        
-        delete or1;
-        // if no trimming applied, r1 should be identical to or1
-        if(r1 != or1 && r1 != NULL)
-            delete r1;
-    }
 
+        // if no trimming applied, r1 should be identical to or1
+        if(r1 != or1 && r1 != NULL){
+            delete r1;
+            r1 = NULL;
+        } else if(r1 == NULL){
+            delete or1;
+            or1 = NULL;
+        }
+    }
     // if splitting output, then no lock is need since different threads write different files
-    if(!mOptions->split.enabled)
-        mOutputMtx.lock();
+    mOutputMtx.lock();
     if(mOptions->outputToSTDOUT) {
-        fwrite(outstr->c_str(), 1, outstr->length(), stdout);
-    } else if(mOptions->split.enabled) {
-        // split output by each worker thread
-        if(!mOptions->out1.empty())
-            config->getWriter1()->writeString(*outstr);
-    } 
+        fwrite(outstr.c_str(), 1, outstr.length(), stdout);
+    }
 
     if(mLeftWriter) {
-        char* ldata = new char[outstr->size()];
-        memcpy(ldata, outstr->c_str(), outstr->size());
-        mLeftWriter->input(ldata, outstr->size());
+        char* ldata = new char[outstr.size()];
+        memcpy(ldata, outstr.c_str(), outstr.size());
+        mLeftWriter->input(ldata, outstr.size());
     }
-    if(mFailedWriter && !failedOut.empty()) {
-        // write failed data
-        char* fdata = new char[failedOut.size()];
-        memcpy(fdata, failedOut.c_str(), failedOut.size());
-        mFailedWriter->input(fdata, failedOut.size());
-    }
-    
-    if(!mOptions->split.enabled)
-        mOutputMtx.unlock();
 
-    if(mOptions->split.byFileLines)
-        config->markProcessed(readPassed);
-    else
-        config->markProcessed(pack->count);
-
-    if(outstr){
-        delete outstr;
-        outstr = NULL;
+    if (mFailedWriter && !failedOutput.empty()) {
+        char* fdata = new char[failedOutput.size()];
+        memcpy(fdata, failedOutput.c_str(), failedOutput.size());
+        mFailedWriter->input(fdata, failedOutput.size());
     }
-    
-    delete pack->data;
+
+    mOutputMtx.unlock();
+
+    config->markProcessed(pack->count);
+
+    delete[] pack->data;
     delete pack;
 
     return true;
@@ -313,11 +296,11 @@ void SingleEndProcessor::initPackRepository() {
     memset(mRepo.packBuffer, 0, sizeof(ReadPack*)*PACK_NUM_LIMIT);
     mRepo.writePos = 0;
     mRepo.readPos = 0;
-    //mRepo.readCounter = 0;
 }
 
 void SingleEndProcessor::destroyPackRepository() {
-    if(mRepo.packBuffer) delete mRepo.packBuffer; mRepo.packBuffer = NULL;
+    delete[] mRepo.packBuffer;
+    mRepo.packBuffer = NULL;
 }
 
 void SingleEndProcessor::producePack(ReadPack* pack){
@@ -339,19 +322,19 @@ void SingleEndProcessor::consumePack(ThreadConfig* config){
     mRepo.readPos++;
     mInputMtx.unlock();
     processSingleEnd(data, config);
+
 }
 
 void SingleEndProcessor::producerTask(){
-    if(mOptions->verbose){
-        mOptions->longlog ? loginfolong("start to load data") : loginfo("start to load data");
-    }
+    if(mOptions->verbose)
+        loginfo("start to load data");
     long lastReported = 0;
     int slept = 0;
     long readNum = 0;
     bool splitSizeReEvaluated = false;
     Read** data = new Read*[PACK_SIZE];
     memset(data, 0, sizeof(Read*)*PACK_SIZE);
-    FastqReader reader(mOptions->in1, true, mOptions->phred64, mOptions->fastqBufferSize);
+    FastqReader reader(mOptions->in1, true, mOptions->phred64);
     int count=0;
     bool needToBreak = false;
     while(true){
@@ -378,8 +361,8 @@ void SingleEndProcessor::producerTask(){
         }
         if(mOptions->verbose && count + readNum >= lastReported + 1000000) {
             lastReported = count + readNum;
-            string msg = "\nloaded " + to_string((lastReported/1000000)) + "M reads";
-            mOptions->longlog ? loginfolong(msg) : loginfo(msg);
+            string msg = "loaded " + to_string((lastReported/1000000)) + "M reads";
+            loginfo(msg);
         }
         // a full pack
         if(count == PACK_SIZE || needToBreak){
@@ -390,16 +373,16 @@ void SingleEndProcessor::producerTask(){
             //re-initialize data for next pack
             data = new Read*[PACK_SIZE];
             memset(data, 0, sizeof(Read*)*PACK_SIZE);
-            // if the consumer is far behind this producer, sleep and wait to limit memory usage
+            // if the consumer/writer is far behind this producer/reader, sleep and wait to limit memory usage
             while(mRepo.writePos - mRepo.readPos > PACK_IN_MEM_LIMIT){
                 slept++;
-                usleep(1000);
+                usleep(100);
             }
             readNum += count;
             // if the writer threads are far behind this producer, sleep and wait
             // check this only when necessary
             if(readNum % (PACK_SIZE * PACK_IN_MEM_LIMIT) == 0 && mLeftWriter) {
-                while(mLeftWriter->bufferLength() > PACK_IN_MEM_LIMIT) {
+                while(mLeftWriter->bufferLength() > PACK_IN_MEM_LIMIT || (mFailedWriter && mFailedWriter->bufferLength() > PACK_IN_MEM_LIMIT)) {
                     slept++;
                     usleep(1000);
                 }
@@ -409,16 +392,21 @@ void SingleEndProcessor::producerTask(){
         }
     }
 
-    //std::unique_lock<std::mutex> lock(mRepo.readCounterMtx);
     mProduceFinished = true;
-    if(mOptions->verbose){
-        mOptions->longlog ? loginfolong("all reads loaded, start to monitor thread status") : loginfo("all reads loaded, start to monitor thread status");
-    }
-    //lock.unlock();
+    if(mOptions->verbose)
+        loginfo("all reads loaded, start to monitor thread status");
 
     // if the last data initialized is not used, free it
-    if(data != NULL)
+     if(data != NULL){
+        for(int i = 0; i < PACK_SIZE; ++i){
+            if(data[i]!= NULL){
+                delete data[i];
+                data[i] = NULL;
+            }
+        }
         delete[] data;
+        data = NULL;
+    }
 }
 
 void SingleEndProcessor::consumerTask(ThreadConfig* config){
@@ -432,19 +420,20 @@ void SingleEndProcessor::consumerTask(ThreadConfig* config){
                 break;
             usleep(1000);
         }
-        //std::unique_lock<std::mutex> lock(mRepo.readCounterMtx);
+
         if(mProduceFinished && mRepo.writePos == mRepo.readPos){
             mFinishedThreads++;
             if(mOptions->verbose) {
                 string msg = "thread " + to_string(config->getThreadId() + 1) + " data processing completed";
-                //loginfo(msg, false);
+                loginfo(msg);
             }
             break;
         }
+        
         if(mProduceFinished){
             if(mOptions->verbose) {
                 string msg = "thread " + to_string(config->getThreadId() + 1) + " is processing the " + to_string(mRepo.readPos) + " / " + to_string(mRepo.writePos) + " pack";
-                //loginfo(msg, false);
+                loginfo(msg);
             }
             consumePack(config);
         } else {
@@ -455,17 +444,19 @@ void SingleEndProcessor::consumerTask(ThreadConfig* config){
     if(mFinishedThreads == mOptions->thread) {
         if(mLeftWriter)
             mLeftWriter->setInputCompleted();
+        
         if(mFailedWriter)
             mFailedWriter->setInputCompleted();
     }
 
     if(mOptions->verbose) {
-        string msg = "\nthread " + to_string(config->getThreadId() + 1) + " finished";
-        mOptions->longlog ? loginfolong(msg) : loginfo(msg);
+        string msg = "thread " + to_string(config->getThreadId() + 1) + " finished";
+        loginfo(msg);
     }
 }
 
-void SingleEndProcessor::writeTask(WriterThread* config){
+void SingleEndProcessor::writeTask(WriterThread* config)
+{
     while(true) {
         if(config->isCompleted()){
             // last check for possible threading related issue
@@ -477,6 +468,6 @@ void SingleEndProcessor::writeTask(WriterThread* config){
 
     if(mOptions->verbose) {
         string msg = config->getFilename() + " writer finished";
-        mOptions->longlog ? loginfolong(msg) : loginfo(msg);
+        loginfo(msg);
     }
 }

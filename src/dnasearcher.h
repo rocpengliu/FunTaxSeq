@@ -49,7 +49,8 @@ private:
     void ids_from_SI(SI *);
     void ids_from_SI_recursive(SI *);
     void clearFragments();
-    void getAllFragments(Read* & item);
+    void clearMatchedIds();
+    void getAllFragments(Read *&item);
     void postProcess();
     Fragment * getNextFragment(uint);
     void addAllMismatchVariantsAtPosSI(const Fragment *, uint, size_t, SI *); // used in Greedy mode
@@ -64,22 +65,24 @@ private:
     int8_t b62[4][4];
     int query_len = 0;
     uint best_match_score = 0;
-    std::set<char *> match_ids;
     std::multimap<uint, Fragment *, std::greater<uint>> fragments;
     std::vector<SI *> best_matches_SI;
     std::vector<SI *> longest_matches_SI;
     std::vector<std::string> best_matches;
     std::vector<std::string> longest_fragments;
     std::map<char, std::vector<char>> blosum_subst;
+    std::string readName;
+    std::stringstream ss;
 
 private:
-    Options * mOptions;
+    Options* mOptions;
     BwtFmiDB* mBwtfmiDB;
-
 public:
     DNASearcher(Options * & opt, BwtFmiDB* & bwtfmiDB);
-    int dnaSearchWuNeng(Read* & item);
-    int dnaSearchWuNeng(Read* & item1, Read* & item2);
+    ~DNASearcher();
+    std::set<char *>& dnaSearchWuNeng(Read* & item);
+    std::set<char *>& dnaSearchWuNeng(Read* & item1, Read* & item2);
+    std::set<char *> match_ids;
 };
 
 #endif /* DNASEARCHER_H */

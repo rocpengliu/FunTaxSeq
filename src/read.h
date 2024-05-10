@@ -8,11 +8,10 @@
 #include <fstream>
 #include "sequence.h"
 #include <vector>
-#include "util.h"
 
 using namespace std;
 
-class Read{
+class Read {
 public:
     Read(string name, string seq, string strand, string quality, bool phred64 = false);
     Read(string name, Sequence seq, string strand, string quality, bool phred64 = false);
@@ -28,15 +27,13 @@ public:
     int lowQualCount(int qual = 20);
     int length();
     string toString();
-    string toFastaR1();
-    string toFastaR2();
     string toStringWithTag(string tag);
-    string toStringWithTag(uint32* tag);
-    string toStringWithTagRm();
     void resize(int len);
     void convertPhred64To33();
     void trimFront(int len);
+    void trimTail(int len);
     bool fixMGI();
+    vector<Read*> split(int segment);
 
 public:
     static bool test();
@@ -45,14 +42,14 @@ private:
 
 
 public:
-	string mName;
-	Sequence mSeq;
-	string mStrand;
-	string mQuality;
-	bool mHasQuality;
+    string mName;
+    Sequence mSeq;
+    string mStrand;
+    string mQuality;
+    bool mHasQuality;
 };
 
-class ReadPair{
+class ReadPair {
 public:
     ReadPair(Read* left, Read* right);
     ~ReadPair();

@@ -23,6 +23,8 @@
 #include <locale>
 #include <stdio.h>
 #include <cmath>
+#include <valarray>
+#include <memory>
 
 #include "util.h"
 #include "algo/blast/core/blast_seg.h"
@@ -34,7 +36,7 @@
 #include "options.h"
 #include "bwtfmiDB.h"
 #include "common.h"
-#include <memory>
+
 
 extern "C" {
 #include "bwt/bwt.h"
@@ -66,12 +68,16 @@ protected:
     std::vector<std::string> longest_fragments;
     
     unsigned int best_match_score = 0;
-    double query_len;
+    double query_len = 0;
     uint32_t read_count = 0;
     uint32 uniq_mapped_reads = 0;
     uint32 multi_mapped_reads = 0;
+    
+    std::string readName;
+    std::stringstream ss;
 
     void clearFragments();
+    void clearMatchedIds();
     unsigned int calcScore(const std::string &);
     unsigned int calcScore(const std::string &, int);
     unsigned int calcScore(const std::string &, size_t, size_t, int);
@@ -94,9 +100,9 @@ protected:
     
 public:
     TransSearcher(Options * & opt, BwtFmiDB* & mBwtfmiDB);
-    int transSearchWuKong(Read* & item);
-    int transSearchWuKong(Read* & item1, Read* & item2);
+    ~TransSearcher();
+    std::set<char *>& transSearchWuKong(Read* & item);
+    std::set<char *>& transSearchWuKong(Read* & item1, Read* & item2);
 };
-
 
 #endif /* TRANSSEARCHER_HPP */

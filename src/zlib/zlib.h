@@ -253,12 +253,12 @@ ZEXTERN int ZEXPORT deflate OF((z_streamp strm, int flush));
     The detailed semantics are as follows.  deflate performs one or both of the
   following actions:
 
-  - Compress more input starting at next_in and update next_in and avail_in
+  - Compress more input start at next_in and update next_in and avail_in
     accordingly.  If not all input can be processed (because there is not
     enough room in the output buffer), next_in and avail_in are updated and
     processing will resume at this point for the next call of deflate().
 
-  - Provide more output starting at next_out and update next_out and avail_out
+  - Provide more output start at next_out and update next_out and avail_out
     accordingly.  This action is forced if the parameter flush is non zero.
     Forcing flush frequently degrades the compression ratio, so this parameter
     should be set only when necessary (in interactive applications).  Some
@@ -399,12 +399,12 @@ ZEXTERN int ZEXPORT inflate OF((z_streamp strm, int flush));
   The detailed semantics are as follows.  inflate performs one or both of the
   following actions:
 
-  - Decompress more input starting at next_in and update next_in and avail_in
+  - Decompress more input start at next_in and update next_in and avail_in
     accordingly.  If not all input can be processed (because there is not
     enough room in the output buffer), next_in is updated and processing will
     resume at this point for the next call of inflate().
 
-  - Provide more output starting at next_out and update next_out and avail_out
+  - Provide more output start at next_out and update next_out and avail_out
     accordingly.  inflate() provides as much output as possible, until there is
     no more input data or no more space in the output buffer (see below about
     the flush parameter).
@@ -880,7 +880,7 @@ ZEXTERN int ZEXPORT inflateCopy OF((z_streamp dest,
 
      This function can be useful when randomly accessing a large stream.  The
    first pass through the stream can periodically record the inflate state,
-   allowing restarting inflate at those points when randomly accessing the
+   allowing restart inflate at those points when randomly accessing the
    stream.
 
      inflateCopy returns Z_OK if success, Z_MEM_ERROR if there was not
@@ -1428,7 +1428,7 @@ ZEXTERN int ZEXPORT gzflush OF((gzFile file, int flush));
 ZEXTERN z_off_t ZEXPORT gzseek OF((gzFile file,
                                    z_off_t offset, int whence));
 
-     Sets the starting position for the next gzread or gzwrite on the given
+     Sets the start position for the next gzread or gzwrite on the given
    compressed file.  The offset represents a number of bytes in the
    uncompressed data stream.  The whence parameter is defined as in lseek(2);
    the value SEEK_END is not supported.
@@ -1436,11 +1436,11 @@ ZEXTERN z_off_t ZEXPORT gzseek OF((gzFile file,
      If the file is opened for reading, this function is emulated but can be
    extremely slow.  If the file is opened for writing, only forward seeks are
    supported; gzseek then compresses a sequence of zeroes up to the new
-   starting position.
+   start position.
 
      gzseek returns the resulting offset location as measured in bytes from
    the beginning of the uncompressed stream, or -1 in case of error, in
-   particular if the file is opened for writing and the new starting position
+   particular if the file is opened for writing and the new start position
    would be before the current position.
 */
 
@@ -1454,9 +1454,9 @@ ZEXTERN int ZEXPORT    gzrewind OF((gzFile file));
 /*
 ZEXTERN z_off_t ZEXPORT    gztell OF((gzFile file));
 
-     Returns the starting position for the next gzread or gzwrite on the given
+     Returns the start position for the next gzread or gzwrite on the given
    compressed file.  This position represents a number of bytes in the
-   uncompressed data stream, and is zero when starting, even if appending or
+   uncompressed data stream, and is zero when start, even if appending or
    reading a gzip stream from the middle of a file using gzdopen().
 
      gztell(file) is equivalent to gzseek(file, 0L, SEEK_CUR)

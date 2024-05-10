@@ -4,41 +4,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
-#include <string>
-#include <fstream>
-#include <iostream>
-#include <unistd.h>
-#include <functional>
-#include <thread>
-#include <memory.h>
+#include "read.h"
 #include <cstdlib>
 #include <condition_variable>
 #include <mutex>
-#include <sstream>
-#include <unordered_map>
-#include <map>
-#include <future>
-#include <deque>
-#include <time.h>
-#include <iomanip>
-
+#include <thread>
 #include "options.h"
 #include "threadconfig.h"
 #include "filter.h"
 #include "umiprocessor.h"
 #include "writerthread.h"
 #include "duplicate.h"
-#include "fastqreader.h"
-#include "util.h"
-#include "jsonreporter.h"
-#include "htmlreporter.h"
-#include "adaptertrimmer.h"
-#include "polyx.h"
-#include "read.h"
-#include "common.h"
 #include "bwtfmiDB.h"
-#include <memory>
-
 
 using namespace std;
 
@@ -59,7 +36,7 @@ typedef struct ReadRepository ReadRepository;
 
 class SingleEndProcessor{
 public:
-    SingleEndProcessor(Options* & opt, BwtFmiDBPair* & bwtfmiDBPair);
+    SingleEndProcessor(Options* opt, BwtFmiDBPair* & bwtfmiDBPair);
     ~SingleEndProcessor();
     bool process();
 
@@ -75,6 +52,7 @@ private:
     void initOutput();
     void closeOutput();
     void writeTask(WriterThread* config);
+
 private:
     Options* mOptions;
     ReadRepository mRepo;
@@ -82,7 +60,6 @@ private:
     atomic_int mFinishedThreads;
     std::mutex mInputMtx;
     std::mutex mOutputMtx;
-    std::mutex logMtx;
     Filter* mFilter;
     gzFile mZipFile;
     ofstream* mOutStream;
@@ -92,4 +69,6 @@ private:
     Duplicate* mDuplicate;
     BwtFmiDBPair* mBwtfmiDBPair;
 };
+
+
 #endif

@@ -135,7 +135,7 @@ static SEQstruct *read_fasta_forward(FILE *fp, char *seq, long length, char *tra
     int lastc=0;
     c=getc(fp);
     while ( c!=EOF ) {
-      /* New fasta entry is starting */
+      /* New fasta entry is start */
       if (c=='>' && lastc=='\n') {
 	ss->len = seq - ss->start;
 	// Add padding

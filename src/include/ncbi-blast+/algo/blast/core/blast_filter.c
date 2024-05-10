@@ -954,7 +954,7 @@ Int2 BlastMaskLocProteinToDNA(BlastMaskLoc* mask_loc,
    return status;
 }
 
-/** Used for qsort, compares two SeqLoc's by starting position. */
+/** Used for qsort, compares two SeqLoc's by start position. */
 static int s_SeqRangeSortByStartPosition(const void *vp1, const void *vp2)
 {
    BlastSeqLoc* v1 = *((BlastSeqLoc**) vp1);

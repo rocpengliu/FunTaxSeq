@@ -62,7 +62,7 @@ typedef struct BlastRPSLookupFileHeader {
 typedef struct BlastRPSProfileHeader {
     Int4 magic_number;     /**< value should be RPS_MAGIC_NUM */
     Int4 num_profiles;     /**< number of PSSMs in the file */
-    Int4 start_offsets[1]; /**< start of an Int4 array that gives the starting 
+    Int4 start_offsets[1]; /**< start of an Int4 array that gives the start 
                               byte offset of each RPS DB sequence. There
                               are num_profiles+1 entries in the list, and
                               the last entry effectively contains the length
@@ -85,7 +85,7 @@ typedef struct BlastRPSProfileHeader {
 typedef struct BlastRPSFreqRatiosHeader {
 	Int4 magic_number;
     Int4 num_profiles;     /**< number of PSSMs in the file */
-    Int4 start_offsets[1];   /**< start of an Int4 array that gives the starting
+    Int4 start_offsets[1];   /**< start of an Int4 array that gives the start
                               byte offset of each RPS DB sequence. There
                               are num_profiles+1 entries in the list, and
                               the last entry effectively contains the length

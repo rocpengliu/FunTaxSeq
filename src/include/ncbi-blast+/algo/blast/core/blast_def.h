@@ -185,7 +185,7 @@ Boolean SSeqRangeIntersectsWith(const SSeqRange* a, const SSeqRange* b)
 /** Returns the index of the range, such that this element is the
  * first range that either contains the target or if no such range exists, the
  * index of the first range, such that the target is less than this range.
- * @pre ranges array is sorted on the starting coordinates (i.e.:
+ * @pre ranges array is sorted on the start coordinates (i.e.:
  * SSeqRange::left)
  * @param ranges array of SSeqRange structures to search [in]
  * @param num_ranges number of elements in the ranges array [in]
@@ -290,7 +290,7 @@ typedef struct BLAST_SequenceBlk {
 
 /** Information about a single pattern occurence in the query. */
 typedef struct SPHIPatternInfo {
-    Int4 offset;  /**< Starting offset of this pattern occurrence. */
+    Int4 offset;  /**< start offset of this pattern occurrence. */
     Int4 length;  /**< Length of this pattern occurrence. */
 } SPHIPatternInfo;
 

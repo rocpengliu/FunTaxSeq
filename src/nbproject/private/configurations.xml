@@ -143,6 +143,10 @@
       <in>dnasearcher.h</in>
       <in>duplicate.cpp</in>
       <in>duplicate.h</in>
+      <in>editdistance.cpp</in>
+      <in>editdistance.h</in>
+      <in>edlib.cpp</in>
+      <in>edlib.h</in>
       <in>evaluator.cpp</in>
       <in>evaluator.h</in>
       <in>fastareader.cpp</in>
@@ -155,7 +159,8 @@
       <in>filterresult.h</in>
       <in>fragment.cpp</in>
       <in>fragment.h</in>
-      <in>funtaxseq.cpp</in>
+      <in>fts.cpp</in>
+      <in>genotype.cpp</in>
       <in>homosearcher.cpp</in>
       <in>homosearcher.h</in>
       <in>htmlreporter.cpp</in>
@@ -171,8 +176,12 @@
       <in>overlapanalysis.h</in>
       <in>peprocessor.cpp</in>
       <in>peprocessor.h</in>
+      <in>phylotree.cpp</in>
+      <in>phylotree.h</in>
       <in>polyx.cpp</in>
       <in>polyx.h</in>
+      <in>primerTrimmer.cpp</in>
+      <in>primerTrimmer.h</in>
       <in>processor.cpp</in>
       <in>processor.h</in>
       <in>read.cpp</in>
@@ -236,9 +245,8 @@
       <runprofile version="9">
         <runcommandpicklist>
           <runcommandpicklistitem>"${OUTPUT_PATH}"</runcommandpicklistitem>
-          <runcommandpicklistitem>/home/eccc/NetBeansProjects/fts/workingmodel/FunTaxSeq/bin/funtaxseq -i /home/eccc/NetBeansProjects/fts/workingmodel/FunTaxSeq/test/tiered/R1.fastq -I /home/eccc/NetBeansProjects/fts/workingmodel/FunTaxSeq/test/tiered/R2.fastq  --tfmi ~/NetBeansProjects/fts/earthmicrobiome/proclusts/database/protein.fmi --dfmi ~/NetBeansProjects/fts/earthmicrobiome/proclusts/database/dna.fmi -w 1 -V --debug</runcommandpicklistitem>
         </runcommandpicklist>
-        <runcommand>/home/eccc/NetBeansProjects/fts/workingmodel/FunTaxSeq/bin/funtaxseq -i /home/eccc/NetBeansProjects/fts/workingmodel/FunTaxSeq/test/tiered/R1.fastq -I /home/eccc/NetBeansProjects/fts/workingmodel/FunTaxSeq/test/tiered/R2.fastq  --tfmi ~/NetBeansProjects/fts/earthmicrobiome/proclusts/database/protein.fmi --dfmi ~/NetBeansProjects/fts/earthmicrobiome/proclusts/database/dna.fmi -w 1 -V --debug</runcommand>
+        <runcommand>"${OUTPUT_PATH}"</runcommand>
         <rundir>.</rundir>
         <buildfirst>false</buildfirst>
         <terminal-type>0</terminal-type>

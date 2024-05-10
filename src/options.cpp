@@ -1,21 +1,15 @@
 #include "options.h"
-#include "util.h"
-#include <iostream>
-#include <fstream>
-#include <string.h>
-#include "fastareader.h"
 
 Options::Options(){
+    sampleTable = "";
     in1 = "";
     in2 = "";
     out1 = "";
     out2 = "";
-    unpaired1 = "";
-    unpaired2 = "";
-    failedOut = "";
-    screenout = false;
-    reportTitle = "FunTaxSeq report";
-    thread = 2;
+    outFR = false;
+    outFRFile = "";
+    reportTitle = "funtaxseq report";
+    thread = 1;
     compression = 2;
     phred64 = false;
     dontOverwrite = false;
@@ -28,12 +22,12 @@ Options::Options(){
     overlapDiffLimit = 5;
     overlapDiffPercentLimit = 20;
     verbose = false;
-    debug = false;
-    longlog = false;
     seqLen1 = 151;
     seqLen2 = 151;
-    fixMGI = false;
-    fastqBufferSize = 1<<20;
+    mergerOverlappedPE = true;
+    prefix = "";
+    samVec.clear();
+    debug = false;
     mTransSearchOptions = new TransSearchOptions();
     mHomoSearchOptions = new HomoSearchOptions();
     mDNASearchOptions = new DNASearchOptions();
@@ -44,18 +38,15 @@ Options::~Options(){
         delete mTransSearchOptions;
         mTransSearchOptions = nullptr;
     }
-    
     if(mHomoSearchOptions){
         delete mHomoSearchOptions;
         mHomoSearchOptions = nullptr;
     }
-    
     if(mDNASearchOptions){
         delete mDNASearchOptions;
         mDNASearchOptions = nullptr;
     }
 }
-
 void Options::init() {
 }
 
@@ -115,79 +106,22 @@ bool Options::validate() {
     } else {
         check_file_valid(in1);
     }
+    
+    if(prefix.empty()){
+        cerr << "you must provide a prefix" << endl;
+    }
+    
+    htmlFile = prefix + ".html";
+    jsonFile = prefix + ".json";
 
     if(!in2.empty()) {
         check_file_valid(in2);
     }
-    
-    if(merge.enabled) {
-        if(split.enabled) {
-            error_exit("splitting mode cannot work with merging mode");
-        }
-        if(in2.empty() && !interleavedInput) {
-            error_exit("read2 input should be specified by --in2 for merging mode");
-        }
-        // enable correction if it's not enabled
-        if(!correction.enabled)
-            correction.enabled = true;
-        if(merge.out.empty() && !outputToSTDOUT && !out1.empty() && out2.empty()) {
-            cerr << "You specified --out1, but haven't specified --merged_out in merging mode. Using --out1 to store the merged reads" << endl << endl;
-            merge.out = out1;
-            out1 = "";
-        }
-        if(merge.includeUnmerged) {
-            if(!out1.empty()) {
-                cerr << "You specified --include_unmerged in merging mode. Ignoring argument --out1 = " << out1 << endl;
-                out1 = "";
-            }
-            if(!out2.empty()) {
-                cerr << "You specified --include_unmerged in merging mode. Ignoring argument --out2 = " << out2 << endl;
-                out2 = "";
-            }
-            if(!unpaired1.empty()) {
-                cerr << "You specified --include_unmerged in merging mode. Ignoring argument --unpaired1 = " << unpaired1 << endl;
-                unpaired1 = "";
-            }
-            if(!unpaired2.empty()) {
-                cerr << "You specified --include_unmerged in merging mode. Ignoring argument --unpaired1 = " << unpaired2 << endl;
-                unpaired2 = "";
-            }
-        }
-        if(merge.out.empty() && !outputToSTDOUT) {
-            error_exit("In merging mode, you should either specify --merged_out or enable --stdout");
-        }
-        if(!merge.out.empty()) {
-            if(merge.out == out1)
-                error_exit("--merged_out and --out1 shouldn't have same file name");
-            if(merge.out == out2)
-                error_exit("--merged_out and --out2 shouldn't have same file name");
-            if(merge.out == unpaired1)
-                error_exit("--merged_out and --unpaired1 shouldn't have same file name");
-            if(merge.out == unpaired2)
-                error_exit("--merged_out and --unpaired2 shouldn't have same file name");
-        }
-    } else {
-        // not in merging mode
-        if(!merge.out.empty()) {
-            cerr << "You haven't enabled merging mode (-m/--merge), ignoring argument --merged_out = " << merge.out << endl;
-            merge.out = "";
-        }
-    }
 
     // if output to STDOUT, then...
     if(outputToSTDOUT) {
-        if(split.enabled) {
-            error_exit("splitting mode cannot work with stdout mode");
-        }
-        cerr << "Streaming uncompressed ";
-        if(merge.enabled)
-            cerr << "merged";
-        else if(isPaired())
-            cerr << "interleaved";
-        cerr << " reads to STDOUT..." << endl;
-        if(isPaired() && !merge.enabled)
+        if(isPaired())
             cerr << "Enable interleaved output mode for paired-end input." << endl;
-        cerr << endl;
     }
 
     if(in2.empty() && !interleavedInput && !out2.empty()) {
@@ -199,8 +133,7 @@ bool Options::validate() {
             error_exit("paired-end input, read1 output should be specified together with read2 output (--out2 needed) ");
         }
         if(out1.empty() && !out2.empty()) {
-            if(!merge.enabled)
-                error_exit("paired-end input, read1 output should be specified (--out1 needed) together with read2 output ");
+            error_exit("paired-end input, read1 output should be specified (--out1 needed) together with read2 output ");
         }
     }
 
@@ -223,59 +156,6 @@ bool Options::validate() {
             error_exit(out2 + " already exists and you have set to not rewrite output files by --dont_overwrite");
         }
     }
-    if(!isPaired()) {
-        if(!unpaired1.empty()) {
-            cerr << "Not paired-end mode. Ignoring argument --unpaired1 = " << unpaired1 << endl;
-            unpaired1 = "";
-        }
-        if(!unpaired2.empty()) {
-            cerr << "Not paired-end mode. Ignoring argument --unpaired2 = " << unpaired2 << endl;
-            unpaired2 = "";
-        }
-    }
-    if(split.enabled) {
-        if(!unpaired1.empty()) {
-            cerr << "Outputing unpaired reads is not supported in splitting mode. Ignoring argument --unpaired1 = " << unpaired1 << endl;
-            unpaired1 = "";
-        }
-        if(!unpaired2.empty()) {
-            cerr << "Outputing unpaired reads is not supported in splitting mode. Ignoring argument --unpaired2 = " << unpaired2 << endl;
-            unpaired2 = "";
-        }
-    }
-    if(!unpaired1.empty()) {
-        if(dontOverwrite && file_exists(unpaired1)) {
-            error_exit(unpaired1 + " already exists and you have set to not rewrite output files by --dont_overwrite");
-        }
-        if(unpaired1 == out1)
-            error_exit("--unpaired1 and --out1 shouldn't have same file name");
-        if(unpaired1 == out2)
-            error_exit("--unpaired1 and --out2 shouldn't have same file name");
-    }
-    if(!unpaired2.empty()) {
-        if(dontOverwrite && file_exists(unpaired2)) {
-            error_exit(unpaired2 + " already exists and you have set to not rewrite output files by --dont_overwrite");
-        }
-        if(unpaired2 == out1)
-            error_exit("--unpaired2 and --out1 shouldn't have same file name");
-        if(unpaired2 == out2)
-            error_exit("--unpaired2 and --out2 shouldn't have same file name");
-    }
-    if(!failedOut.empty()) {
-        if(dontOverwrite && file_exists(failedOut)) {
-            error_exit(failedOut + " already exists and you have set to not rewrite output files by --dont_overwrite");
-        }
-        if(failedOut == out1)
-            error_exit("--failed_out and --out1 shouldn't have same file name");
-        if(failedOut == out2)
-            error_exit("--failed_out and --out2 shouldn't have same file name");
-        if(failedOut == unpaired1)
-            error_exit("--failed_out and --unpaired1 shouldn't have same file name");
-        if(failedOut == unpaired2)
-            error_exit("--failed_out and --unpaired2 shouldn't have same file name");
-        if(failedOut == merge.out)
-            error_exit("--failed_out and --merged_out shouldn't have same file name");
-    }
 
     if(dontOverwrite) {
         if(file_exists(jsonFile)) {
@@ -286,6 +166,12 @@ bool Options::validate() {
         }
     }
 
+    if(outFR){
+        if(outFRFile.empty()){
+            error_exit(prefix + " is empty; please specify the prefix");
+        }
+    }
+    
     if(compression < 1 || compression > 9)
         error_exit("compression level (--compression) should be between 1 ~ 9, 1 for fastest, 9 for smallest");
 
@@ -294,9 +180,9 @@ bool Options::validate() {
 
     if(thread < 1) {
         thread = 1;
-    } else if(thread > 32) {
-        cerr << "WARNING: FunTaxSeq uses up to 32 threads although you specified " << thread << endl;
-        thread = 32;
+    } else if(thread > 16) {
+        cerr << "WARNING: funtaxseq uses up to 16 threads although you specified " << thread << endl;
+        thread = 16;
     }
 
     if(trim.front1 < 0 || trim.front1 > 30)
@@ -325,27 +211,6 @@ bool Options::validate() {
 
     if(lengthFilter.requiredLength < 0 )
         error_exit("length requirement (--length_required) should be >0, suggest 15 ~ 100");
-
-    if(overlapDiffPercentLimit < 0 || overlapDiffPercentLimit > 100)
-        error_exit("the maximum percentage of mismatched bases to detect overlapped region (--overlap_diff_percent_limit) should be 0 ~ 100, suggest 20 ~ 60");
-
-    if(split.enabled ) {
-        if(split.digits < 0 || split.digits > 10)
-            error_exit("you have enabled splitting output to multiple files, the digits number of file name prefix (--split_prefix_digits) should be 0 ~ 10.");
-        
-        if(split.byFileNumber) {
-            if(split.number < 2 || split.number >= 1000)
-                error_exit("you have enabled splitting output by file number, the number of files (--split) should be 2 ~ 999.");
-            // thread number cannot be more than the number of file to split
-            if(thread > split.number)
-                thread = split.number;
-        }
-
-        if(split.byFileLines) {
-            if(split.size < 1000/4)
-                error_exit("you have enabled splitting output by file lines, the file lines (--split_by_lines) should be >= 1000.");
-        }
-    }
 
     if(qualityCut.enabledFront || qualityCut.enabledTail || qualityCut.enabledRight) {
         if(qualityCut.windowSizeShared < 1 || qualityCut.windowSizeShared > 1000)
@@ -436,20 +301,7 @@ bool Options::validate() {
                 }
             }
         }
-
     }
-
-    if(overRepAnalysis.sampling < 1 || overRepAnalysis.sampling > 10000)
-        error_exit("overrepresentation_sampling should be 1~10000");
-
-    if (mTransSearchOptions->tmode == "tGREEDY") {
-        mTransSearchOptions->mode = tGREEDY;
-    } else if (mTransSearchOptions->tmode == "tMEM") {
-        mTransSearchOptions->mode = tMEM;
-    } else {
-        error_exit("you must be use either tGREEDY or tMEM mode");
-    }
-    
     return true;
 }
 
@@ -467,57 +319,6 @@ bool Options::shallDetectAdapter(bool isR2) {
     }
 }
 
-void Options::initIndexFiltering(string blacklistFile1, string blacklistFile2, int threshold) {
-    if(blacklistFile1.empty() && blacklistFile2.empty())
-        return;
-
-    if(!blacklistFile1.empty()){
-        check_file_valid(blacklistFile1);
-        indexFilter.blacklist1 = makeListFromFileByLine(blacklistFile1);
-    }
-
-    if(!blacklistFile2.empty()){
-        check_file_valid(blacklistFile2);
-        indexFilter.blacklist2 = makeListFromFileByLine(blacklistFile2);
-    }
-
-    if(indexFilter.blacklist1.empty() && indexFilter.blacklist2.empty())
-        return;
-
-    indexFilter.enabled = true;
-    indexFilter.threshold = threshold;
-}
-
-vector<string> Options::makeListFromFileByLine(string filename) {
-    vector<string> ret;
-    ifstream file;
-    file.open(filename.c_str(), ifstream::in);
-    const int maxLine = 1000000;
-    char line[maxLine];
-    cerr << "filter by index, loading " << filename << endl;
-    while(file.getline(line, maxLine)){
-        // trim \n, \r or \r\n in the tail
-        int readed = strlen(line);
-        if(readed >=2 ){
-            if(line[readed-1] == '\n' || line[readed-1] == '\r'){
-                line[readed-1] = '\0';
-                if(line[readed-2] == '\r')
-                    line[readed-2] = '\0';
-            }
-        }
-        string linestr(line);
-        for(int i=0; i<linestr.length(); i++) {
-            if(linestr[i] != 'A' && linestr[i] != 'T' && linestr[i] != 'C' && linestr[i] != 'G') {
-                error_exit("processing " + filename + ", each line should be one barcode, which can only contain A/T/C/G");
-            }
-        }
-        cerr << linestr << endl;
-        ret.push_back(linestr);
-    }
-    cerr << endl;
-    return ret;
-}
-
 string Options::getAdapter1(){
     if(adapter.sequence == "" || adapter.sequence == "auto")
         return "unspecified";
@@ -530,4 +331,81 @@ string Options::getAdapter2(){
         return "unspecified";
     else
         return adapter.sequenceR2;
+}
+
+void Options::deterCodonTable(){
+    if (mTransSearchOptions->tCodonTable == "codontable1") {
+         mTransSearchOptions->codonTable = codontable1;
+    } else if (mTransSearchOptions->tCodonTable == "codontable2") {
+         mTransSearchOptions->codonTable = codontable2;
+    } else if ( mTransSearchOptions->tCodonTable == "codontable3") {
+         mTransSearchOptions->codonTable = codontable3;
+    } else if ( mTransSearchOptions->tCodonTable == "codontable4") {
+         mTransSearchOptions->codonTable = codontable4;
+    } else if ( mTransSearchOptions->tCodonTable == "codontable5") {
+         mTransSearchOptions->codonTable = codontable5;
+    } else if ( mTransSearchOptions->tCodonTable == "codontable6") {
+         mTransSearchOptions->codonTable = codontable6;
+    } else if ( mTransSearchOptions->tCodonTable == "codontable9") {
+         mTransSearchOptions->codonTable = codontable9;
+    } else if ( mTransSearchOptions->tCodonTable == "codontable10") {
+         mTransSearchOptions->codonTable = codontable10;
+    } else if ( mTransSearchOptions->tCodonTable == "codontable12") {
+         mTransSearchOptions->codonTable = codontable12;
+    } else if ( mTransSearchOptions->tCodonTable == "codontable13") {
+         mTransSearchOptions->codonTable = codontable13;
+    } else if ( mTransSearchOptions->tCodonTable == "codontable14") {
+         mTransSearchOptions->codonTable = codontable14;
+    } else if ( mTransSearchOptions->tCodonTable == "codontable16") {
+         mTransSearchOptions->codonTable = codontable16;
+    } else if ( mTransSearchOptions->tCodonTable == "codontable26") {
+         mTransSearchOptions->codonTable = codontable26;
+    } else if ( mTransSearchOptions->tCodonTable == "codontable21") {
+         mTransSearchOptions->codonTable = codontable21;
+    } else if ( mTransSearchOptions->tCodonTable == "codontable22") {
+         mTransSearchOptions->codonTable = codontable22;
+    } else if ( mTransSearchOptions->tCodonTable == "codontable24") {
+         mTransSearchOptions->codonTable = codontable24;
+    } else if ( mTransSearchOptions->tCodonTable == "codontable27") {
+         mTransSearchOptions->codonTable = codontable27;
+    } else if ( mTransSearchOptions->tCodonTable == "codontable29") {
+         mTransSearchOptions->codonTable = codontable29;
+    } else if ( mTransSearchOptions->tCodonTable == "codontable30") {
+         mTransSearchOptions->codonTable = codontable30;
+    } else if ( mTransSearchOptions->tCodonTable == "codontable31") {
+         mTransSearchOptions->codonTable = codontable31;
+    } else if ( mTransSearchOptions->tCodonTable == "codontable33") {
+         mTransSearchOptions->codonTable = codontable33;
+    } else {
+        error_exit("you must select one codon table");
+    }
+    if (verbose){
+        std::cout << "Codon table of " << mTransSearchOptions->tCodonTable << " is selected" << std::endl;
+    }
+}
+
+void Options::parseSampleTable(){
+    std::string msg = "Reading sample table from file " + sampleTable;
+    loginfo(msg);
+    ifstream infile(sampleTable.c_str(), ifstream::in);
+    if(!infile.is_open()) error_exit("can not open gene ortholog tree: " + sampleTable);
+    std::string line = "";
+    std::vector<std::string> strVec;
+    while(std::getline(infile, line)){
+        trimEnds(&line);
+        strVec.clear();
+        splitStr(line, strVec);
+        if(strVec.size() == 2){
+            samVec.emplace_back(Sample(strVec[0], strVec[1], ""));
+            
+        } else if(strVec.size() == 3){
+            samVec.emplace_back(Sample(strVec[0], strVec[1], strVec[2]));
+        } else {
+            error_exit("wrong format: " + line);
+        }
+    }
+    infile.close();
+    if(samVec.empty()){
+        error_exit("empty file: " + sampleTable);
+    }
 }

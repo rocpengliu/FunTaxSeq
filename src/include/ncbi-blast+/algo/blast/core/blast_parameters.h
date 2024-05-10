@@ -200,7 +200,7 @@ typedef struct BlastScoringParameters {
    BlastScoringOptions *options; /**< User-provided values for these params */
    Int2 reward;      /**< Reward for a match */
    Int2 penalty;     /**< Penalty for a mismatch */
-   Int4 gap_open;    /**< Extra penalty for starting a gap (scaled version) */
+   Int4 gap_open;    /**< Extra penalty for start a gap (scaled version) */
    Int4 gap_extend;  /**< Penalty for each gap residue  (scaled version) */
    Int4 shift_pen;   /**< Penalty for shifting a frame in out-of-frame 
                         gapping (scaled version) */

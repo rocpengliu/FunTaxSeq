@@ -1,0 +1,379 @@
+#include "funtaxdecoder.h"
+
+FunTaxDecoder::FunTaxDecoder(PhyloOptions *& mOptions){
+    this->mOptions = mOptions;
+    samFunMap.clear();
+    samTaxMap.clear();
+    ftMap.clear();
+    ftSet.clear();
+    samFunSet.clear();
+    samTaxSet.clear();
+    totFTMap.clear();
+    mPhyloTree = new PhyloTree(mOptions);
+    mFunTaxFreq = new FunTaxFreq();
+    mFunTaxPair.clear();
+    uniqFuns.clear();
+    uniqTaxons.clear();
+    taxRankMap = {{'k', 0},{'p', 1},{'c', 2},{'o', 3},{'f', 4},{'g', 5},{'s', 6},{'t', 7}};
+}
+
+FunTaxDecoder::~FunTaxDecoder(){
+    if(mPhyloTree){
+        delete mPhyloTree;
+        mPhyloTree = NULL;
+    }
+    if(mFunTaxFreq){
+        delete mFunTaxFreq;
+        mFunTaxFreq = NULL;
+    }
+}
+
+void FunTaxDecoder::process(){
+    readFunTax();
+    if(!totFTMap.empty()){
+        loginfo("Number of unique funtax ids: " + std::to_string(ftSet.size()));
+        decode();
+        decodeEach();
+    }
+}
+
+void FunTaxDecoder::readFunTax(){
+    std::queue<std::string> samQueue;
+    for(const auto &it : mOptions->samples){
+        samQueue.push(it);
+    }
+    int numThread = std::min(mOptions->thread, static_cast<int>(mOptions->samples.size()));
+    std::thread consumerThreads[numThread];
+    if(mOptions->verbose) loginfo("start to read");
+    for (int i = 0; i < numThread; ++i){
+        consumerThreads[i] = std::thread([this, &samQueue, &i](){
+            while(true){
+                std::unique_lock<std::mutex> lock(mtxTreR);
+                if(samQueue.empty()){
+                    lock.unlock();
+                    break;
+                }
+                std::string sample = samQueue.front();
+                samQueue.pop();
+                lock.unlock();
+                char buffer[buffer_size];
+                std::string line;
+                gzFile file = gzopen(sample.c_str(), "rb");
+                if (!file) error_exit("Error: Failed to open file " + sample);
+                std::unordered_map<std::string, uint32> tmpMap;
+                std::unordered_set<std::string> tmpSet;
+                while (gzgets(file, buffer, buffer_size) != NULL){
+                    line = buffer; // Output or process each line
+                    if (line.size() > 0){
+                        trimEnds(&line);
+                        tmpMap[line]++;
+                        tmpSet.insert(line);
+                    }
+                }
+                gzclose(file);
+                std::unique_lock<std::mutex> lock2(mtxTreW);
+                totFTMap[removeExtension(basename(sample), "_funtax.txt.gz")] = tmpMap;
+                ftSet.insert(tmpSet.begin(), tmpSet.end());
+                lock2.unlock();
+                loginfo("File " + removeExtension(basename(sample), "_funtax.txt.gz") + " readed");
+            }
+        });
+    }
+    for(int i = 0; i < numThread; ++i){
+        if(consumerThreads[i].joinable()){
+            consumerThreads[i].join();
+        }
+    }
+}
+
+void FunTaxDecoder::decode(){
+    int numThreads = std::min<int>(mOptions->thread, ftSet.size());
+    std::thread consumerThreads[numThreads];
+    for (const auto &itm : ftSet){
+        ftQueue.push(itm);
+    }
+    loginfo("Start to decode the funtax ids");
+    uint32 numIds = ftQueue.size();
+    for(int i = 0; i < numThreads; ++i){
+        consumerThreads[i] = std::thread([this, &i, &numIds](){
+            std::unordered_set<std::string> locSet;
+            std::unordered_map<std::string, std::pair<std::string, std::string>> mFunTaxPairSub;
+            while(true){
+                std::unique_lock<std::mutex> lock(mtxTreR);
+                if (ftQueue.empty()) {
+                    lock.unlock();
+                    break;
+                }
+                std::string ft = ftQueue.front();
+                ftQueue.pop();
+                if((numIds - ftQueue.size()) % 10000 == 0)
+                    loginfo("decoded " + std::to_string((numIds - ftQueue.size())/10000) + "0k funtax ids");
+                lock.unlock();
+                if(ft.empty())
+                    continue;
+                locSet.clear();
+                locSet = splitStr2(ft);
+                if(locSet.empty())
+                    continue;
+                auto pr = decodeFunTax(locSet);
+                if(pr.first.empty() && pr.second.empty())
+                    continue;
+                mFunTaxPairSub[ft] = pr;
+            }
+            std::unique_lock<std::mutex> lock2(mtxTreW);
+            for(const auto & pair : mFunTaxPairSub){
+                mFunTaxPair[pair.first] = pair.second;
+                if(!pair.second.first.empty()){
+                    uniqTaxons.insert(pair.second.first);
+                }
+                if(!pair.second.second.empty()){
+                    uniqFuns.insert(pair.second.second);
+                }
+            }
+            lock2.unlock(); 
+        });
+    }
+
+    for (int i = 0; i < numThreads; ++i) {
+        if (consumerThreads[i].joinable()) {
+            consumerThreads[i].join();
+        }
+    }
+    loginfo("Finished decoding: " + std::to_string(mFunTaxPair.size()));
+}
+
+void FunTaxDecoder::decodeEach(){
+    if(mOptions->verbose)
+        loginfo("start to decode each sample");
+    std::map<std::string, std::map<std::string, uint32>> tTaxMap; // sample, fun, count;
+    std::map<std::string, std::map<std::string, uint32>> tFunMap; // sample, fun, count;
+    for(const auto & it : totFTMap){
+        for(const auto & it2 : it.second) {
+            auto it3 = mFunTaxPair.find(it2.first);
+            if(it3 == mFunTaxPair.end())
+                continue;
+            if(!it3->second.first.empty()) 
+                tTaxMap[it.first][it3->second.first] += it2.second;
+            if(!it3->second.second.empty()) 
+                tFunMap[it.first][it3->second.second] += it2.second;
+        }
+    }
+    std::thread dTaxThread = std::thread(&FunTaxDecoder::decodeTaxonSample, this, std::ref(tTaxMap));
+    std::thread dFunThread = std::thread(&FunTaxDecoder::decodeFunSample, this, std::ref(tFunMap));
+    if(dTaxThread.joinable()) dTaxThread.join();
+    if(dFunThread.joinable()) dFunThread.join();
+    if(mOptions->verbose)
+        loginfo("decode each sample done!");
+}
+
+void FunTaxDecoder::decodeTaxonSample(std::map<std::string, std::map<std::string, uint32>>& tTaxMap){
+    std::ofstream *of = new std::ofstream();
+    of->open(mOptions->outTaxon.c_str(), std::ofstream::out);
+    if(!of->is_open()) error_exit("can not open " + mOptions->outTaxon);
+    *of << "#taxon" << "\t";
+    for(auto prt = tTaxMap.begin(); prt != tTaxMap.end(); ++prt){
+        *of << prt->first << (std::next(prt) == tTaxMap.end() ? "\n" : "\t");
+    }
+    for(const auto & it : uniqTaxons){
+        *of << it << "\t";
+        for(auto prt = tTaxMap.begin(); prt != tTaxMap.end(); ++prt){
+            auto prt2 = prt->second.find(it);
+            *of << (prt2 == prt->second.end() ? 0 : prt2->second) << (std::next(prt) == tTaxMap.end() ? "\n" : "\t");
+        }
+    }
+    of->clear();
+    if(of){
+        delete of;
+        of = nullptr;
+    }
+
+    for(int i = 0; i < mOptions->taxLevels.size(); ++i){
+        std::set<string> subUniqTaxon;
+        std::map<std::string, std::map<std::string, uint32>> subTaxMap;
+        for (const auto & it : tTaxMap){
+            for(const auto & it2 : it.second){
+                std::string tax = getFirstNsSeps(it2.first, (i + 1));
+                if(tax.empty()) continue;
+                subTaxMap[it.first][tax] += it2.second;
+                subUniqTaxon.insert(tax);
+            }
+        }
+        std::ofstream *of = new std::ofstream();
+        of->open(mOptions->prefix + "_taxon_abundance_" + mOptions->taxLevels.at(i) + ".txt", std::ofstream::out);
+        if(!of->is_open()) error_exit("can not open " + mOptions->prefix + "_taxon_abundance_" + mOptions->taxLevels.at(i) + ".txt");
+        *of << "#taxon:" << mOptions->taxLevels.at(i) << "\t";
+        for(auto sam = subTaxMap.begin(); sam != subTaxMap.end(); ++sam){
+            *of << sam->first << (std::next(sam) == subTaxMap.end() ? "\n" : "\t");
+        }
+        for(const auto & it : subUniqTaxon) {
+            *of << it;
+            for(auto sam = subTaxMap.begin(); sam != subTaxMap.end(); ++sam){
+                auto sam2 = sam->second.find(it);
+                *of << "\t" << (sam2 == sam->second.end() ? 0 : sam2->second) << (std::next(sam) == subTaxMap.end() ? "\n" : "\t");
+            }
+        }
+        of->close();
+        if(of){
+            delete of;
+            of = nullptr;
+        }
+    }
+}
+
+void FunTaxDecoder::decodeFunSample(std::map<std::string, std::map<std::string, uint32>>& tFunMap){
+    std::ofstream* otf = new std::ofstream();
+    otf->open(mOptions->outFun.c_str(), std::ofstream::out);
+    if(!otf->is_open()) error_exit("can not open " + mOptions->outFun);
+    *otf << "#orthology" << "\t";
+    for(auto prt = tFunMap.begin(); prt != tFunMap.end(); ++prt){
+        *otf << prt->first << (std::next(prt) == tFunMap.end() ? "\n" : "\t");
+    }
+    for(const auto & it : uniqFuns) {
+        *otf << it << "\t";
+        for (auto pr = tFunMap.begin(); pr != tFunMap.end(); ++pr){
+            auto pr2 = pr->second.find(it);
+            *otf << (pr2 == pr->second.end() ? 0 : pr2->second) << (std::next(pr) == tFunMap.end() ? "\n" : "\t");
+        }
+    }
+    otf->close();
+    if(otf){
+        delete otf;
+        otf = nullptr;
+    }
+
+    std::map<std::string, std::map<std::string, uint32>> finalFunMap;
+    for(const auto & it : tFunMap){
+        std::multimap<std::string, std::pair<std::vector<std::string>, uint32>> annoFunMap;
+        std::set<std::string> uniqFunSet;
+        for(const auto & it2 : it.second){
+            std::string tmpStr = it2.first;
+            auto vec = splitStr(tmpStr, "|");
+            annoFunMap.insert(std::make_pair(vec.at(0), std::make_pair(vec, it2.second)));
+            uniqFunSet.insert(vec.at(0));
+        }
+
+        for(const auto & it2 : uniqFunSet){
+            auto range = annoFunMap.equal_range(it2);
+            uint32 numReadsTmp = 0;
+            std::multimap<uint8, std::vector<std::string>> tmpMap;
+            for(auto itr = range.first; itr != range.second; ++itr){
+                numReadsTmp += itr->second.second;
+                if(!itr->second.first.at(1).empty()){
+                    auto va = taxRankMap[itr->second.first.at(1)[0]];
+                    tmpMap.insert(std::make_pair(va, itr->second.first));
+                }
+            }
+            if(!tmpMap.empty()){
+                uint8 rankKey = tmpMap.begin()->first;
+                auto rangeIt = tmpMap.equal_range(rankKey);
+                int len = std::distance(rangeIt.first, rangeIt.second);
+                if(len == 1){
+                    finalFunMap[it.first][getStrVec(rangeIt.first->second)] = numReadsTmp;
+                } else {
+                    std::vector<std::pair<uint32, uint32>> freqVec;
+                    uint32 ii = 0;
+                    for(auto rIt = rangeIt.first; rIt != rangeIt.second; ++rIt){
+                        freqVec.push_back(std::make_pair(ii, static_cast<uint32>(rIt->second.at(2).length() + rIt->second.at(3).length())));
+                    }
+                    std::sort(freqVec.begin(), freqVec.end(), [](const std::pair<uint32, uint32>& a, const std::pair<uint32, uint32>& b) {
+                        return a.second > b.second;
+                    });
+                    std::advance(rangeIt.first, freqVec.at(0).first);
+                    if ( rangeIt.first != rangeIt.second){
+                        finalFunMap[it.first][getStrVec(rangeIt.first->second)] = numReadsTmp;
+                    }
+                }
+            }
+        }
+
+        std::ofstream* otf = new std::ofstream();
+        std::string fn = mOptions->prefix + "_func_" + it.first + ".txt";
+        otf->open(fn.c_str(), std::ofstream::out);
+        if(!otf->is_open()) error_exit("can not open " + fn);
+        *otf << "#orthology\tnumReads\n";
+        for(const auto & itf : finalFunMap[it.first]){
+            *otf << itf.first << "\t" << itf.second << "\n";
+        }
+        otf->close();
+        if(otf){
+            delete otf;
+            otf = nullptr;
+        }
+    }
+}
+std::pair<std::string, std::string> FunTaxDecoder::decodeFunTax(std::unordered_set<std::string>& locSet) {
+    std::pair<std::string, std::string> ftp;
+    ftp.first = decodeTax(locSet);
+    ftp.second = decodeFun(locSet);
+    return ftp;
+}
+
+std::string FunTaxDecoder::decodeTax(std::unordered_set<std::string>& locSet) {
+    std::set<tree<std::string*>::iterator, tree<std::string*>::iterator_base_less> treItSet;
+    tree<std::string*>::leaf_iterator locf;
+    for (const auto & it : locSet) {
+        std::string strChar(it);
+        size_t pos = strChar.find_first_of('_');
+        if (pos == std::string::npos) continue;
+        strChar.erase(pos, std::string::npos);
+        locf = std::find_if(mPhyloTree->taxonTree->begin_leaf(),
+                mPhyloTree->taxonTree->end_leaf(),
+                [&strChar](std::string* & itp) {
+                    return *itp == strChar;
+                });
+        if (mPhyloTree->taxonTree->is_valid(locf)) {
+            treItSet.insert(locf);
+        }
+    }
+    std::string taxon = "";
+    if (!treItSet.empty()) {
+        //ftNode->taxLoc = mPhyloTree->taxonTree->lowest_common_ancestor(treItSet);
+        taxon = mPhyloTree->taxonTree->lowest_common_ancestor_str(treItSet);
+        trimLeft(taxon, "root;");
+        treItSet.clear();
+    }
+    return taxon;
+}
+
+std::string FunTaxDecoder::decodeFun(std::unordered_set<std::string>& locSet) {
+    std::string gene = "";
+    if(locSet.size() == 1){
+        auto it = mPhyloTree->geneAnoMap.find(*(locSet.begin()));
+        if(it!= mPhyloTree->geneAnoMap.end()){
+            gene = it->second->print();
+        }
+        return gene;
+    }
+    std::unordered_set<std::string> tmpSet;
+    for (const auto & it : locSet){
+        auto it2 = mPhyloTree->geneAnoMap.find(it);
+        if(it2 == mPhyloTree->geneAnoMap.end())
+            continue;
+        if(it2->second->par != "0") tmpSet.insert(it2->second->par);
+    }
+
+    std::set<tree<std::string*>::iterator, tree<std::string*>::iterator_base_less> treItSet;
+    tree<std::string*>::leaf_iterator locf;
+    for (const auto & it : tmpSet) {
+        locf = std::find_if(mPhyloTree->geneTree->begin_leaf(),
+                mPhyloTree->geneTree->end_leaf(),
+                [&it](std::string* & itp) {
+                    return *itp == it;
+                });
+        if (mPhyloTree->geneTree->is_valid(locf)) {
+            treItSet.insert(locf);
+        }
+    }
+    
+    if (!treItSet.empty()) {
+        //ftNode->funLoc = mPhyloTree->geneTree->lowest_common_ancestor(treItSet);
+        auto itt = mPhyloTree->geneTree->lowest_common_ancestor(treItSet);
+        auto itt2 = mPhyloTree->orthAnoMap.find(*(itt.node->data));
+        if(itt2 != mPhyloTree->orthAnoMap.end()){
+            gene = itt2->second->print();
+            //gene = itt2->first;
+        }
+        treItSet.clear();
+    }
+    return gene;
+}

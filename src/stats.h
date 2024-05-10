@@ -14,7 +14,7 @@ using namespace std;
 class Stats{
 public:
     // this @guessedCycles parameter should be calculated using the first several records
-    Stats(Options* & opt, bool isRead2 = false, int guessedCycles = 0, int bufferMargin = 1024);
+    Stats(Options* opt, bool isRead2 = false, int guessedCycles = 0, int bufferMargin = 1024);
     ~Stats();
     int getCycles();
     long getReads();
@@ -34,29 +34,23 @@ public:
     void reportHtml(ofstream& ofs, string filteringType, string readName);
     void reportHtmlQuality(ofstream& ofs, string filteringType, string readName);
     void reportHtmlContents(ofstream& ofs, string filteringType, string readName);
-    void reportHtmlKMER(ofstream& ofs, string filteringType, string readName);
-    void reportHtmlORA(ofstream& ofs, string filteringType, string readName);
     bool isLongRead();
-    void initOverRepSeq();
     int getMeanLength();
 
 public:
     static string list2string(double* list, int size);
+    static string list2string(std::vector<int> & x_vec, int top);
+    static string list2string2(std::vector<int> & x_vec, int top);
+    static string list2string(std::vector<double> & x_vec, int top);
+    static string list2string2(std::vector<double> & x_vec, int top);
+    static string list2string(std::vector<std::string> & x_vec, int top);
+    static string list2string(std::map< std::string, std::vector<int>> & stackMap, int top);
     static string list2string(double* list, int size, long* coords);
     static string list2string(long* list, int size);
-    static string list2string(std::vector<std::string> & x_vec, int top);
-    static string list2string(std::vector<double> & y_vec, int top);
-    static string list2string(std::vector<int> & x_vec, int top);
-    //static string list2string(std::vector<int> & y_vec, int top);
     static int base2val(char base);
 
 private:
     void extendBuffer(int newBufLen);
-    string makeKmerTD(int i, int j);
-    string kmer3(int val);
-    string kmer2(int val);
-    void deleteOverRepSeqDist();
-    bool overRepPassed(string& seq, long count);
 
 private:
     Options* mOptions;
@@ -78,12 +72,9 @@ private:
     long *mCycleBaseQual[8];
     long *mCycleTotalBase;
     long *mCycleTotalQual;
-    long *mKmer;
 
     map<string, double*> mQualityCurves;
     map<string, double*> mContentCurves;
-    map<string, long> mOverRepSeq;
-    map<string, long*> mOverRepSeqDist;
 
 
     int mCycles;
@@ -95,9 +86,6 @@ private:
     long mQ20Total;
     long mQ30Total;
     bool summarized;
-    long mKmerMax;
-    long mKmerMin;
-    int mKmerBufLen;
     long mLengthSum;
 };
 

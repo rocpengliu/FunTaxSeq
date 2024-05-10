@@ -255,7 +255,7 @@ typedef struct internal_state {
 #endif
 
     ush bi_buf;
-    /* Output buffer. bits are inserted starting at the bottom (least
+    /* Output buffer. bits are inserted start at the bottom (least
      * significant bits).
      */
     int bi_valid;

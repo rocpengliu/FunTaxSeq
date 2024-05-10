@@ -1340,7 +1340,7 @@ typedef struct SSequence
    struct SSequence* parent;   /**< SSequence window that encompasses the current one */
    char* seq;                  /**< sequence in ncbistdaa. */
    Alpha* palpha;              /**< alphabet information */
-   Int4 start;                 /**< starting offset to seg. */
+   Int4 start;                 /**< start offset to seg. */
    Int4 length;                /**< Length of sequence to be segged. */
    Int4 bogus;                 /**< tracks number of non-allowed residues (e.g., X) */
    Boolean punctuation;        /**< FIXME: always FALSE, never set to TRUE? */
@@ -2266,8 +2266,7 @@ s_SegParametersCheck (SegParameters* sparamsp)
 }
 
 /* Comments in blast_seg.h */
-void SegParametersFree(SegParameters* sparamsp)
-{
+void SegParametersFree(SegParameters* sparamsp){
    if (!sparamsp) 
       return;
    sfree(sparamsp);

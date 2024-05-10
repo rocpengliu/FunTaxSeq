@@ -1,6 +1,6 @@
 #include "jsonreporter.h"
 
-JsonReporter::JsonReporter(Options* & opt){
+JsonReporter::JsonReporter(Options* opt){
     mOptions = opt;
     mDupHist = NULL;
     mDupRate = 0;
@@ -15,7 +15,7 @@ void JsonReporter::setDupHist(int* dupHist, double* dupMeanGC, double dupRate) {
     mDupRate = dupRate;
 }
 
-void JsonReporter::setInsertHist(atomic_long* insertHist, int insertSizePeak) {
+void JsonReporter::setInsertHist(long* insertHist, int insertSizePeak) {
     mInsertHist = insertHist;
     mInsertSizePeak = insertSizePeak;
 }
@@ -26,15 +26,7 @@ void JsonReporter::report(FilterResult* result, Stats* preStats1, Stats* postSta
     ofs.open(mOptions->jsonFile, ifstream::out);
     ofs << "{" << endl;
 
-     // sequencing info
-    string sequencingInfo  = mOptions->isPaired()?"paired end":"single end";
-    if(mOptions->isPaired()) {
-        sequencingInfo += " (" + to_string(preStats1->getCycles()) + " cycles + " + to_string(preStats2->getCycles()) + " cycles)";
-    } else {
-        sequencingInfo += " (" + to_string(preStats1->getCycles()) + " cycles)";
-    }
-    
-    long pre_total_reads = preStats1->getReads();  
+    long pre_total_reads = preStats1->getReads();
     if(preStats2)
         pre_total_reads += preStats2->getReads();
 
@@ -74,6 +66,41 @@ void JsonReporter::report(FilterResult* result, Stats* preStats1, Stats* postSta
     if(postStats2)
         post_total_gc += postStats2->getGCNumber();
 
+//    // KMER detection
+//    Kmer* kmer = vd->getKmer();
+//    if(kmer) {
+//        string detectionResult;
+//        if(kmer->getMeanHit() >= mOptions->positiveThreshold)
+//            detectionResult = "POSITIVE";
+//        else
+//            detectionResult = "NEGATIVE";
+//
+//        ofs << "\t" << "\"kmer_detection_result\": {" << endl;
+//        ofs << "\t\t" << "\"result\": \"" << detectionResult << "\"," << endl;
+//        ofs << "\t\t" << "\"mean_coverage\": " << kmer->getMeanHit() << "," << endl;
+//        ofs << "\t\t" << "\"positive_thread\": " << mOptions->positiveThreshold << "," << endl;
+//
+//        // unique kmer hits
+//        ofs << "\t\t" << "\"kmer_hits\": {" << endl;
+//            kmer->reportJSON(ofs);
+//        ofs << "\t\t" << "}" << endl;
+//
+//
+//        ofs << "\t" << "}," << endl;
+//    }
+//
+//    // KMER detection
+//    Genomes* genome = vd->getGenomes();
+//    if(genome) {
+//        genome->reportJSON(ofs);
+//    }
+//
+//    // KMER detection
+//    KmerCollection* kc = vd->getKmerCollection();
+//    if(kc) {
+//        kc->reportJSON(ofs);
+//    }
+
     // summary
     ofs << "\t" << "\"summary\": {" << endl;
 
@@ -96,11 +123,11 @@ void JsonReporter::report(FilterResult* result, Stats* preStats1, Stats* postSta
     ofs << "\t\t\t" << "\"q20_bases\":" << post_q20_bases << "," << endl; 
     ofs << "\t\t\t" << "\"q30_bases\":" << post_q30_bases << "," << endl; 
     ofs << "\t\t\t" << "\"q20_rate\":" << (post_total_bases == 0?0.0:(double)post_q20_bases / (double)post_total_bases) << "," << endl; 
-    ofs << "\t\t\t" << "\"q30_rate\":" << (post_total_bases == 0?0.0:(double)post_q30_bases / (double)post_total_bases) << "," << endl;
+    ofs << "\t\t\t" << "\"q30_rate\":" << (post_total_bases == 0?0.0:(double)post_q30_bases / (double)post_total_bases) << "," << endl; 
     ofs << "\t\t\t" << "\"read1_mean_length\":" << postStats1->getMeanLength() << "," << endl;
-    if (mOptions->isPaired() && !mOptions->merge.enabled)
+    if(mOptions->isPaired())
         ofs << "\t\t\t" << "\"read2_mean_length\":" << postStats2->getMeanLength() << "," << endl;
-    ofs << "\t\t\t" << "\"gc_content\":" << (post_total_bases == 0 ? 0.0 : (double) post_total_gc / (double) post_total_bases) << endl;
+    ofs << "\t\t\t" << "\"gc_content\":" << (post_total_bases == 0?0.0:(double)post_total_gc / (double)post_total_bases)  << endl; 
     ofs << "\t\t" << "}";
 
     ofs << endl;
@@ -170,13 +197,11 @@ void JsonReporter::report(FilterResult* result, Stats* preStats1, Stats* postSta
 
     if(postStats1) {
         string name = "read1_after_filtering";
-        if(mOptions->merge.enabled)
-            name = "merged_and_filtered";
         ofs << "\t" << "\"" << name << "\": " ;
         postStats1 -> reportJson(ofs, "\t");
     }
 
-    if(postStats2 && !mOptions->merge.enabled) {
+    if(postStats2) {
         ofs << "\t" << "\"read2_after_filtering\": " ;
         postStats2 -> reportJson(ofs, "\t");
     }
