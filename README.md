@@ -15,7 +15,7 @@ ftd is to generate taxa and gene abundance table
 mkbwt and mkfmi are used to build databases
 ```
 
-# sampletable separated by tab
+### sampletable separated by tab
 ```
 sample1  sample1.R1.fastq.gz  sample1.R2.fastq.gz
 sample2  sample2.R1.fastq.gz  sample2.R2.fastq.gz
@@ -27,7 +27,7 @@ FunTaxSeq/bin/fts --samtable sample.txt --dfmi db/dna.fmi --tfmi db/pro.fmi --ou
 FunTaxSeq/bin/ftd --samdir out_fts db -b db/ -o out_ftd -w 12 -V
 ```
 
-# all options for funtaxseq
+### all options for funtaxseq
 ```
 usage: ./fts [options] ... 
 options:
@@ -109,7 +109,7 @@ options:
   -?, --help                          print this message
 ```
 
-# all options for funtaxdecoder
+### all options for funtaxdecoder
 ```
 usage: ./ftd [options] ... 
 options:
@@ -123,7 +123,7 @@ options:
   -?, --help         print this message
 ```
 
-# TO DO LIST
+### TO DO LIST
 ```
 
 ```
