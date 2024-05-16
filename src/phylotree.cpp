@@ -45,7 +45,7 @@ PhyloTree::~PhyloTree() {
         for(auto it = geneAnoMap.begin(); it != geneAnoMap.end(); ++it){
             if(it->second){
             delete it->second;
-            it->second = nullptr;
+            //it->second = nullptr;
             }
         }
         geneAnoMap.clear();
@@ -57,11 +57,11 @@ PhyloTree::~PhyloTree() {
         for(auto it = orthAnoMap.begin(); it != orthAnoMap.end(); ++it){
             if(it->second){
             delete it->second;
-            it->second = nullptr;
+            //it->second = nullptr;
             }
         }
         orthAnoMap.clear();
-        if(mOptions->verbose) cerr << "ortho annotation map freeing done!" << "\n";
+        if(mOptions->verbose) cerr << "ortho annotation map free finished!" << "\n";
     });
 
     if(dTTreThread.joinable()){
@@ -76,6 +76,7 @@ PhyloTree::~PhyloTree() {
     if(dOrthThread.joinable()){
         dOrthThread.join();
     }
+    loginfo("finished all the deleting");
 }
 
 void PhyloTree::init(){
@@ -515,6 +516,7 @@ void PhyloTree::readGeneAnno(std::queue<std::string>& geneAnnoQueue){
                 splitStr(line, strVec);
                 if(strVec.size() == 6){
                     GeneNode *tmp = new GeneNode();
+                    tmp->id = strVec[0];
                     tmp->par = strVec[1];
                     tmp->taxon = strVec[2];
                     tmp->anno = strVec[3];
@@ -564,6 +566,7 @@ void PhyloTree::readOrthAnno(std::queue<std::string>& orthAnnoQueue){
                 splitStr(line, strVec);
                 if(strVec.size() == 6){
                     GeneNode *tmp = new GeneNode();
+                    tmp->id = strVec[0];
                     tmp->par = strVec[1];
                     tmp->taxon = strVec[2];
                     tmp->anno = strVec[3];

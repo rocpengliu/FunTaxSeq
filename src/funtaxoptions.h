@@ -72,7 +72,9 @@ class GeneNode{
         GeneNode();
         ~GeneNode();
 
-        std::string print(std::string type = "full");
+        std::string print(std::string idpar = "id", std::string type = "full");
+        std::string print2(std::string idpar = "id");
+        std::string print3();
 
     public:
         std::string id;
@@ -88,7 +90,6 @@ class SimGeneNode{
         SimGeneNode();
         SimGeneNode(std::string id);
         ~SimGeneNode();
-
         std::string print();
 
     public:

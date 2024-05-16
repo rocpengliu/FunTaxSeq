@@ -49,11 +49,12 @@ GeneNode::GeneNode(){
 GeneNode::~GeneNode(){
 }
 
-std::string GeneNode::print(std::string type){
+std::string GeneNode::print(std::string idpar, std::string type){
     bool goGo = false;
     bool goKo = false;
     std::stringstream ss;
-    ss << anno << "|" << taxon;
+    //ss << (idpar == "id" ? id : par) << "|" << anno << "|" << taxon;
+    ss << (idpar == "id" ? id : par) << "|" << anno;
     if(type == "gene"){
 
     } else {
@@ -98,6 +99,48 @@ std::string GeneNode::print(std::string type){
     }
     return ss.str();
 }
+
+std::string GeneNode::print2(std::string idpar){
+    return (idpar == "id" ? id : par);
+}
+
+std::string GeneNode::print3(){
+    bool goGo = true;
+    bool goKo = true;
+    std::stringstream ss;
+    ss << id << "|" << taxon << "|" << anno;
+    if(goGo){
+        ss << "|";
+        if(goSet.empty()){
+            ss << 0;
+        } else {
+                for (const auto & it : goSet){
+                    if(it == 0){
+                        ss << 0;
+                    } else {
+                        ss << "GO:" << std::setw(7) << std::setfill('0') << it << (it == *goSet.rbegin() ? "" : ";");
+                    }
+                }
+        }
+    }
+
+    if(goKo){
+        ss << "|";
+        if (koSet.empty()){
+            ss << 0;
+        } else{
+            for (const auto &it : koSet){
+                if (it == 0){
+                    ss << 0;
+                } else{
+                    ss << "K" << std::setw(5) << std::setfill('0') << it << (it == *koSet.rbegin() ? "" : ";");
+                }
+            }
+        }
+    }
+    return ss.str();
+}
+
 
 SimGeneNode::SimGeneNode(){
     id = "";
