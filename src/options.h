@@ -408,7 +408,8 @@ public:
     string out1;
     // file name of read2 output
     string out2;
-    //output failed reads
+    string outdir;
+    // output failed reads
     bool outFR;
     //file name of failed reads;
     string outFRFile;

@@ -34,6 +34,7 @@ int main(int argc, char* argv[]) {
     cmd.add<string>("out1", 'o', "file name to store read1 with on-target sequences", false, "");
     cmd.add<string>("out2", 'O', "file name to store read2 with on-target sequences", false, "");
     cmd.add<string>("samtable", 0, "sample table", false, "");
+    cmd.add<string>("outdir", 0, "output directory", false, "");
     // translated search
     cmd.add<string>("tfmi", 'd', "fmi index of Protein database", false, "");
     cmd.add<string>("tmode", 'K', "searching mode either tGREEDY or tMEM (maximum exactly match). By default greedy", false, "tGREEDY");
@@ -297,6 +298,7 @@ int main(int argc, char* argv[]) {
     opt->mEvaluation.supportEvaluation = (!opt->inputFromSTDIN && opt->in1 != "/dev/stdin");
     opt->mEvaluation.disable_trim_poly_g = cmd.exist("disable_trim_poly_g");
 
+    opt->outdir = cmd.get<string>("outdir");
     opt->sampleTable = cmd.get<string>("samtable");
     if(opt->sampleTable.empty()) {
         Sample sam;

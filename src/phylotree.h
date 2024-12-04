@@ -15,6 +15,7 @@
 #include <unordered_map>
 #include <cstdint> 
 #include <algorithm>
+#include <future>
 
 #include "util.h"
 #include "tree.h"

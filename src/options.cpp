@@ -26,6 +26,7 @@ Options::Options(){
     seqLen2 = 151;
     mergerOverlappedPE = true;
     prefix = "";
+    outdir = "";
     samVec.clear();
     debug = false;
     mTransSearchOptions = new TransSearchOptions();

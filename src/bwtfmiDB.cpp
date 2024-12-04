@@ -278,7 +278,7 @@ void BwtFmiDBPair::init() {
             dBwtfmiDB = new BwtFmiDB(mOptions);
             dBwtfmiDB->init("DNA");
             dnaSearch = true;
-        } 
+        }
     });
 
     if(tThread.joinable()){

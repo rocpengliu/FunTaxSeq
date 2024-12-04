@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include <cstdint> 
 #include <dirent.h>
+#include <vector>
 
 #include "util.h"
 #include "tree.h"

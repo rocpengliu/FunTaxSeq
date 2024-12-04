@@ -40,17 +40,23 @@ PhyloTree::~PhyloTree() {
         if(mOptions->verbose) cerr << "gene ortholog tree free finished" << "\n";
     });
 
+/*
     std::thread dGenThread = std::thread([this](){
         if(mOptions->verbose) cerr << "start to free gene annotation map" << "\n";
+        int ii = 0;
+        //do not perform this, as this takes too long time, and won't cause problem as it will be deleted
         for(auto it = geneAnoMap.begin(); it != geneAnoMap.end(); ++it){
+            ++ii;
             if(it->second){
-            delete it->second;
+                if(ii % 1000000 == 0) loginfo("deleted gene map: ", ii);
+                delete it->second;
             //it->second = nullptr;
             }
         }
         geneAnoMap.clear();
         if(mOptions->verbose) cerr << "gene annotation map free finished!" << "\n";
     });
+    */
 
     std::thread dOrthThread = std::thread([this](){
         if(mOptions->verbose) cerr << "start to free ortho annotation map" << "\n";//could remove as this is already deleted.
@@ -64,15 +70,40 @@ PhyloTree::~PhyloTree() {
         if(mOptions->verbose) cerr << "ortho annotation map free finished!" << "\n";
     });
 
+    const int chunkSize = geneAnoMap.size() / mOptions->thread;
+    std::vector<std::future<void>> futures;
+    futures.reserve(mOptions->thread);
+    auto it = geneAnoMap.begin();
+
+    for (int i = 0; i < mOptions->thread; ++i) {
+        auto startIt = it;
+        std::advance(it, chunkSize);
+        if (i == mOptions->thread - 1) {
+            it = geneAnoMap.end();
+        }
+        futures.push_back(std::async(std::launch::async, [startIt, it] {
+            for (auto iter = startIt; iter != it; ++iter) {
+                if (iter->second != nullptr) {
+                    delete iter->second;
+                }
+            }
+        }));
+    }
+
+    for (auto& future : futures) {
+        future.get();
+    }
+    geneAnoMap.clear();
+
     if(dTTreThread.joinable()){
         dTTreThread.join();
     }
     if(dFTreThread.joinable()){
         dFTreThread.join();
     }
-    if(dGenThread.joinable()){
-        dGenThread.join();
-    }
+    //if(dGenThread.joinable()){
+        //dGenThread.join();
+    //}
     if(dOrthThread.joinable()){
         dOrthThread.join();
     }
