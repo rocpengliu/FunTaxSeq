@@ -7,7 +7,7 @@ git clone https://github.com/rocpengliu/FunTaxSeq.git
 
 # build
 cd FunTaxSeq
-make clean; make;
+make clean && make;
 
 # after the building, there are 4 exe files in the dir bin
 fts is used to map reads
@@ -23,7 +23,7 @@ sample2  sample2.R1.fastq.gz  sample2.R2.fastq.gz
 
 # first try
 ```
-FunTaxSeq/bin/fts --samtable sample.txt --dfmi db/dna.fmi --tfmi db/pro.fmi --outdir out_fts -w 12 -V
+FunTaxSeq/bin/fts --samtable sample.txt --dfmi db/dna.fmi --tfmi db/pro.fmi -w 12 -V
 FunTaxSeq/bin/ftd --samdir out_fts db -b db/ -o out_ftd -w 12 -V
 ```
 
