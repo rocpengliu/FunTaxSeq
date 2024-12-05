@@ -67,19 +67,20 @@ BWT *read_BWT(FILE *bwtfile) {
          Read indexes from one file (made by mkfmi) and resturn in BWT struct
  */
 BWT *readIndexes(FILE *fp) {
-    printf("starting to read read_BWT_header!\n");
+    //printf("starting to read read_BWT_header!\n");
     BWT *b = read_BWT_header(fp);
-    printf("reading read_BWT_header completed!\n");
+    //printf("reading read_BWT_header completed!\n");
     b->bwt = NULL;
-    printf("starting to read read_suffixArray_header!\n");
+    //printf("starting to read read_suffixArray_header!\n");
     b->s = read_suffixArray_header(fp);
-    printf("reading read_suffixArray_header completed1\n");
-    printf("starting to read read_suffixArray_body!\n");
+    //printf("reading read_suffixArray_header completed1\n");
+   //printf("starting to read read_suffixArray_body!\n");
     read_suffixArray_body(b->s, fp);
-    printf("reading read_suffixArray_body completed!\n");
-    printf("starting to read read_fmi!\n");
+    //printf("reading read_suffixArray_body completed!\n");
+    //printf("starting to read read_fmi!\n");
     b->f = read_fmi(fp);
-    printf("reading read_fmi completed!\n");
+    printf("b->f->alen in readIndexes is %d\n", b->f->alen);
+    //printf("reading read_fmi completed!\n");
     return b;
 }
 

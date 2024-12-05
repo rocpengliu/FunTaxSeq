@@ -46,7 +46,7 @@ void BwtFmiDB::free_BWT() {
     }
     // Free dynamically allocated members
     if (bwt->bwt != NULL) {
-         loginfo("Start to free bwt!");
+        loginfo("Start to free bwt!");
         free(bwt->bwt);
         bwt->bwt = NULL;
     }

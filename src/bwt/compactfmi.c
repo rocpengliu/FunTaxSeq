@@ -167,17 +167,19 @@ FMI *alloc_FMI(uchar *bwt, IndexType bwtlen, int alen) {
 
 
 FMI *read_fmi(FILE *fp) {
-  printf("starting to read_fmi_common!\n");
+  //printf("starting to read_fmi_common!\n");
   FMI *f = read_fmi_common(sizeof(ushort), fp);
-  printf("read_fmi_common completed!\n");
-  printf("f->alen is %d\n", f->alen);
+  //printf("f->alen in read_fmi1 is %d\n", f->alen);
+  //printf("read_fmi_common completed!\n");
+  //printf("f->alen is %d\n", f->alen);
   f->startLcode = (int *)malloc((f->alen + 1) * sizeof(int));
-  printf("allocating memory for startLcode!\n");
+  //printf("allocating memory for startLcode!\n");
   fread(f->startLcode,sizeof(int),f->alen+1,fp);
-  printf("reading startLcode completed!\n");
-  printf("starting to fmi_fill_codes\n");
+  //printf("reading startLcode completed!\n");
+  //printf("starting to fmi_fill_codes\n");
+  //printf("f->alen in read_fmi2 is %d\n", f->alen);
   fmi_fill_codes(f->alen, f->startLcode);
-  printf("fmi_fill_codes completed!\n");
+  //printf("fmi_fill_codes completed!\n");
   return f;
 }
 

@@ -189,23 +189,23 @@ static void write_fmi_common(const FMI *f, int index2_size, FILE *fp) {
 /* Read the FMI in file (binary)
 */
 static FMI *read_fmi_common(int index2_size, FILE *fp) {
-  printf("starting to Reading FMI common\n");
+  //printf("starting to Reading FMI common\n");
   int i;
   FMI *f = (FMI *)malloc(sizeof(FMI));
-  printf("allocating memory for reading FMI complete\n");
+  //printf("allocating memory for reading FMI complete\n");
   f->bwt=NULL;
 
-  printf("reading alen, bwtlen, N1, N2 complete\n");
+  //printf("reading alen, bwtlen, N1, N2 complete\n");
   fread(&(f->alen),sizeof(int),1,fp);
   fread(&(f->bwtlen),sizeof(IndexType),1,fp);
   fread(&(f->N1),sizeof(int),1,fp);
   fread(&(f->N2),sizeof(int),1,fp);
   printf("bwt and index1 reading complete\n");
 
-  printf("allocating memory for bwt and index1\n");
+  //printf("allocating memory for bwt and index1\n");
   f->bwt=(uchar *)malloc(f->bwtlen*sizeof(uchar));
-  printf("allocating memory for bwt and index1 completed\n");
-  printf("reading bwt len %ld\n", f->bwtlen);
+  //printf("allocating memory for bwt and index1 completed\n");
+  //printf("reading bwt len %ld\n", f->bwtlen);
 
   if(f->bwt==NULL){
     fprintf(stderr,"Error: malloc failed for f->bwt\n");
@@ -213,11 +213,11 @@ static FMI *read_fmi_common(int index2_size, FILE *fp) {
   }
 
   //######################
-  printf("starting to read bwt by chuncks\n");
+  //printf("starting to read bwt by chuncks\n");
   size_t bytes_read = 0;
   while(bytes_read < f->bwtlen){
     size_t chunk_size = ((f->bwtlen - bytes_read) > CHUNK_SIZE) ? CHUNK_SIZE : (f->bwtlen - bytes_read);
-    printf("Reading chunk of size %zu, remaining bytes: %zu\n", chunk_size, f->bwtlen - bytes_read);
+    //printf("Reading chunk of size %zu, remaining bytes: %zu\n", chunk_size, f->bwtlen - bytes_read);
     size_t n = fread(f->bwt + bytes_read, sizeof(uchar), chunk_size, fp);
     if (n < chunk_size) {
         if (n == 0) {
@@ -228,14 +228,14 @@ static FMI *read_fmi_common(int index2_size, FILE *fp) {
         exit(1);
     }
     bytes_read += n;
-    printf("Bytes read so far: %zu\n", bytes_read);
+    //printf("Bytes read so far: %zu\n", bytes_read);
   }
 //######################
   //fread(f->bwt, sizeof(uchar), f->bwtlen, fp); // why can not read and killed. this is the oringal
-  printf("f->bwt reading completed with reading length %zu\n", bytes_read);
+  //printf("f->bwt reading completed with reading length %zu\n", bytes_read);
 
   f->index1 = (IndexType **)malloc(f->N1*sizeof(IndexType *));
-  printf( "f->index1 allocation complete\n");
+  //printf( "f->index1 allocation complete\n");
   for (i=0;i<f->N1;++i) {
     f->index1[i]=(IndexType *)malloc(f->alen*sizeof(IndexType));
     fread(f->index1[i],sizeof(IndexType),f->alen,fp);
@@ -271,16 +271,16 @@ static FMI *read_fmi_common(int index2_size, FILE *fp) {
 //   }
 
   //****************************************** */
-  printf("allocating memory for N2 with N2 is %d\n", f->N2);
+  //printf("allocating memory for N2 with N2 is %d\n", f->N2);
   f->index2 = (ushort **)malloc(f->N2 * sizeof(uchar *));//orignal code
   if (f->index2 == NULL) {
     fprintf(stderr, "Memory allocation for index2 failed\n");
     exit(1);
   }
-  printf("allocating memory for N2 completed\n");
+  //printf("allocating memory for N2 completed\n");
 
-  size_t total_memory = (size_t)f->N2 * (size_t)f->alen * (size_t)index2_size * sizeof(ushort);
-  printf("Total memory for index2: %zu bytes\n", total_memory);
+  //size_t total_memory = (size_t)f->N2 * (size_t)f->alen * (size_t)index2_size * sizeof(ushort);
+  //printf("Total memory for index2: %zu bytes\n", total_memory);
 
   for (i=0;i<f->N2;++i) {
     f->index2[i] = (ushort *)malloc(f->alen * index2_size);
@@ -294,7 +294,7 @@ static FMI *read_fmi_common(int index2_size, FILE *fp) {
     }
   }
   //******************************************* */
-  printf("index2 reading complete\n");
+  //printf("index2 reading complete\n");
   return f;
 }
 

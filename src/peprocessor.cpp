@@ -318,7 +318,6 @@ bool PairEndProcessor::processPairEnd(ReadPairPack* pack, ThreadConfig* config){
                 } else {
                     locus = *(config->getHomoSearcher()->homoSearch(r1, r2));
                 }
-                
                 if (!locus.empty()) {
                     failedOutput += (locus + "\n");
                     numMappedReads++;

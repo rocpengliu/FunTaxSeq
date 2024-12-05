@@ -43,21 +43,21 @@ std::string* HomoSearcher::homoSearch(Read* & item) {
     if (mOptions->mDNASearchOptions->minFragLength < item->length())
         return locus;
     if (dnaSearch && transSearch) {
-            match_ids = mDNASearcher->dnaSearchWuNeng(item);
-            if (match_ids.empty()) {
-                match_ids = mTransSearcher->transSearchWuKong(item);
-            }
-    } else if (dnaSearch) {
-            match_ids = mDNASearcher->dnaSearchWuNeng(item);
-    } else if (transSearch) {
+        match_ids = mDNASearcher->dnaSearchWuNeng(item);
+        if (match_ids.empty()) {
             match_ids = mTransSearcher->transSearchWuKong(item);
+        }
+    } else if (dnaSearch) {
+        match_ids = mDNASearcher->dnaSearchWuNeng(item);
+    } else if (transSearch) {
+        match_ids = mTransSearcher->transSearchWuKong(item);
     }
-
     if (!match_ids.empty()) {
-       // runFunTax();
        for(const auto &match : match_ids){
-            locus->append(match);
-            locus->append(";");
+            if(match != nullptr){
+                locus->append(match);
+                locus->append(";");
+            }
         }
     }
     return locus;
@@ -100,12 +100,12 @@ std::string* HomoSearcher::homoSearch(Read* & item1, Read* & item2) {
             match_ids = mTransSearcher->transSearchWuKong(item2);
         }
     }
-
     if (!match_ids.empty()) {
-        // runFunTax();
         for(const auto &match : match_ids){
-            locus->append(match);
-            locus->append(";");
+            if(match != nullptr){
+                locus->append(match);
+                locus->append(";");
+            }
         }
     }
     return locus;
@@ -113,7 +113,7 @@ std::string* HomoSearcher::homoSearch(Read* & item1, Read* & item2) {
 void HomoSearcher::clearMatchedIds(){
     for(auto it = match_ids.begin(); it != match_ids.end(); ++it) {
         if(*it) {
-            delete *it; 
+            delete *it;
         }
     }
     match_ids.clear();

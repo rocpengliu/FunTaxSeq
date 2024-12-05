@@ -31,18 +31,18 @@ DNASearcher::DNASearcher(Options * & opt, BwtFmiDB* & bwtfmiDB) {
 
     b62[nuc2int[(uint8_t) 'A']][nuc2int[(uint8_t) 'C']] = 0;
     b62[nuc2int[(uint8_t) 'A']][nuc2int[(uint8_t) 'T']] = 0;
-    b62[nuc2int[(uint8_t) 'A']][nuc2int[(uint8_t) 'G']] = 0;
+    b62[nuc2int[(uint8_t) 'A']][nuc2int[(uint8_t) 'G']] = 1;
 
     b62[nuc2int[(uint8_t) 'C']][nuc2int[(uint8_t) 'A']] = 0;
     b62[nuc2int[(uint8_t) 'C']][nuc2int[(uint8_t) 'G']] = 0;
-    b62[nuc2int[(uint8_t) 'C']][nuc2int[(uint8_t) 'T']] = 0;
+    b62[nuc2int[(uint8_t) 'C']][nuc2int[(uint8_t) 'T']] = 1;
 
-    b62[nuc2int[(uint8_t) 'G']][nuc2int[(uint8_t) 'A']] = 0;
+    b62[nuc2int[(uint8_t) 'G']][nuc2int[(uint8_t) 'A']] = 1;
     b62[nuc2int[(uint8_t) 'G']][nuc2int[(uint8_t) 'C']] = 0;
     b62[nuc2int[(uint8_t) 'G']][nuc2int[(uint8_t) 'T']] = 0;
 
     b62[nuc2int[(uint8_t) 'T']][nuc2int[(uint8_t) 'A']] = 0;
-    b62[nuc2int[(uint8_t) 'T']][nuc2int[(uint8_t) 'C']] = 0;
+    b62[nuc2int[(uint8_t) 'T']][nuc2int[(uint8_t) 'C']] = 1;
     b62[nuc2int[(uint8_t) 'T']][nuc2int[(uint8_t) 'G']] = 0;
 }
 
@@ -68,6 +68,10 @@ void DNASearcher::clearMatchedIds(){
 
 void DNASearcher::getAllFragments(Read * & item) {
     Read* rr1 = nullptr;
+
+    // rr1 = item->reverseComplement();
+    // fragments.emplace(item->length(), new Fragment(item->mSeq.mStr));
+    // fragments.emplace(rr1->length(), new Fragment(rr1->mSeq.mStr));
     if (mOptions->mDNASearchOptions->mode == dGREEDY) {
         uint32 score = calcScore(item->mSeq.mStr);
         if (score >= mOptions->mDNASearchOptions->minScore) {
@@ -406,7 +410,6 @@ void DNASearcher::eval_match_scores(SI *si, Fragment *frag) {
 }
 
 void DNASearcher::addAllMismatchVariantsAtPosSI(const Fragment *f, unsigned int pos, size_t erase_pos = std::string::npos, SI *si = NULL) {
-
     assert(mOptions->mDNASearchOptions.mode == dGREEDY);
     assert(pos < erase_pos);
     assert(f->num_mm == 0 || pos < f->pos_lastmm);
@@ -415,6 +418,12 @@ void DNASearcher::addAllMismatchVariantsAtPosSI(const Fragment *f, unsigned int 
     assert(fragment.length() >= mOptions->mDNASearchOptions->minFragLength);
     char origchar = fragment[pos];
     assert(blosum_subst.count(origchar) > 0);
+    if(blosum_subst.find(origchar) == blosum_subst.end()){
+        if(mOptions->verbose){
+            std::cerr << "Warning: No substitutions found for nucleotide " << origchar << " in pos: " << pos << " in frag: " << fragment << std::endl;
+        }
+        return;
+    }
 
     if (erase_pos != std::string::npos && erase_pos < fragment.length()) {
         if (mOptions->debug) {
@@ -430,7 +439,6 @@ void DNASearcher::addAllMismatchVariantsAtPosSI(const Fragment *f, unsigned int 
     IndexType siarray[2], siarrayupd[2];
     siarray[0] = si->start;
     siarray[1] = si->start + (IndexType) si->len;
-
     for (auto itv : blosum_subst.at(origchar)) {
         // we know the difference between score of original aa and substitution score, this
         // has to be subtracted when summing over all positions later
