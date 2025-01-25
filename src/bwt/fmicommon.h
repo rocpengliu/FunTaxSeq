@@ -200,7 +200,7 @@ static FMI *read_fmi_common(int index2_size, FILE *fp) {
   fread(&(f->bwtlen),sizeof(IndexType),1,fp);
   fread(&(f->N1),sizeof(int),1,fp);
   fread(&(f->N2),sizeof(int),1,fp);
-  printf("bwt and index1 reading complete\n");
+  //printf("bwt and index1 reading complete\n");
 
   //printf("allocating memory for bwt and index1\n");
   f->bwt=(uchar *)malloc(f->bwtlen*sizeof(uchar));
@@ -239,8 +239,11 @@ static FMI *read_fmi_common(int index2_size, FILE *fp) {
   for (i=0;i<f->N1;++i) {
     f->index1[i]=(IndexType *)malloc(f->alen*sizeof(IndexType));
     fread(f->index1[i],sizeof(IndexType),f->alen,fp);
+    // if (i > 10000000 && i % 10000000 == 0) {
+    //     printf("Reading index1 row %d\n", i);
+    // }
   }
-  printf("index1 reading complete\n");
+  //printf("index1 reading complete\n");
 
 // // Allocate memory for all rows in a single block
 //   size_t total_rows_size = (size_t)f->N2 * (size_t)f->alen * (size_t)index2_size;
@@ -289,9 +292,9 @@ static FMI *read_fmi_common(int index2_size, FILE *fp) {
         exit(1);
     }
     fread(f->index2[i],1,f->alen*index2_size,fp);//original
-    if (i % 10000000 == 0) {
-        printf("Reading index2 row %d\n", i);
-    }
+    // if (i > 10000000 && i % 10000000 == 0) {
+    //     printf("Reading index2 row %d\n", i);
+    // }
   }
   //******************************************* */
   //printf("index2 reading complete\n");

@@ -629,8 +629,8 @@ void *BucketSorter(void *x) {
       int fs = bs->nextfill;
       int fl = bs->nfill;
       if ( bs->nbuckets - bs->nextfill < 3*bs->nfill/2) {
-	fl = bs->nbuckets - bs->nextfill;
-	bs->nextfill = bs->nbuckets+bs->nfill;
+          fl = bs->nbuckets - bs->nextfill;
+          bs->nextfill = bs->nbuckets+bs->nfill;
       }
       else bs->nextfill += fl;
 
@@ -885,15 +885,16 @@ char *read_alphabet(char *alphabet, char term) {
 
   if (!term) term='*';
 
-  if (strcmp(alphabet,"DNA")==0) { l=6; a = malloc(l+2); strcpy(a+1,"ACGTN"); }
-  else {
-    if (strcmp(alphabet,"RNA")==0) { l=6; a = malloc(l+2); strcpy(a+1,"ACGUN"); }
-    else {
-      if (strcmp(alphabet,"protein")==0) { l=22; a = malloc(l+2); strcpy(a+1,"ACDEFGHIKLMNPQRSTVWYX"); }
-      else {
-	l = 1+strlen(alphabet);
-	a = malloc(l+2);
-	strcpy(a+1,alphabet);
+  if (strcmp(alphabet,"DNA")==0) { 
+    l=6; a = malloc(l+2); strcpy(a+1,"ACGTN"); 
+  } else {
+    if (strcmp(alphabet,"RNA")==0) { 
+      l=6; a = malloc(l+2); strcpy(a+1,"ACGUN"); 
+    } else {
+      if (strcmp(alphabet,"protein")==0) { 
+        l=22; a = malloc(l+2); strcpy(a+1,"ACDEFGHIKLMNPQRSTVWYX"); 
+      } else {
+        l = 1+strlen(alphabet);a = malloc(l+2);strcpy(a+1,alphabet);
       }
     }
   }

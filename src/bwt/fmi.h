@@ -22,10 +22,10 @@ typedef struct {
 
 /* FUNCTION PROTOTYPES BEGIN  ( by funcprototypes.pl ) */
 FMI *alloc_FMI(uchar *bwt, IndexType bwtlen, int alen);
-FMI *read_fmi(FILE *fp);
+FMI *read_fmi(FILE *fp, char db);
 void write_fmi(const FMI *f, FILE *fp);
-IndexType FMindex(FMI *f, uchar ct, IndexType k);
-IndexType FMindexCurrent(FMI *f, uchar *c, IndexType k);
+IndexType FMindex(FMI *f, uchar ct, IndexType k, char db);
+IndexType FMindexCurrent(FMI *f, uchar *c, IndexType k, char db);
 void FMindexAll(FMI *f, IndexType k, IndexType *fmia);
 void FMIrecode(FMI *fmi);
 FMI *makeIndex(uchar *bwt, long bwtlen, int alen);

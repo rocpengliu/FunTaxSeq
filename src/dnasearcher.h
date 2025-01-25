@@ -38,9 +38,9 @@ extern "C" {
 #include "bwt/bwt.h"
 }
 
-const double dLN_2 = 0.6931471805;
-const double dLAMBDA = 0.3176;
-const double dLN_K = -2.009915479;
+// const double dLN_2 = 0.6931471805;
+// const double dLAMBDA = 0.3176;
+// const double dLN_K = -2.009915479;
 
 class DNASearcher {
 private:
@@ -71,14 +71,16 @@ private:
     std::vector<std::string> best_matches;
     std::vector<std::string> longest_fragments;
     std::map<char, std::vector<char>> blosum_subst;
-    std::string readName;
+    //std::string readName;
     std::stringstream ss;
 
 private:
     Options* mOptions;
     BwtFmiDB* mBwtfmiDB;
+    CommonSearchOptions mCommonOptions;
+
 public:
-    DNASearcher(Options * & opt, BwtFmiDB* & bwtfmiDB);
+    DNASearcher(Options * & opt, BwtFmiDB* & bwtfmiDB, char db);
     ~DNASearcher();
     std::set<char *>& dnaSearchWuNeng(Read* & item);
     std::set<char *>& dnaSearchWuNeng(Read* & item1, Read* & item2);

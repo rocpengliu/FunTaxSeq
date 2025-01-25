@@ -66,7 +66,7 @@ BWT *read_BWT(FILE *bwtfile) {
 /*
          Read indexes from one file (made by mkfmi) and resturn in BWT struct
  */
-BWT *readIndexes(FILE *fp) {
+BWT *readIndexes(FILE *fp, char db) {
     //printf("starting to read read_BWT_header!\n");
     BWT *b = read_BWT_header(fp);
     //printf("reading read_BWT_header completed!\n");
@@ -78,8 +78,7 @@ BWT *readIndexes(FILE *fp) {
     read_suffixArray_body(b->s, fp);
     //printf("reading read_suffixArray_body completed!\n");
     //printf("starting to read read_fmi!\n");
-    b->f = read_fmi(fp);
-    printf("b->f->alen in readIndexes is %d\n", b->f->alen);
+    b->f = read_fmi(fp, db);
     //printf("reading read_fmi completed!\n");
     return b;
 }
@@ -97,12 +96,12 @@ BWT *readIndexes(FILE *fp) {
 /* Find suffix for suffix number i
          Return sequence number in *iseq and position in *pos
  */
-void get_suffix(FMI *fmi, suffixArray *s, IndexType i, int *iseq, IndexType *pos) {
+void get_suffix(FMI *fmi, suffixArray *s, IndexType i, int *iseq, IndexType *pos, char db) {
     IndexType k = 0;
     uchar c = 1;
     //printf("debug: get_suffix a: k: %ld; c: %d\n", k, c);
     while (c && (i & s->check)) {
-        i = FMindexCurrent(fmi, &c, i);
+        i = FMindexCurrent(fmi, &c, i, db);
         ++k;
     }
     //printf("debug: get_suffix b: k: %ld; c: %d\n", k, c);
@@ -124,7 +123,7 @@ void get_suffix(FMI *fmi, suffixArray *s, IndexType i, int *iseq, IndexType *pos
 /*
          Reconstruct sequence number snum (according to the original order of the sequence file)
  */
-uchar *retrieve_seq(int snum, BWT *b) {
+uchar *retrieve_seq(int snum, BWT *b, char db) {
     IndexType l, k;
     uchar *seq, *cur;
 
@@ -136,7 +135,7 @@ uchar *retrieve_seq(int snum, BWT *b) {
     *cur-- = 0;
     *cur-- = 0;
     while (cur >= seq) {
-        k = FMindexCurrent(b->f, cur, k);
+        k = FMindexCurrent(b->f, cur, k, db);
         --cur;
     }
     return seq;
@@ -155,11 +154,11 @@ IndexType InitialSI(FMI *f, uchar ct, IndexType *si) {
          If newsi==NULL and an SI is found, it OVERWRITES values in si
          Note that the actual SI is from si[0] to si[1]-1
  */
-IndexType UpdateSI(FMI *f, uchar ct, IndexType *si, IndexType *newsi) {
+IndexType UpdateSI(FMI *f, uchar ct, IndexType *si, IndexType *newsi, char db) {
     IndexType nsi[2];
 
-    nsi[0] = FMindex(f, ct, si[0]);
-    nsi[1] = FMindex(f, ct, si[1]);
+    nsi[0] = FMindex(f, ct, si[0], db);
+    nsi[1] = FMindex(f, ct, si[1], db);
 
     if (nsi[0] >= nsi[1]) return 0;
 
@@ -252,7 +251,7 @@ static SI *insert_SI_sorted(SI *base, SI *new) {
          Returns null if there are no matchesBWT *b
          If max_matches==0, not limit imposed
  */
-SI *maxMatches(FMI *f, char *str, int len, int L, int max_matches) {
+SI *maxMatches(FMI *f, char *str, int len, int L, int max_matches, char db) {
     SI *first = NULL, *cur = NULL;
     IndexType si[2], l;
     int i, j, k;
@@ -263,7 +262,7 @@ SI *maxMatches(FMI *f, char *str, int len, int L, int max_matches) {
         InitialSI(f, str[i], si);
         // Extend backward
         while (i-- > 0) {
-            if (UpdateSI(f, str[i], si, NULL) == 0) break;
+            if (UpdateSI(f, str[i], si, NULL, db) == 0) break;
         }
         i += 1;
         l = j - i + 1;
@@ -289,7 +288,7 @@ SI *maxMatches(FMI *f, char *str, int len, int L, int max_matches) {
     return first;
 }
 
-SI *maxMatches_withStart(FMI *f, char *str, int len, int L, int max_matches, IndexType si0, IndexType si1, int offset) {
+SI *maxMatches_withStart(FMI *f, char *str, int len, int L, int max_matches, IndexType si0, IndexType si1, int offset, char db) {
     SI *first = NULL, *cur = NULL;
     IndexType si[2], l;
     int i, j, k;
@@ -303,7 +302,7 @@ SI *maxMatches_withStart(FMI *f, char *str, int len, int L, int max_matches, Ind
     //InitialSI(f, str[i], si);
     // Extend backward
     while (i-- > 0) {
-        if (UpdateSI(f, str[i], si, NULL) == 0) break;
+        if (UpdateSI(f, str[i], si, NULL, db) == 0) break;
     }
     i += 1;
     l = j - i + 1;
@@ -321,7 +320,7 @@ SI *maxMatches_withStart(FMI *f, char *str, int len, int L, int max_matches, Ind
          if jump is positive, it jumps by L-jump after having a match of length L
          Note that L is dynamic (max length found)
  */
-SI *greedyExact(FMI *f, char *str, int len, int L, int jump) {
+SI *greedyExact(FMI *f, char *str, int len, int L, int jump, char db) {
     SI *tmp, *first = NULL, *cur = NULL;
     IndexType si[2], l;
     int i, j, delta = 1;
@@ -334,7 +333,7 @@ SI *greedyExact(FMI *f, char *str, int len, int L, int jump) {
         InitialSI(f, str[i], si);
         // Extend backward
         while (i-- > 0) {
-            if (UpdateSI(f, str[i], si, NULL) == 0) break;
+            if (UpdateSI(f, str[i], si, NULL, db) == 0) break;
         }
         i += 1; // Start of match
         l = j - i + 1;

@@ -80,7 +80,7 @@ void Read::resize(int len) {
 	mSeq.mStr.resize(len);
 	mQuality.resize(len);
 }
-   
+
 void Read::trimFront(int len){
 	len = min(length()-1, len);
 	mSeq.mStr = mSeq.mStr.substr(len, mSeq.mStr.length() - len);
@@ -126,7 +126,7 @@ int Read::lowQualCount(int qual){
 	int count = 0;
 	for(int q=0;q<mQuality.size();q++){
 		if(mQuality[q] < qual + 33)
-			count++;
+			++count;
 	}
 	return count;
 }
@@ -220,10 +220,10 @@ Read* ReadPair::fastMerge(){
 		int offset = len1 - olen;
 		for(int i=0;i<olen;i++){
 			if(str1[offset+i] != str2[i]){
-				diff++;
+				++diff;
 				// one is >= Q30 and the other is <= Q15
 				if((qual1[offset+i]>='?' && qual2[i]<='0') || (qual1[offset+i]<='0' && qual2[i]>='?')){
-					lowQualDiff++;
+					++lowQualDiff;
 				}
 				// we disallow high quality diff, and only allow up to 3 low qual diff
 				if(diff>lowQualDiff || lowQualDiff>=3){
@@ -236,7 +236,7 @@ Read* ReadPair::fastMerge(){
 			overlapped = true;
 			break;
 		}
-		olen++;
+		++olen;
 	}
 
 	if(overlapped){

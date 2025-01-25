@@ -55,7 +55,7 @@ int Evaluator::computeSeqLen(string filename) {
         int rlen = r->length();
         if(rlen > seqlen)
             seqlen = rlen;
-        records ++;
+        ++records;
         delete r;
     }
 
@@ -87,7 +87,7 @@ void Evaluator::evaluateReadNum(long& readNum) {
             firstReadPos = bytesRead;
             first = false;
         }
-        records++;
+        ++records;
         bases += r->length();
         delete r;
     }
@@ -138,7 +138,7 @@ string Evaluator::evalAdapterAndReadNum(long& readNum, bool isR2) {
         int rlen = r->length();
         bases += rlen;
         loadedReads[records] = r;
-        records++;
+        ++records;
     }
 
     readNum = 0;
@@ -244,7 +244,7 @@ string Evaluator::evalAdapterAndReadNum(long& readNum, bool isR2) {
         int diff = 0;
         for(int s=0; s<seq.length() - 1; s++) {
             if(seq[s] != seq[s+1])
-                diff++;
+                ++diff;
         }
         if(diff <3){
             continue;
@@ -338,7 +338,7 @@ string Evaluator::matchKnownAdapter(string seq) {
         int diff = 0;
         for(int i=0; i<adapter.length() && i<seq.length(); i++) {
             if(adapter[i] != seq[i])
-                diff++;
+                ++diff;
         }
         if(diff == 0)
             return adapter;
@@ -353,7 +353,7 @@ string Evaluator::int2seq(unsigned int val, int seqlen) {
     while(done < seqlen) {
         ret[seqlen - done - 1] = bases[val & 0x03];
         val = (val >> 2);
-        done++;
+        ++done;
     }
     return ret;
 }

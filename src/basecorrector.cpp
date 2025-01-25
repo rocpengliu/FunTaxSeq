@@ -43,7 +43,7 @@ int BaseCorrector::correctByOverlapAnalysis(Read* r1, Read* r2, FilterResult* fr
                 // use R1
                 r2->mSeq.mStr[p2] = complement(seq1[p1]);
                 r2->mQuality[p2] = qual1[p1];
-                corrected++;
+                ++corrected;
                 r2Corrected = true;
                 if(fr) {
                     fr->addCorrection(seq2[p2], complement(seq1[p1]));
@@ -52,13 +52,13 @@ int BaseCorrector::correctByOverlapAnalysis(Read* r1, Read* r2, FilterResult* fr
                 // use R2
                 r1->mSeq.mStr[p1] = complement(seq2[p2]);
                 r1->mQuality[p1] = qual2[p2];
-                corrected++;
+                ++corrected;
                 r1Corrected = true;
                 if(fr) {
                     fr->addCorrection(seq1[p1], complement(seq2[p2]));
                 }
             } else {
-                uncorrected++;
+                ++uncorrected;
             }
         }
     }

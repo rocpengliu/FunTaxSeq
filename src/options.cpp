@@ -32,6 +32,8 @@ Options::Options(){
     mTransSearchOptions = new TransSearchOptions();
     mHomoSearchOptions = new HomoSearchOptions();
     mDNASearchOptions = new DNASearchOptions();
+    mHostSearchOptions = new HostSearchOptions();
+    mMarkerSearchOptions = new MarkerSearchOptions();
 }
 
 Options::~Options(){
@@ -46,6 +48,14 @@ Options::~Options(){
     if(mDNASearchOptions){
         delete mDNASearchOptions;
         mDNASearchOptions = nullptr;
+    }
+    if(mHostSearchOptions){
+        delete mHostSearchOptions;
+        mHostSearchOptions = nullptr;
+    }
+    if(mMarkerSearchOptions){
+        delete mMarkerSearchOptions;
+        mMarkerSearchOptions = nullptr;
     }
 }
 void Options::init() {

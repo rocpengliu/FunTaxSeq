@@ -30,7 +30,6 @@ private:
     uint64* mDups;
     uint16* mCounts;
     uint8* mGC;
-    
 };
 
 #endif

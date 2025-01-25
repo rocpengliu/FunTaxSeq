@@ -47,6 +47,9 @@ void FunTaxDecoder::readFunTax(){
     if(mOptions->verbose) loginfo("start to read");
     for (int i = 0; i < numThread; ++i){
         consumerThreads[i] = std::thread([this, &samQueue, &i](){
+            std::vector<std::string> split_vec;
+            split_vec.reserve(3);
+            std::string id = "";
             while(true){
                 std::unique_lock<std::mutex> lock(mtxTreR);
                 if(samQueue.empty()){
@@ -66,8 +69,18 @@ void FunTaxDecoder::readFunTax(){
                     line = buffer; // Output or process each line
                     if (line.size() > 0){
                         trimEnds(&line);
-                        tmpMap[line]++;
-                        tmpSet.insert(line);
+                        split_vec.clear();
+                        splitStr(line, split_vec);
+                        if(split_vec.size() != 3){
+                            continue;
+                        }
+                        if(split_vec[1] == "host"){
+                            continue;
+                        }
+                        id.clear();
+                        id = split_vec.at(2);
+                        tmpMap[id]++;
+                        tmpSet.insert(id);
                     }
                 }
                 gzclose(file);
@@ -106,8 +119,8 @@ void FunTaxDecoder::decode(){
                 }
                 std::string ft = ftQueue.front();
                 ftQueue.pop();
-                if((numIds - ftQueue.size()) % 10000 == 0)
-                    loginfo("decoded " + std::to_string((numIds - ftQueue.size())/10000) + "0k funtax ids");
+                if((numIds - ftQueue.size()) % 1000 == 0)
+                    loginfo("decoded " + std::to_string((numIds - ftQueue.size())/1000) + "k funtax ids");
                 lock.unlock();
                 if(ft.empty())
                     continue;
@@ -130,7 +143,7 @@ void FunTaxDecoder::decode(){
                     uniqFuns.insert(pair.second.second);
                 }
             }
-            lock2.unlock(); 
+            lock2.unlock();
         });
     }
 

@@ -2,7 +2,7 @@ CC = gcc
 CXX = g++
 CFLAGS = -O3 -DNDEBUG -fno-omit-frame-pointer
 CXXFLAGS = -O3 -pthread -std=c++11 -DNDEBUG -g -fno-inline -fno-omit-frame-pointer
-LDLIBS = -ldl -lpthread -lz 
+LDLIBS = -ldl -lpthread -lz
 #CFLAGS = -O3 -DNDEBUG -fsanitize=address -fno-omit-frame-pointer
 #CXXFLAGS = -O3 -pthread -std=c++11 -DNDEBUG -g -fno-inline -fno-omit-frame-pointer -fsanitize=address
 #LDLIBS = -ldl -lpthread -lz -fsanitize=address
@@ -36,30 +36,31 @@ else
 LD_LIBS_STATIC = -Wl,--whole-archive -lpthread -lz -Wl,--no-whole-archive
 endif
 
-all: makefile  src/fts src/ftd src/bwt/mkbwt 
+all: makefile  src/fts src/ftd src/bwt/mkbwt
 	mkdir -p bin
-	cp src/fts bin/
-	cp src/ftd bin/
-	cp src/bwt/mkbwt bin/mkbwt
-	cp src/bwt/mkfmi bin/mkfmi
+	# mv src/fts bin/
+	# mv src/ftd bin/
+	mv src/bwt/mkbwt bin/mkbwt
+	mv src/bwt/mkfmi bin/mkfmi
+	find src/ -name "*.o" -delete
 
 src/bwt/mkbwt:
 	$(MAKE) -C src/bwt/ $(MAKECMDGOALS)
-	
+
 src/fts: makefile src/bwt/mkbwt src/fts.o src/homosearcher.o src/transsearcher.o src/dnasearcher.o src/fragment.o src/bwtfmiDB.o src/adaptertrimmer.o src/basecorrector.o \
 	src/duplicate.o src/evaluator.o src/fastareader.o src/fastqreader.o src/filter.o src/filterresult.o src/htmlreporter.o \
 	src/jsonreporter.o  src/nucleotidetree.o src/options.o src/overlapanalysis.o src/peprocessor.o \
 	src/polyx.o src/processor.o src/read.o src/seprocessor.o src/sequence.o src/stats.o src/threadconfig.o src/umiprocessor.o \
 	src/unittest.o src/writer.o src/writerthread.o $(BLASTOBJS)
-	
-	$(CXX) $(LDFLAGS) -o src/fts src/fts.o src/homosearcher.o src/transsearcher.o src/dnasearcher.o src/fragment.o src/bwtfmiDB.o src/adaptertrimmer.o src/basecorrector.o \
+
+	$(CXX) $(LDFLAGS) -o bin/fts src/fts.o src/homosearcher.o src/transsearcher.o src/dnasearcher.o src/fragment.o src/bwtfmiDB.o src/adaptertrimmer.o src/basecorrector.o \
 	src/duplicate.o src/evaluator.o src/fastareader.o src/fastqreader.o src/filter.o src/filterresult.o src/htmlreporter.o \
 	src/jsonreporter.o  src/nucleotidetree.o src/options.o src/overlapanalysis.o src/peprocessor.o \
 	src/polyx.o src/processor.o src/read.o src/seprocessor.o src/sequence.o src/stats.o src/threadconfig.o src/umiprocessor.o \
 	src/unittest.o src/writer.o src/writerthread.o $(BWTOBJS) $(BLASTOBJS) $(LDLIBS)
 
-src/ftd: makefile src/ftd.o src/phylotree.o src/funtaxoptions.o src/funtaxdecoder.o 
-	$(CXX) $(LDFLAGS) -o src/ftd src/ftd.o src/phylotree.o src/funtaxoptions.o src/funtaxdecoder.o $(LDLIBS)
+src/ftd: makefile src/ftd.o src/phylotree.o src/funtaxoptions.o src/funtaxdecoder.o
+	$(CXX) $(LDFLAGS) -o bin/ftd src/ftd.o src/phylotree.o src/funtaxoptions.o src/funtaxdecoder.o $(LDLIBS)
 
 #%.o : %.c makefile
 %.o : %.c
@@ -69,7 +70,7 @@ src/ftd: makefile src/ftd.o src/phylotree.o src/funtaxoptions.o src/funtaxdecode
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
 
 clean:
-	rm -f -v src/bwt/mkbwt src/bwt/mkfmi fts bin/* testdata/All* testdata/*.html testdata/*_mapped* testdata/D*.txt testdata/*.json testdata/*.txt.gz
+	rm -f -v src/bwt/mkbwt src/bwt/mkfmi bin/* testdata/All* testdata/*.html testdata/*_mapped* testdata/D*.txt testdata/*.json testdata/*.txt.gz
 	find src/ -name "*.o" -delete
 	$(MAKE) -C src/bwt/ clean
 

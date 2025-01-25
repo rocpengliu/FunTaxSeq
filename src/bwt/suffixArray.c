@@ -271,7 +271,7 @@ void write_suffixArray_header(suffixArray *s, FILE *fp) {
 
   fwrite(&(s->nseq),sizeof(int),1,fp);
   for (i=0; i<s->nseq;++i) writeString(s->ids[i], fp);
-  fwrite(s->seqTermOrder,sizeof(int),s->nseq,fp);  
+  fwrite(s->seqTermOrder,sizeof(int),s->nseq,fp);
   fwrite(s->seqlengths,sizeof(IndexType),s->nseq,fp);
   // fwrite(&(s->maxlength),sizeof(IndexType),1,fp);
 }
@@ -296,7 +296,7 @@ suffixArray *read_suffixArray_header(FILE *fp) {
   s->ids = (char **)malloc(s->nseq*sizeof(char*));
   for (i=0; i<s->nseq;++i) s->ids[i] = readString(fp);
   s->seqTermOrder = (int *)malloc(s->nseq*sizeof(int));
-  fread(s->seqTermOrder,sizeof(int),s->nseq,fp);  
+  fread(s->seqTermOrder,sizeof(int),s->nseq,fp);
   s->seqlengths = (IndexType *)malloc(s->nseq*sizeof(IndexType));
   fread(s->seqlengths,sizeof(IndexType),s->nseq,fp);
 

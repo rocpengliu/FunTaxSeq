@@ -14,7 +14,7 @@
 #include "fastareader.h"
 #include "util.h"
 #include "common.h"
-#include "edlib.h"
+
 
 using namespace std;
 
@@ -42,7 +42,7 @@ public:
 class LowComplexityFilterOptions {
 public:
     LowComplexityFilterOptions() {
-        enabled = false;
+        enabled = true;
         threshold = 0.3;
     }
 public:
@@ -210,25 +210,23 @@ public:
 };
 
 class ReadLengthFilteringOptions {
-public:
-    ReadLengthFilteringOptions() {
-        enabled = false;
-        requiredLength = 50;
-        maxLength = 0;
-    }
-public:
-    // length filter enabled
-    bool enabled;
-    // if read_length < requiredLength, then this read is discard
-    int requiredLength;
-    // length limit, 0 for no limitation
-    int maxLength;
+    public:
+        ReadLengthFilteringOptions() {
+            enabled = false;
+            requiredLength = 50;
+            maxLength = 0;
+        }
+    public:
+        // length filter enabled
+        bool enabled;
+        // if read_length < requiredLength, then this read is discard
+        int requiredLength;
+        // length limit, 0 for no limitation
+        int maxLength;
 };
 enum Mode {
-    tMEM,
-    tGREEDY,
-    dMEM,
-    dGREEDY
+    MEM,
+    GREEDY
 };
 
 enum CodonTable {
@@ -254,72 +252,8 @@ enum CodonTable {
     codontable31,
     codontable33
 };
-
-class TransSearchOptions {
-public:
-    TransSearchOptions() {
-        mode = tGREEDY;
-        codonTable = codontable1;
-        SEG = true;
-        useEvalue = false;
-        minEvalue = 0.01;
-        minAAFragLength = 0;
-        misMatches = 3;
-        minScore = 65;
-        seedLength = 7;
-        max_matches_SI = 100000;
-        max_match_ids = 100000;
-        timeLapse = 0;
-    }
-    void reset2Default() {
-        timeLapse = 0;
-    }
-
-public:
-    string tfmi;
-    string tmode;
-    string tCodonTable;
-    bool SEG;
-    bool useEvalue;
-    double minEvalue;
-    unsigned int minAAFragLength;
-    unsigned int misMatches;
-    unsigned int minScore;
-    unsigned int seedLength;
-    unsigned int maxTransLength;
-
-    size_t max_matches_SI;
-    size_t max_match_ids;
-    time_t startTime;
-    time_t endTime;
-    long timeLapse;
-    Mode mode;
-    CodonTable codonTable;
-};
-
-class DNASearchOptions {
-public:
-    DNASearchOptions() {
-        mode = dGREEDY;
-        SEG = false;
-        useEvalue = false;
-        minEvalue = 0.01;
-        minFragLength = 50;
-        misMatches = 6;
-        minScore = 50;
-        seedLength = 7;
-        allFragments = false;
-        max_matches_SI = 100000;
-        max_match_ids = 100000;
-        DNASearchFinished = false;
-    }
-
-    void reset2Default() {
-    }
-
-public:
-    string dfmi;
-    string dmode;
+struct CommonSearchOptions{
+    string fmi;
     bool SEG;
     bool useEvalue;
     double minEvalue;
@@ -327,39 +261,150 @@ public:
     unsigned int misMatches;
     unsigned int minScore;
     unsigned int seedLength;
-    unsigned int maxTransLength;
-    bool allFragments;
     size_t max_matches_SI;
     size_t max_match_ids;
     Mode mode;
-    bool DNASearchFinished;
+    char db;
 };
+class TransSearchOptions {
+public:
+    TransSearchOptions() {
+        codonTable = codontable1;
+        comOptions.mode = GREEDY;
+        comOptions.SEG = true;
+        comOptions.useEvalue = false;
+        comOptions.minEvalue = 0.01;
+        comOptions.minFragLength = 11;
+        comOptions.misMatches = 3;
+        comOptions.minScore = 65;
+        comOptions.seedLength = 7;
+        comOptions.max_matches_SI = 100000;
+        comOptions.max_match_ids = 100000;
+        comOptions.db = 'p';
+    }
+    void reset2Default() {
+    }
 
+public:
+    CommonSearchOptions comOptions;
+    string tCodonTable;
+    CodonTable codonTable;
+};
+class DNASearchOptions {
+public:
+    DNASearchOptions() {
+        comOptions.mode = GREEDY;
+        comOptions.SEG = true;
+        comOptions.useEvalue = false;
+        comOptions.minEvalue = 0.01;
+        comOptions.minFragLength = 60;
+        comOptions.misMatches = 6;
+        comOptions.minScore = 50;
+        comOptions.seedLength = 7;
+        comOptions.max_matches_SI = 100000;
+        comOptions.max_match_ids = 100000;
+        comOptions.db = 'd';
+    }
+
+    void reset2Default() {
+    }
+
+public:
+    CommonSearchOptions comOptions;
+};
+class HostSearchOptions {
+public:
+    HostSearchOptions() {
+        comOptions.mode = GREEDY;
+        comOptions.SEG = true;
+        comOptions.useEvalue = false;
+        comOptions.minEvalue = 0.01;
+        comOptions.minFragLength = 90;
+        comOptions.misMatches = 6;
+        comOptions.minScore = 80;
+        comOptions.seedLength = 7;
+        comOptions.max_matches_SI = 1000;
+        comOptions.max_match_ids = 1000;
+        comOptions.db = 'h';
+    }
+
+    void reset2Default() {
+    }
+
+public:
+    CommonSearchOptions comOptions;
+};
+class MarkerSearchOptions {
+public:
+    MarkerSearchOptions() {
+        comOptions.mode = GREEDY;
+        comOptions.SEG = true;
+        comOptions.useEvalue = false;
+        comOptions.minEvalue = 0.01;
+        comOptions.minFragLength = 90;
+        comOptions.misMatches = 6;
+        comOptions.minScore = 80;
+        comOptions.seedLength = 7;
+        comOptions.max_matches_SI = 1000000;
+        comOptions.max_match_ids = 1000000;
+        comOptions.db = 'm';
+    }
+
+    void reset2Default() {
+    }
+
+public:
+    CommonSearchOptions comOptions;
+};
 class HomoSearchOptions {
 public:
     HomoSearchOptions() {
         mappedReads = 0;
+        dnaReads = 0;
+        proReads = 0;
+        hostReads = 0;
+        markerReads = 0;
+        totReads = 0;
+        totCleanReads = 0;
     }
     void reset2Default() {
         mappedReads = 0;
+        dnaReads = 0;
+        proReads = 0;
+        hostReads = 0;
+        markerReads = 0;
         totReads = 0;
         totCleanReads = 0;
-        mappedReadPer = 0.0;
     }
 
-    void calculate(){
-        mappedReadPer = std::round((static_cast<double>(mappedReads * 100.0)/totCleanReads) * 10000.0) / 10000.0;
+    double calculate(char readType = 't'){
+        double mappedReadPer = 0.0;
+        if(readType == 'd') {
+            mappedReadPer = std::round((static_cast<double>(dnaReads * 100.0)/totCleanReads) * 10000.0) / 10000.0;
+        } else if(readType == 'p'){
+            mappedReadPer = std::round((static_cast<double>(proReads * 100.0)/totCleanReads) * 10000.0) / 10000.0;
+        } else if(readType == 'h'){
+            mappedReadPer = std::round((static_cast<double>(hostReads * 100.0)/totCleanReads) * 10000.0) / 10000.0;
+        } else if(readType == 'm'){
+            mappedReadPer = std::round((static_cast<double>(markerReads * 100.0)/totCleanReads) * 10000.0) / 10000.0;
+        } else {
+            mappedReadPer = std::round((static_cast<double>(mappedReads * 100.0)/totCleanReads) * 10000.0) / 10000.0;
+        }
+        return mappedReadPer;
     }
 
 public:
     uint32 mappedReads;
+    uint32 dnaReads;
+    uint32 proReads;
+    uint32 hostReads;
+    uint32 markerReads;
     long totReads;
     long totCleanReads;
-    double mappedReadPer;
 };
 
 class Sample{
-public: 
+public:
     Sample(){
         prefix = "";
         ff = "";
@@ -477,7 +522,7 @@ public:
 
     //merge overlapped PE read;
     bool mergerOverlappedPE;
-    
+
     //FunTaxSeq file dir;
     string funtaxseqProgPath;
     //funtaxseq dir;
@@ -488,6 +533,8 @@ public:
     TransSearchOptions* mTransSearchOptions;
     HomoSearchOptions* mHomoSearchOptions;
     DNASearchOptions* mDNASearchOptions;
+    HostSearchOptions* mHostSearchOptions;
+    MarkerSearchOptions* mMarkerSearchOptions;
 };
 
 #endif

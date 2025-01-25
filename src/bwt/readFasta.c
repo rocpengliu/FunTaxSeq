@@ -109,8 +109,7 @@ static SEQstruct *read_fasta_forward(FILE *fp, char *seq, long length, char *tra
   do c=getc(fp); while (c!='>' && c!=EOF);
   if (c==EOF) return NULL;
 
-  /* Alloc sequence structure to hold anchor and hold total length of
-     allocation. */
+  /* Alloc sequence structure to hold anchor and hold total length of allocation. */
   ret=ss=alloc_SEQstruct();
   ret->start = seq;
   ret->sort_order = 0;
@@ -137,15 +136,15 @@ static SEQstruct *read_fasta_forward(FILE *fp, char *seq, long length, char *tra
     while ( c!=EOF ) {
       /* New fasta entry is start */
       if (c=='>' && lastc=='\n') {
-	ss->len = seq - ss->start;
-	// Add padding
-	for (i=0; i<padding; ++i) { *seq++ = term; test_seq_alloc(seq,seqend); }
-	break;
+          ss->len = seq - ss->start;
+          // Add padding
+          for (i=0; i<padding; ++i) { *seq++ = term; test_seq_alloc(seq,seqend); }
+          break;
       }
       if (translate[c]>=0) {
         *seq++ = translate[c];
-	test_seq_alloc(seq,seqend);
-	ss->len += 1;
+        test_seq_alloc(seq,seqend);
+        ss->len += 1;
       }
       lastc=c;
       c=getc(fp);

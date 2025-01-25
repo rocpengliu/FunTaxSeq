@@ -247,7 +247,7 @@ inline std::vector<std::string> splitStr(string& str, string sep = ";") {
     int s = 0;
     for(const char & c : str){
         if(c == sep[0]){
-            s++;
+            ++s;
         }
     }
     ret_.reserve(s + 1);
@@ -292,7 +292,7 @@ inline std::unordered_set<std::string> splitStr2(string str, string sep = ";") {
     int s = 0;
     for(const char & c : str){
         if(c == sep[0]){
-            s++;
+            ++s;
         }
     }
     ret_.reserve(s + 1);
@@ -368,7 +368,7 @@ inline int countFreq(std::string & s, std::string p){
             if(s[i+j] != p[j]) break;
         }
         if(j == N){
-            res++;
+            ++res;
             j = 0;
         }
     }
@@ -548,7 +548,7 @@ inline void str_keep_valid_sequence(string& s, bool forceUpperCase = false) {
         }
         if (isalpha(c) || c == '-' || c == '*') {
             s[total] = c;
-            total++;
+            ++total;
         }
     }
 
@@ -589,6 +589,18 @@ inline void error_exit(const string& msg) {
 inline string trimName(string& str) {
     // string strnew;
     str.erase(str.begin());
+    string suffixStartCharacters = " /\t\r";
+    size_t n = str.find_first_of(suffixStartCharacters);
+    if (n != string::npos) {
+        return str.erase(n);
+    } else {
+        return str;
+    }
+}
+
+inline string trimName2(string src) {
+    // string strnew;
+    std::string str = src;
     string suffixStartCharacters = " /\t\r";
     size_t n = str.find_first_of(suffixStartCharacters);
     if (n != string::npos) {

@@ -1,50 +1,50 @@
-#include "transsearcher.hpp"
+#include "transsearcher.h"
 
 TransSearcher::TransSearcher(Options * & opt, BwtFmiDB* & mBwtfmiDB) {
     mOptions = opt;
     tbwtfmiDB = mBwtfmiDB;
+    //match_str.clear();
     blosum_subst = {
         {'A',
-            {'S', 'V', 'T', 'G', 'C', 'P', 'M', 'K', 'L', 'I', 'E', 'Q', 'R', 'Y', 'F', 'H', 'D', 'N', 'W'}},
+         {'S', 'V', 'T', 'G', 'C', 'P', 'M', 'K', 'L', 'I', 'E', 'Q', 'R', 'Y', 'F', 'H', 'D', 'N', 'W'}},
         {'R',
-            {'K', 'Q', 'H', 'E', 'N', 'T', 'S', 'M', 'A', 'Y', 'P', 'L', 'G', 'D', 'V', 'W', 'F', 'I', 'C'}},
+         {'K', 'Q', 'H', 'E', 'N', 'T', 'S', 'M', 'A', 'Y', 'P', 'L', 'G', 'D', 'V', 'W', 'F', 'I', 'C'}},
         {'N',
-            {'S', 'H', 'D', 'T', 'K', 'G', 'E', 'Q', 'R', 'Y', 'P', 'M', 'A', 'V', 'F', 'L', 'I', 'C', 'W'}},
+         {'S', 'H', 'D', 'T', 'K', 'G', 'E', 'Q', 'R', 'Y', 'P', 'M', 'A', 'V', 'F', 'L', 'I', 'C', 'W'}},
         {'D',
-            {'E', 'N', 'S', 'Q', 'T', 'P', 'K', 'H', 'G', 'R', 'A', 'V', 'Y', 'F', 'M', 'I', 'C', 'W', 'L'}},
+         {'E', 'N', 'S', 'Q', 'T', 'P', 'K', 'H', 'G', 'R', 'A', 'V', 'Y', 'F', 'M', 'I', 'C', 'W', 'L'}},
         {'C',
-            {'A', 'V', 'T', 'S', 'M', 'L', 'I', 'Y', 'W', 'F', 'P', 'K', 'H', 'G', 'Q', 'D', 'N', 'R', 'E'}},
+         {'A', 'V', 'T', 'S', 'M', 'L', 'I', 'Y', 'W', 'F', 'P', 'K', 'H', 'G', 'Q', 'D', 'N', 'R', 'E'}},
         {'Q',
-            {'E', 'K', 'R', 'S', 'M', 'H', 'D', 'N', 'Y', 'T', 'P', 'A', 'V', 'W', 'L', 'G', 'F', 'I', 'C'}},
+         {'E', 'K', 'R', 'S', 'M', 'H', 'D', 'N', 'Y', 'T', 'P', 'A', 'V', 'W', 'L', 'G', 'F', 'I', 'C'}},
         {'E',
-            {'Q', 'D', 'K', 'S', 'H', 'N', 'R', 'T', 'P', 'A', 'V', 'Y', 'M', 'G', 'W', 'F', 'L', 'I', 'C'}},
+         {'Q', 'D', 'K', 'S', 'H', 'N', 'R', 'T', 'P', 'A', 'V', 'Y', 'M', 'G', 'W', 'F', 'L', 'I', 'C'}},
         {'G',
-            {'S', 'N', 'A', 'D', 'W', 'T', 'P', 'K', 'H', 'E', 'Q', 'R', 'V', 'Y', 'F', 'M', 'C', 'L', 'I'}},
+         {'S', 'N', 'A', 'D', 'W', 'T', 'P', 'K', 'H', 'E', 'Q', 'R', 'V', 'Y', 'F', 'M', 'C', 'L', 'I'}},
         {'H',
-            {'Y', 'N', 'E', 'Q', 'R', 'S', 'F', 'K', 'D', 'W', 'T', 'P', 'M', 'G', 'A', 'V', 'L', 'I', 'C'}},
+         {'Y', 'N', 'E', 'Q', 'R', 'S', 'F', 'K', 'D', 'W', 'T', 'P', 'M', 'G', 'A', 'V', 'L', 'I', 'C'}},
         {'I',
-            {'V', 'L', 'M', 'F', 'Y', 'T', 'C', 'A', 'S', 'W', 'P', 'K', 'H', 'E', 'Q', 'D', 'N', 'R', 'G'}},
+         {'V', 'L', 'M', 'F', 'Y', 'T', 'C', 'A', 'S', 'W', 'P', 'K', 'H', 'E', 'Q', 'D', 'N', 'R', 'G'}},
         {'L',
-            {'M', 'I', 'V', 'F', 'Y', 'T', 'C', 'A', 'W', 'S', 'K', 'Q', 'R', 'P', 'H', 'E', 'N', 'G', 'D'}},
+         {'M', 'I', 'V', 'F', 'Y', 'T', 'C', 'A', 'W', 'S', 'K', 'Q', 'R', 'P', 'H', 'E', 'N', 'G', 'D'}},
         {'K',
-            {'R', 'E', 'Q', 'S', 'N', 'T', 'P', 'M', 'H', 'D', 'A', 'V', 'Y', 'L', 'G', 'W', 'F', 'I', 'C'}},
+         {'R', 'E', 'Q', 'S', 'N', 'T', 'P', 'M', 'H', 'D', 'A', 'V', 'Y', 'L', 'G', 'W', 'F', 'I', 'C'}},
         {'M',
-            {'L', 'V', 'I', 'F', 'Q', 'Y', 'W', 'T', 'S', 'K', 'C', 'R', 'A', 'P', 'H', 'E', 'N', 'G', 'D'}},
+         {'L', 'V', 'I', 'F', 'Q', 'Y', 'W', 'T', 'S', 'K', 'C', 'R', 'A', 'P', 'H', 'E', 'N', 'G', 'D'}},
         {'F',
-            {'Y', 'W', 'M', 'L', 'I', 'V', 'H', 'T', 'S', 'C', 'A', 'K', 'G', 'E', 'Q', 'D', 'N', 'R', 'P'}},
+         {'Y', 'W', 'M', 'L', 'I', 'V', 'H', 'T', 'S', 'C', 'A', 'K', 'G', 'E', 'Q', 'D', 'N', 'R', 'P'}},
         {'P',
-            {'T', 'S', 'K', 'E', 'Q', 'D', 'A', 'V', 'M', 'H', 'G', 'N', 'R', 'Y', 'L', 'I', 'C', 'W', 'F'}},
+         {'T', 'S', 'K', 'E', 'Q', 'D', 'A', 'V', 'M', 'H', 'G', 'N', 'R', 'Y', 'L', 'I', 'C', 'W', 'F'}},
         {'S',
-            {'T', 'N', 'A', 'K', 'G', 'E', 'Q', 'D', 'P', 'M', 'H', 'C', 'R', 'V', 'Y', 'F', 'L', 'I', 'W'}},
+         {'T', 'N', 'A', 'K', 'G', 'E', 'Q', 'D', 'P', 'M', 'H', 'C', 'R', 'V', 'Y', 'F', 'L', 'I', 'W'}},
         {'T',
-            {'S', 'V', 'N', 'A', 'P', 'M', 'K', 'L', 'I', 'E', 'Q', 'C', 'D', 'R', 'Y', 'W', 'F', 'H', 'G'}},
+         {'S', 'V', 'N', 'A', 'P', 'M', 'K', 'L', 'I', 'E', 'Q', 'C', 'D', 'R', 'Y', 'W', 'F', 'H', 'G'}},
         {'W',
-            {'Y', 'F', 'M', 'T', 'L', 'H', 'G', 'Q', 'C', 'V', 'S', 'K', 'I', 'E', 'R', 'A', 'P', 'D', 'N'}},
+         {'Y', 'F', 'M', 'T', 'L', 'H', 'G', 'Q', 'C', 'V', 'S', 'K', 'I', 'E', 'R', 'A', 'P', 'D', 'N'}},
         {'Y',
-            {'F', 'W', 'H', 'V', 'M', 'L', 'I', 'Q', 'T', 'S', 'K', 'E', 'C', 'N', 'R', 'A', 'P', 'G', 'D'}},
+         {'F', 'W', 'H', 'V', 'M', 'L', 'I', 'Q', 'T', 'S', 'K', 'E', 'C', 'N', 'R', 'A', 'P', 'G', 'D'}},
         {'V',
-            {'I', 'M', 'L', 'T', 'A', 'Y', 'F', 'C', 'S', 'P', 'K', 'E', 'Q', 'W', 'H', 'G', 'D', 'N', 'R'}}
-    };
+         {'I', 'M', 'L', 'T', 'A', 'Y', 'F', 'C', 'S', 'P', 'K', 'E', 'Q', 'W', 'H', 'G', 'D', 'N', 'R'}}};
 
     std::memset(nuc2int, std::numeric_limits<uint8_t>::max(), sizeof (nuc2int));
     nuc2int['A'] = nuc2int['a'] = 0;
@@ -726,7 +726,7 @@ Fragment *TransSearcher::getNextFragment(unsigned int min_score) {
     }
     fragments.erase(it);
 
-    while (mOptions->mTransSearchOptions->SEG && f != NULL && !f->SEGchecked) {
+    while (mOptions->mTransSearchOptions->comOptions.SEG && f != NULL && !f->SEGchecked) {
         std::string convertedseq = f->seq;
         for (size_t i = 0; i < convertedseq.length(); i++) {
             convertedseq[i] = AMINOACID_TO_NCBISTDAA[(int) convertedseq[i]];
@@ -743,10 +743,10 @@ Fragment *TransSearcher::getNextFragment(unsigned int min_score) {
                     ss << "SEG region: " << curr_loc->ssr->left << " - " << curr_loc->ssr->right << " = " << f->seq.substr(curr_loc->ssr->left, curr_loc->ssr->right - curr_loc->ssr->left + 1);
                     cCout(ss.str(), 'g');
                 }
-                if (length > mOptions->mTransSearchOptions->minAAFragLength) {
-                    if (mOptions->mTransSearchOptions->mode == tGREEDY) {
+                if (length > mOptions->mTransSearchOptions->comOptions.minFragLength) {
+                    if (mOptions->mTransSearchOptions->comOptions.mode == GREEDY) {
                         unsigned int score = calcScore(f->seq, start, length, 0);
-                        if (score >= mOptions->mTransSearchOptions->minScore) {
+                        if (score >= mOptions->mTransSearchOptions->comOptions.minScore) {
                             fragments.emplace(score, new Fragment(f->seq.substr(start, length), true));
                         }
                     } else {
@@ -756,10 +756,10 @@ Fragment *TransSearcher::getNextFragment(unsigned int min_score) {
                 start = curr_loc->ssr->right + 1;
             } while ((curr_loc = curr_loc->next) != NULL);
             size_t len_last_piece = f->seq.length() - start;
-            if (len_last_piece > mOptions->mTransSearchOptions->minAAFragLength) {
-                if (mOptions->mTransSearchOptions->mode == tGREEDY) {
+            if (len_last_piece > mOptions->mTransSearchOptions->comOptions.minFragLength) {
+                if (mOptions->mTransSearchOptions->comOptions.mode == GREEDY) {
                     unsigned int score = calcScore(f->seq, start, len_last_piece, 0);
-                    if (score >= mOptions->mTransSearchOptions->minScore) {
+                    if (score >= mOptions->mTransSearchOptions->comOptions.minScore) {
                         fragments.emplace(score, new Fragment(f->seq.substr(start, len_last_piece), true));
                     }
                 } else {
@@ -797,10 +797,10 @@ void TransSearcher::getAllFragmentsBits(const std::string& line) {
         if (aa == '*') {
             size_t index = count % 3;
             // finished one of the translations, so add it to fragments
-            if (translations[index].length() >= mOptions->mTransSearchOptions->minAAFragLength) {
-                if (mOptions->mTransSearchOptions->mode == tGREEDY) {
+            if (translations[index].length() >= mOptions->mTransSearchOptions->comOptions.minFragLength) {
+                if (mOptions->mTransSearchOptions->comOptions.mode == GREEDY) {
                     unsigned int score = calcScore(translations[index]);
-                    if (score >= mOptions->mTransSearchOptions->minScore)
+                    if (score >= mOptions->mTransSearchOptions->comOptions.minScore)
                         fragments.emplace(score, new Fragment(translations[index]));
                 } else {
                     fragments.emplace(translations[index].length(), new Fragment(translations[index]));
@@ -814,10 +814,10 @@ void TransSearcher::getAllFragmentsBits(const std::string& line) {
 
     for (unsigned int i = 0; i <= 2; i++) {
         //add remaining stuff to fragments
-        if (translations[i].length() >= mOptions->mTransSearchOptions->minAAFragLength) {
-            if (mOptions->mTransSearchOptions->mode == tGREEDY) {
+        if (translations[i].length() >= mOptions->mTransSearchOptions->comOptions.minFragLength) {
+            if (mOptions->mTransSearchOptions->comOptions.mode == GREEDY) {
                 unsigned int score = calcScore(translations[i]);
-                if (score >= mOptions->mTransSearchOptions->minScore)
+                if (score >= mOptions->mTransSearchOptions->comOptions.minScore)
                     fragments.emplace(score, new Fragment(translations[i]));
             } else {
                 fragments.emplace(translations[i].length(), new Fragment(translations[i]));
@@ -833,10 +833,10 @@ void TransSearcher::getAllFragmentsBits(const std::string& line) {
         if (aa == '*') {
             size_t index = count % 3;
             // finished one of the translations, so add it to fragments
-            if (translations[index].length() >= mOptions->mTransSearchOptions->minAAFragLength) {
-                if (mOptions->mTransSearchOptions->mode == tGREEDY) {
+            if (translations[index].length() >= mOptions->mTransSearchOptions->comOptions.minFragLength) {
+                if (mOptions->mTransSearchOptions->comOptions.mode == GREEDY) {
                     unsigned int score = calcScore(translations[index]);
-                    if (score >= mOptions->mTransSearchOptions->minScore)
+                    if (score >= mOptions->mTransSearchOptions->comOptions.minScore)
                         fragments.emplace(score, new Fragment(translations[index]));
                 } else {
                     fragments.emplace(translations[index].length(), new Fragment(translations[index]));
@@ -850,10 +850,10 @@ void TransSearcher::getAllFragmentsBits(const std::string& line) {
 
     for (unsigned int i = 0; i <= 2; i++) {
         //add remaining stuff to fragments
-        if (translations[i].length() >= mOptions->mTransSearchOptions->minAAFragLength) {
-            if (mOptions->mTransSearchOptions->mode == tGREEDY) {
+        if (translations[i].length() >= mOptions->mTransSearchOptions->comOptions.minFragLength) {
+            if (mOptions->mTransSearchOptions->comOptions.mode == GREEDY) {
                 unsigned int score = calcScore(translations[i]);
-                if (score >= mOptions->mTransSearchOptions->minScore)
+                if (score >= mOptions->mTransSearchOptions->comOptions.minScore)
                     fragments.emplace(score, new Fragment(translations[i]));
             } else {
                 fragments.emplace(translations[i].length(), new Fragment(translations[i]));
@@ -872,7 +872,7 @@ void TransSearcher::getLongestFragmentsBits(const std::string& line) {
         min_len_cutoff = floor(line.length() / 3) - 1;
     }
 
-    min_len_cutoff = min(mOptions->mTransSearchOptions->maxTransLength, max(min_len_cutoff, mOptions->mTransSearchOptions->minAAFragLength));
+    min_len_cutoff = max(min_len_cutoff, mOptions->mTransSearchOptions->comOptions.minFragLength);
 
     for (unsigned int i = 0; i <= 2; i++) {
         translations[i].clear();
@@ -884,10 +884,10 @@ void TransSearcher::getLongestFragmentsBits(const std::string& line) {
             size_t index = count % 3;
             // finished one of the translations, so add it to fragments
             if (translations[index].length() >= min_len_cutoff) {
-                if (mOptions->mTransSearchOptions->mode == tGREEDY) {
+                if (mOptions->mTransSearchOptions->comOptions.mode == GREEDY) {
                     unsigned int score = calcScore(translations[index]);
 
-                    if (score >= mOptions->mTransSearchOptions->minScore)
+                    if (score >= mOptions->mTransSearchOptions->comOptions.minScore)
                         fragments.emplace(score, new Fragment(translations[index]));
                 } else {
                     fragments.emplace(translations[index].length(), new Fragment(translations[index]));
@@ -901,9 +901,9 @@ void TransSearcher::getLongestFragmentsBits(const std::string& line) {
     for (unsigned int i = 0; i <= 2; i++) {
         //add remaining stuff to fragments
         if (translations[i].length() >= min_len_cutoff) {
-            if (mOptions->mTransSearchOptions->mode == tGREEDY) {
+            if (mOptions->mTransSearchOptions->comOptions.mode == GREEDY) {
                 unsigned int score = calcScore(translations[i]);
-                if (score >= mOptions->mTransSearchOptions->minScore)
+                if (score >= mOptions->mTransSearchOptions->comOptions.minScore)
                     fragments.emplace(score, new Fragment(translations[i]));
             } else {
                 fragments.emplace(translations[i].length(), new Fragment(translations[i]));
@@ -919,9 +919,9 @@ void TransSearcher::getLongestFragmentsBits(const std::string& line) {
             size_t index = count % 3;
             // finished one of the translations, so add it to fragments
             if (translations[index].length() >= min_len_cutoff) {
-                if (mOptions->mTransSearchOptions->mode == tGREEDY) {
+                if (mOptions->mTransSearchOptions->comOptions.mode == GREEDY) {
                     unsigned int score = calcScore(translations[index]);
-                    if (score >= mOptions->mTransSearchOptions->minScore)
+                    if (score >= mOptions->mTransSearchOptions->comOptions.minScore)
                         fragments.emplace(score, new Fragment(translations[index]));
                 } else {
                     fragments.emplace(translations[index].length(), new Fragment(translations[index]));
@@ -935,9 +935,9 @@ void TransSearcher::getLongestFragmentsBits(const std::string& line) {
     for (unsigned int i = 0; i <= 2; i++) {
         //add remaining stuff to fragments
         if (translations[i].length() >= min_len_cutoff) {
-            if (mOptions->mTransSearchOptions->mode == tGREEDY) {
+            if (mOptions->mTransSearchOptions->comOptions.mode == GREEDY) {
                 unsigned int score = calcScore(translations[i]);
-                if (score >= mOptions->mTransSearchOptions->minScore)
+                if (score >= mOptions->mTransSearchOptions->comOptions.minScore)
                     fragments.emplace(score, new Fragment(translations[i]));
             } else {
                 fragments.emplace(translations[i].length(), new Fragment(translations[i]));
@@ -948,12 +948,12 @@ void TransSearcher::getLongestFragmentsBits(const std::string& line) {
 
 void TransSearcher::addAllMismatchVariantsAtPosSI(const Fragment *f, unsigned int pos, size_t erase_pos = std::string::npos, SI *si = NULL) {
 
-    assert(mOptions->mTransSearchOptions->mode == tGREEDY);
+    assert(mOptions->mTransSearchOptions->comOptions.mode == GREEDY);
     assert(pos < erase_pos);
     assert(f->num_mm == 0 || pos < f->pos_lastmm);
 
     std::string fragment = f->seq; // make a copy to modify the sequence at pos
-    assert(fragment.length() >= mOptions->mTransSearchOptions->minAAFragLength);
+    assert(fragment.length() >= mOptions->mTransSearchOptions->comOptions.minFragLength);
     char origchar = fragment[pos];
     assert(blosum_subst.count(origchar) > 0);
 
@@ -977,8 +977,8 @@ void TransSearcher::addAllMismatchVariantsAtPosSI(const Fragment *f, unsigned in
         // has to be subtracted when summing over all positions later
         // so we add this difference to the fragment
         int score_after_subst = score + b62[aa2int[(uint8_t) origchar]][aa2int[(uint8_t) itv]];
-        if (score_after_subst >= (int) best_match_score && score_after_subst >= (int) mOptions->mTransSearchOptions->minScore) {
-            if (UpdateSI(tbwtfmiDB->fmi, tbwtfmiDB->astruct->trans[(size_t) itv], siarray, siarrayupd) != 0) {
+        if (score_after_subst >= (int) best_match_score && score_after_subst >= (int) mOptions->mTransSearchOptions->comOptions.minScore) {
+            if (UpdateSI(tbwtfmiDB->fmi, tbwtfmiDB->astruct->trans[(size_t) itv], siarray, siarrayupd, 'p') != 0) {
                 fragment[pos] = itv;
                 int diff = b62[aa2int[(uint8_t) origchar]][aa2int[(uint8_t) itv]] - blosum62diag[aa2int[(uint8_t) itv]];
                 if (mOptions->debug) {
@@ -997,7 +997,7 @@ void TransSearcher::addAllMismatchVariantsAtPosSI(const Fragment *f, unsigned in
             if (mOptions->debug) {
                 fragment[pos] = itv;
                 std::stringstream ss;
-                ss << "Skipping fragment " << fragment << " and following fragments, because score is too low: " << score_after_subst << " < " << std::max(best_match_score, mOptions->mTransSearchOptions->minScore);
+                ss << "Skipping fragment " << fragment << " and following fragments, because score is too low: " << score_after_subst << " < " << std::max(best_match_score, mOptions->mTransSearchOptions->comOptions.minScore);
                 cCout(ss.str(), 'g');
             }
             break;
@@ -1039,7 +1039,7 @@ void TransSearcher::eval_match_scores(SI *si, Fragment *frag) {
     // eval the remaining same-length and shorter matches
     if (si->samelen)
         eval_match_scores(si->samelen, frag);
-    if (si->next && si->next->ql >= (int) mOptions->mTransSearchOptions->minAAFragLength)
+    if (si->next && si->next->ql >= (int) mOptions->mTransSearchOptions->comOptions.minFragLength)
         eval_match_scores(si->next, frag);
     else if (si->next)
         recursive_free_SI(si->next);
@@ -1052,7 +1052,7 @@ void TransSearcher::eval_match_scores(SI *si, Fragment *frag) {
         cCout(ss.str(), 'g');
     }
 
-    if (score < mOptions->mTransSearchOptions->minScore) {
+    if (score < mOptions->mTransSearchOptions->comOptions.minScore) {
         free(si);
         si = NULL;
         return;
@@ -1066,12 +1066,17 @@ void TransSearcher::eval_match_scores(SI *si, Fragment *frag) {
         best_matches_SI.clear();
         best_matches_SI.push_back(si);
         best_match_score = score;
+        // match_str.append(frag->seq.substr(si->qi, si->ql));
+        // match_str.append(";");
+
         if (mOptions->verbose) {
             best_matches.clear();
             best_matches.push_back(frag->seq.substr(si->qi, si->ql));
         }
-    } else if (score == best_match_score && best_matches_SI.size() < mOptions->mTransSearchOptions->max_matches_SI) {
+    } else if (score == best_match_score && best_matches_SI.size() < mOptions->mTransSearchOptions->comOptions.max_matches_SI) {
         best_matches_SI.push_back(si);
+        // match_str.append(frag->seq.substr(si->qi, si->ql));
+        // match_str.append(";");
         if (mOptions->verbose)
             best_matches.push_back(frag->seq.substr(si->qi, si->ql));
     } else {
@@ -1127,13 +1132,13 @@ void TransSearcher::classify_greedyblosum() {
         translate2numbers((uchar *) seq, (unsigned int) length, tbwtfmiDB->astruct);
         SI *si = NULL;
         if (num_mm > 0) {
-            if (num_mm == mOptions->mTransSearchOptions->misMatches) { //after last mm has been done, we need to have at least reached the min_length
-                si = maxMatches_withStart(tbwtfmiDB->fmi, seq, (unsigned int) length, mOptions->mTransSearchOptions->minAAFragLength, 1, t->si0, t->si1, t->matchlen);
+            if (num_mm == mOptions->mTransSearchOptions->comOptions.misMatches) { //after last mm has been done, we need to have at least reached the min_length
+                si = maxMatches_withStart(tbwtfmiDB->fmi, seq, (unsigned int) length, mOptions->mTransSearchOptions->comOptions.minFragLength, 1, t->si0, t->si1, t->matchlen, 'p');
             } else {
-                si = maxMatches_withStart(tbwtfmiDB->fmi, seq, (unsigned int) length, t->matchlen, 1, t->si0, t->si1, t->matchlen);
+                si = maxMatches_withStart(tbwtfmiDB->fmi, seq, (unsigned int) length, t->matchlen, 1, t->si0, t->si1, t->matchlen, 'p');
             }
         } else {
-            si = maxMatches(tbwtfmiDB->fmi, seq, (unsigned int) length, mOptions->mTransSearchOptions->seedLength, 0); //initial matches
+            si = maxMatches(tbwtfmiDB->fmi, seq, (unsigned int) length, mOptions->mTransSearchOptions->comOptions.seedLength, 0, 'p'); //initial matches
         }
         if (!si) { // no match for this fragment
             if (mOptions->debug) {
@@ -1151,7 +1156,7 @@ void TransSearcher::classify_greedyblosum() {
             cCout(ss.str(), 'g');
         }
 
-        if (mOptions->mTransSearchOptions->misMatches > 0 && num_mm < mOptions->mTransSearchOptions->misMatches) {
+        if (mOptions->mTransSearchOptions->comOptions.misMatches > 0 && num_mm < mOptions->mTransSearchOptions->comOptions.misMatches) {
             SI *si_it = si;
             while (si_it) {
                 unsigned int match_right_end = si_it->qi + si_it->ql - 1;
@@ -1162,7 +1167,7 @@ void TransSearcher::classify_greedyblosum() {
                     ss << "Match from " << si_it->qi << " to " << match_right_end << ": " << fragment.substr(si_it->qi, match_right_end - si_it->qi + 1) << " (" << si_it->ql << ")";
                     cCout(ss.str(), 'g');
                 }
-                if (si_it->qi > 0 && match_right_end + 1 >= mOptions->mTransSearchOptions->minAAFragLength) {
+                if (si_it->qi > 0 && match_right_end + 1 >= mOptions->mTransSearchOptions->comOptions.minFragLength) {
                     //1. match must end before beginning of fragment, i.e. it is extendable
                     //2. remaining fragment, from zero to end of current match, must be longer than minimum length of accepted matches
                     const size_t erase_pos = (match_right_end < length - 1) ? match_right_end + 1 : std::string::npos;
@@ -1172,7 +1177,7 @@ void TransSearcher::classify_greedyblosum() {
             }
         }
 
-        if ((unsigned int) si->ql < mOptions->mTransSearchOptions->minAAFragLength) { // match was too short
+        if ((unsigned int) si->ql < mOptions->mTransSearchOptions->comOptions.minFragLength) { // match was too short
             if (mOptions->debug) {
                 std::stringstream ss;
                 ss << "Match of length " << si->ql << " is too short";
@@ -1195,7 +1200,7 @@ void TransSearcher::classify_greedyblosum() {
         return;
     }
 
-    if (mOptions->mTransSearchOptions->useEvalue) {
+    if (mOptions->mTransSearchOptions->comOptions.useEvalue) {
         //calc e-value and only return match if > cutoff
 
         double bitscore = (LAMBDA * best_match_score - LN_K) / LN_2;
@@ -1206,7 +1211,7 @@ void TransSearcher::classify_greedyblosum() {
             cCout(ss.str(), 'g');
         }
 
-        if (Evalue > mOptions->mTransSearchOptions->minEvalue) {
+        if (Evalue > mOptions->mTransSearchOptions->comOptions.minEvalue) {
             for (auto itm : best_matches_SI) {
                 free(itm);
                 //recursive_free_SI(itm);
@@ -1247,7 +1252,7 @@ void TransSearcher::classify_length() {
 
         translate2numbers((uchar *) seq, length, tbwtfmiDB->astruct);
         //use longest_match_length here too:
-        SI *si = maxMatches(tbwtfmiDB->fmi, seq, length, std::max(mOptions->mTransSearchOptions->minAAFragLength, longest_match_length), 1);
+        SI *si = maxMatches(tbwtfmiDB->fmi, seq, length, std::max(mOptions->mTransSearchOptions->comOptions.minFragLength, longest_match_length), 1, 'p');
 
         if (!si) { // no match for this fragment
             if (mOptions->debug) {
@@ -1272,12 +1277,16 @@ void TransSearcher::classify_length() {
             longest_matches_SI.clear();
             longest_matches_SI.push_back(si);
             longest_match_length = (unsigned int) si->ql;
+            // match_str.append(fragment.substr(si->qi, si->ql));
+            // match_str.append(";");
             if (mOptions->verbose) {
                 longest_fragments.clear();
                 longest_fragments.push_back(fragment.substr(si->qi, si->ql));
             }
         } else if ((unsigned int) si->ql == longest_match_length) {
             longest_matches_SI.push_back(si);
+            // match_str.append(fragment.substr(si->qi, si->ql));
+            // match_str.append(";");
             if (mOptions->verbose)
                 longest_fragments.push_back(fragment.substr(si->qi, si->ql));
         } else {
@@ -1302,27 +1311,15 @@ void TransSearcher::classify_length() {
 }
 
 void TransSearcher::postProcess() {
-    if (mOptions->verbose) {
-        ss.str("");
-        ss << readName << "\t";
-        for (const auto it : match_ids) {
-            if (it == *(match_ids.rbegin())) {
-                ss << it;
-            } else {
-                ss << it << ";";
-            }
-        }
-        cCout(ss.str(), 'y');
-    }
 }
 
 std::set<char *>& TransSearcher::transSearchWuKong(Read* & item) {
+    //match_str.clear();
     clearFragments();
     //clearMatchedIds();
     match_ids.clear();
-    readName = item->mName;
     query_len = static_cast<double> (item->length()) / 3.0;
-    if (item->length() >= mOptions->mTransSearchOptions->minAAFragLength * 3) {
+    if (item->length() >= mOptions->mTransSearchOptions->comOptions.minFragLength * 3) {
         if (mOptions->debug) {
             std::stringstream ss;
             ss << "Getting fragments for read: " << item->mName << "\t" << item->mSeq.mStr;
@@ -1337,9 +1334,9 @@ std::set<char *>& TransSearcher::transSearchWuKong(Read* & item) {
         cCout(ss.str(), 'g');
     }
 
-    if (mOptions->mTransSearchOptions->mode == tMEM) {
+    if (mOptions->mTransSearchOptions->comOptions.mode == MEM) {
         classify_length();
-    } else if (mOptions->mTransSearchOptions->mode == tGREEDY) {
+    } else if (mOptions->mTransSearchOptions->comOptions.mode == GREEDY) {
         classify_greedyblosum();
     } else { // this should not happen
         assert(false);
@@ -1348,17 +1345,18 @@ std::set<char *>& TransSearcher::transSearchWuKong(Read* & item) {
     clearFragments();
     if (!match_ids.empty()) {
         //postProcess();
+        //cCout(item->mName, match_str, 'd');
     }
     return (match_ids);
 }
 
 std::set<char *>& TransSearcher::transSearchWuKong(Read* & item1, Read* & item2) {
+    //match_str.clear();
     clearFragments();
     //clearMatchedIds();
     match_ids.clear();
-    readName = item1->mName;
     query_len = static_cast<double> (item1->length()) / 3.0;
-    if (item1->length() >= mOptions->mTransSearchOptions->minAAFragLength * 3) {
+    if (item1->length() >= mOptions->mTransSearchOptions->comOptions.minFragLength * 3) {
         if (mOptions->debug) {
             std::stringstream ss;
             ss << "Getting fragments for read1: " << item1->mName << "\t" << item1->mSeq.mStr;
@@ -1368,7 +1366,7 @@ std::set<char *>& TransSearcher::transSearchWuKong(Read* & item1, Read* & item2)
     }
 
     query_len += static_cast<double> (item2->length()) / 3.0;
-    if (item2->length() >= mOptions->mTransSearchOptions->minAAFragLength * 3) {
+    if (item2->length() >= mOptions->mTransSearchOptions->comOptions.minFragLength * 3) {
         if (mOptions->debug) {
             std::stringstream ss;
             ss << "Getting fragments for read2: " << item2->mName << "\t" << item2->mSeq.mStr;
@@ -1383,18 +1381,19 @@ std::set<char *>& TransSearcher::transSearchWuKong(Read* & item1, Read* & item2)
         cCout(ss.str(), 'g');
     }
 
-    if (mOptions->mTransSearchOptions->mode == tMEM) {
+    if (mOptions->mTransSearchOptions->comOptions.mode == MEM) {
         classify_length();
-    } else if (mOptions->mTransSearchOptions->mode == tGREEDY) {
+    } else if (mOptions->mTransSearchOptions->comOptions.mode == GREEDY) {
         classify_greedyblosum();
     } else { // this should not happen
         assert(false);
     }
     clearFragments();
 
-    if (!match_ids.empty()) {
-        //postProcess();
-    }
+    // if (!match_ids.empty()) {
+    //     //postProcess();
+    //     cCout(item1->mName, match_str, 'd');
+    // }
     return (match_ids);
 }
 
@@ -1402,10 +1401,10 @@ void TransSearcher::ids_from_SI(SI *si) {
     IndexType k, pos;
     int iseq;
     for (k = si->start; k < si->start + si->len; ++k) {
-        if (match_ids.size() > mOptions->mTransSearchOptions->max_match_ids) {
+        if (match_ids.size() > mOptions->mTransSearchOptions->comOptions.max_match_ids) {
             break;
         }
-        get_suffix(tbwtfmiDB->fmi, tbwtfmiDB->bwt->s, k, &iseq, &pos);
+        get_suffix(tbwtfmiDB->fmi, tbwtfmiDB->bwt->s, k, &iseq, &pos, 'p');
         match_ids.insert(tbwtfmiDB->bwt->s->ids[iseq]);
     }
 }
@@ -1416,10 +1415,10 @@ void TransSearcher::ids_from_SI_recursive(SI *si) {
         IndexType k, pos;
         int iseq;
         for (k = si_it->start; k < si_it->start + si_it->len; ++k) {
-            if (match_ids.size() > mOptions->mTransSearchOptions->max_match_ids) {
+            if (match_ids.size() > mOptions->mTransSearchOptions->comOptions.max_match_ids) {
                 break;
             }
-            get_suffix(tbwtfmiDB->fmi, tbwtfmiDB->bwt->s, k, &iseq, &pos);
+            get_suffix(tbwtfmiDB->fmi, tbwtfmiDB->bwt->s, k, &iseq, &pos, 'p');
             match_ids.insert(tbwtfmiDB->bwt->s->ids[iseq]);
         } // end for
         si_it = si_it->samelen;

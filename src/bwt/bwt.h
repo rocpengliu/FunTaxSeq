@@ -38,15 +38,15 @@ typedef struct _SI_ {
 /* FUNCTION PROTOTYPES BEGIN  ( by funcprototypes.pl ) */
 void write_BWT_header(BWT *b, FILE *bwtfile);
 BWT *read_BWT(FILE *bwtfile);
-BWT *readIndexes(FILE *fp);
-void get_suffix(FMI *fmi, suffixArray *s, IndexType i, int *iseq, IndexType *pos);
-uchar *retrieve_seq(int snum, BWT *b);
+BWT *readIndexes(FILE *fp, char db);
+void get_suffix(FMI *fmi, suffixArray *s, IndexType i, int *iseq, IndexType *pos, char db);
+uchar *retrieve_seq(int snum, BWT *b, char db);
 IndexType InitialSI(FMI *f, uchar ct, IndexType *si);
-IndexType UpdateSI(FMI *f, uchar ct, IndexType *si, IndexType *newsi);
+IndexType UpdateSI(FMI *f, uchar ct, IndexType *si, IndexType *newsi, char db);
 void recursive_free_SI(SI *si);
-SI *maxMatches(FMI *f, char *str, int len, int L, int max_matches);
-SI *maxMatches_withStart(FMI *f, char *str, int len, int L, int max_matches, IndexType si0, IndexType si1, int offset);
-SI *greedyExact(FMI *f, char *str, int len, int L, int jump);
+SI *maxMatches(FMI *f, char *str, int len, int L, int max_matches, char db);
+SI *maxMatches_withStart(FMI *f, char *str, int len, int L, int max_matches, IndexType si0, IndexType si1, int offset, char db);
+SI *greedyExact(FMI *f, char *str, int len, int L, int jump, char db);
 /* FUNCTION PROTOTYPES END */
 
 #endif

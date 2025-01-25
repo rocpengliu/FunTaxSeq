@@ -21,6 +21,13 @@ typedef unsigned short uint16;
 typedef char int8;
 typedef unsigned char uint8;
 
+// const double dLN_2 = 0.6931471805;
+// const double dLAMBDA = 0.3176;
+// const double dLN_K = -2.009915479;
+const double LN_2 = 0.6931471805;
+const double LAMBDA = 0.3176;
+const double LN_K = -2.009915479;
+
 const char ATCG_BASES[] = {'A', 'T', 'C', 'G'};
 
 const std::string fileTypes[8] = {".fastq.gz", ".FASTQ.GZ", ".fq.gz", ".FQ.GZ", ".fastq", ".FASTQ", ".fq",  ".FQ"};

@@ -192,6 +192,10 @@ bool SingleEndProcessor::processSingleEnd(ReadPack* pack, ThreadConfig* config){
     string failedOutput;
     string locus = "";
     int readPassed = 0;
+    int dnaReads = 0;
+    int proReads = 0;
+    int hostReads = 0;
+    int markerReads = 0;
     for(int p=0;p<pack->count;p++){
 
         // original read1
@@ -243,7 +247,7 @@ bool SingleEndProcessor::processSingleEnd(ReadPack* pack, ThreadConfig* config){
 
         if( r1 != NULL &&  result == PASS_FILTER) {
             locus.clear();
-            config->getHomoSearcher()->homoSearch(r1);
+            config->getHomoSearcher()->homoSearch(r1, dnaReads, proReads, hostReads, markerReads);
             if (!locus.empty()) {
                 failedOutput += r1->toStringWithTag(locus);
             } else {
@@ -251,7 +255,7 @@ bool SingleEndProcessor::processSingleEnd(ReadPack* pack, ThreadConfig* config){
             }
             // stats the read after filtering
             config->getPostStats1()->statRead(r1);
-            readPassed++;
+            ++readPassed;
         }
 
         // if no trimming applied, r1 should be identical to or1
@@ -265,6 +269,19 @@ bool SingleEndProcessor::processSingleEnd(ReadPack* pack, ThreadConfig* config){
     }
     // if splitting output, then no lock is need since different threads write different files
     mOutputMtx.lock();
+    mOptions->mHomoSearchOptions->dnaReads += dnaReads;
+    mOptions->mHomoSearchOptions->proReads += proReads;
+    mOptions->mHomoSearchOptions->hostReads += hostReads;
+    mOptions->mHomoSearchOptions->markerReads += markerReads;
+    mOptions->mHomoSearchOptions->mappedReads += (dnaReads + proReads + hostReads + markerReads);
+    if (mOptions->mHomoSearchOptions->mappedReads % 1000 == 0){
+        cerr << "mapped " << (mOptions->mHomoSearchOptions->mappedReads / 1000) << "K reads("
+            << (mOptions->mHomoSearchOptions->hostReads / 1000) << "K h|"
+            << (mOptions->mHomoSearchOptions->markerReads / 1000) << "K m|"
+            << (mOptions->mHomoSearchOptions->dnaReads / 1000) << "K d|"
+            << (mOptions->mHomoSearchOptions->proReads / 1000) << "K p"
+            << ")\n";
+    }
     if(mOptions->outputToSTDOUT) {
         fwrite(outstr.c_str(), 1, outstr.length(), stdout);
     }
@@ -280,14 +297,10 @@ bool SingleEndProcessor::processSingleEnd(ReadPack* pack, ThreadConfig* config){
         memcpy(fdata, failedOutput.c_str(), failedOutput.size());
         mFailedWriter->input(fdata, failedOutput.size());
     }
-
     mOutputMtx.unlock();
-
     config->markProcessed(pack->count);
-
     delete[] pack->data;
     delete pack;
-
     return true;
 }
 
@@ -354,7 +367,7 @@ void SingleEndProcessor::producerTask(){
             break;
         }
         data[count] = read;
-        count++;
+        ++count;
         // configured to process only first N reads
         if(mOptions->readsToProcess >0 && count + readNum >= mOptions->readsToProcess) {
             needToBreak = true;
@@ -375,7 +388,7 @@ void SingleEndProcessor::producerTask(){
             memset(data, 0, sizeof(Read*)*PACK_SIZE);
             // if the consumer/writer is far behind this producer/reader, sleep and wait to limit memory usage
             while(mRepo.writePos - mRepo.readPos > PACK_IN_MEM_LIMIT){
-                slept++;
+                ++slept;
                 usleep(100);
             }
             readNum += count;
@@ -383,7 +396,7 @@ void SingleEndProcessor::producerTask(){
             // check this only when necessary
             if(readNum % (PACK_SIZE * PACK_IN_MEM_LIMIT) == 0 && mLeftWriter) {
                 while(mLeftWriter->bufferLength() > PACK_IN_MEM_LIMIT || (mFailedWriter && mFailedWriter->bufferLength() > PACK_IN_MEM_LIMIT)) {
-                    slept++;
+                    ++slept;
                     usleep(1000);
                 }
             }
@@ -412,7 +425,7 @@ void SingleEndProcessor::producerTask(){
 void SingleEndProcessor::consumerTask(ThreadConfig* config){
     while(true) {
         if(config->canBeStopped()){
-            mFinishedThreads++;
+            ++mFinishedThreads;
             break;
         }
         while(mRepo.writePos <= mRepo.readPos) {
@@ -422,7 +435,7 @@ void SingleEndProcessor::consumerTask(ThreadConfig* config){
         }
 
         if(mProduceFinished && mRepo.writePos == mRepo.readPos){
-            mFinishedThreads++;
+            ++mFinishedThreads;
             if(mOptions->verbose) {
                 string msg = "thread " + to_string(config->getThreadId() + 1) + " data processing completed";
                 loginfo(msg);

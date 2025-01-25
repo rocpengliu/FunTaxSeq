@@ -43,10 +43,11 @@ void free_SEQstruct(SEQstruct *ss) {
 /* Assumes that base->start points to the whole sequence */
 void recursive_free_SEQstruct(SEQstruct *base) {
   SEQstruct *ss, *next;
-  if (base->start){
+  if (base->start){//redundant, because free_SEQstruct will free start
       free(base->start);
       base->start = NULL;
   }
+
   ss=base;
   next=ss->next;
   while (ss) {
@@ -55,10 +56,6 @@ void recursive_free_SEQstruct(SEQstruct *base) {
     if (next) next=ss->next;
   }
 }
-
-
-
-
 
 /* Makes a translation table from an alphabet to a translation, so
         table[alphabet[i]] = translation[i]
@@ -79,10 +76,40 @@ void recursive_free_SEQstruct(SEQstruct *base) {
    HAS to be as long (or longer) than alphabet.
 
    If 0 is not in the alphabet, it is translated to 0
+
+   peng added
+     this is to convert the letter alphabet to number, it liletrly convert the ASCII table 
+  to the corresponding number from 0:len(alphabet), say 0:3 and 0:19 for DNA and aa, the others will be -1
+  for no alphabet and 4 or 21 for alphabet which are not in the DNA or aa alphabet.
+  eg
+  out[i0] = 0
+  out[i1] = -1
+  out[i41] = -1
+  out[i42] = 4
+  out[i43] = -1
+  out[i64] = -1
+  out[i65] = 0 A
+  out[i66] = 4
+  out[i67] = 1 C
+  out[i68] = 4
+  out[i71] = 2 G
+  out[i72] = 4
+  out[i84] = 3 T
+  out[i85] = 4
+  out[i91] = -1
+  out[i97] = 0
+  out[i98] = 4
+  out[i99] = 1
+  out[i100] = 4
+  out[i103] = 2
+  out[i104] = 4
+  out[i116] = 3
+  out[i117] = 4
+  out[i123] = -1
 */
 static char *translation_table(char *alphabet, char *translation, char dummy, int casesens) {
   int i, l, freetrans=0;
-  char *table = (char*)malloc(128*sizeof(char));
+  char *table = (char*)malloc(128*sizeof(char));//128
 
   l = strlen(alphabet);
   //printf("translation_table alphabet alen: %d\n", l);
@@ -94,7 +121,10 @@ static char *translation_table(char *alphabet, char *translation, char dummy, in
   if (dummy==0) dummy = translation[l-1];
 
   table[0]=0;
-  for (i=1; i<128; ++i) { table[i]=-1; if (isalpha((char)i)) table[i]=dummy; }
+  for (i=1; i<128; ++i) {
+    table[i]=-1;
+    if (isalpha((char)i)) table[i]=dummy;
+  }
 
   if (!casesens) {
     for (i=0; i<l; ++i) {
@@ -114,15 +144,15 @@ static char *dnaComplement(char *alphabet) {
   int i;
   for (i=0;i<l;++i) {
     switch (alphabet[i]) {
-    case 'a': comp[i]='t'; break;
-    case 'A': comp[i]='T'; break;
-    case 't': comp[i]='a'; break;
-    case 'T': comp[i]='A'; break;
-    case 'c': comp[i]='g'; break;
-    case 'C': comp[i]='G'; break;
-    case 'g': comp[i]='c'; break;
-    case 'G': comp[i]='C'; break;
-    default: comp[i]=alphabet[i];
+        case 'a': comp[i]='t'; break;
+        case 'A': comp[i]='T'; break;
+        case 't': comp[i]='a'; break;
+        case 'T': comp[i]='A'; break;
+        case 'c': comp[i]='g'; break;
+        case 'C': comp[i]='G'; break;
+        case 'g': comp[i]='c'; break;
+        case 'G': comp[i]='C'; break;
+        default: comp[i]=alphabet[i];
     }
   }
   comp[i]=0;
@@ -135,8 +165,7 @@ AlphabetStruct *alloc_AlphabetStruct(char *a, int caseSens, int revcomp) {
   astruct->len = strlen(a);
   astruct->caseSens = caseSens;
   astruct->trans = translation_table(a, NULL, astruct->len-1, astruct->caseSens);
-  if (revcomp) astruct->comp = dnaComplement(a);
-  else astruct->comp = NULL;
+  astruct->comp = (revcomp ? dnaComplement(a) : NULL);
   return astruct;
 }
 
@@ -155,8 +184,6 @@ void free_AlphabetStruct(AlphabetStruct *astruct) {
     astruct = NULL;
   }
 }
-
-
 
 /*
   translate a sequence (s) to numbers

@@ -98,7 +98,7 @@ bool AdapterTrimmer::trimBySequence(Read* r, FilterResult* fr, string& adapterse
         bool matched = true;
         for(int i=max(0, -pos); i<cmplen; i++) {
             if( adata[i] != rdata[i+pos] ){
-                mismatch++;
+                ++mismatch;
                 if(mismatch > allowedMismatch) {
                     matched = false;
                     break;
@@ -131,7 +131,6 @@ bool AdapterTrimmer::trimBySequence(Read* r, FilterResult* fr, string& adapterse
         }
         return true;
     }
-
     return false;
 }
 

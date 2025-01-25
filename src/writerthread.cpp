@@ -40,14 +40,14 @@ void WriterThread::output(){
         mWriter1->write(mRingBuffer[mOutputCounter], mRingBufferSizes[mOutputCounter]);
         delete[] mRingBuffer[mOutputCounter];
         mRingBuffer[mOutputCounter] = NULL;
-        mOutputCounter++;
+        ++mOutputCounter;
     }
 }
 
 void  WriterThread::input(char* data, size_t size){
     mRingBuffer[mInputCounter] = data;
     mRingBufferSizes[mInputCounter] = size;
-    mInputCounter++;
+    ++mInputCounter;
 }
 
 void WriterThread::cleanup() {

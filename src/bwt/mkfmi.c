@@ -85,8 +85,7 @@ int main (int argc, char **argv) {
     fprintf(stderr,"Removing files with this command: %s\n",command);
     system(command);
     free(command);
-  }
-  else {
+  } else {
     strcpy(filename+l,".bwt");
     fprintf(stderr,"\n  !!  You can now delete files %s and ",filename);
     strcpy(filename+l,".sa");

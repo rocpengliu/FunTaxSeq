@@ -31,23 +31,27 @@ class BwtFmiDB {
 public:
     BwtFmiDB(Options * & opt);
     ~BwtFmiDB();
-    
+
     void free_BWT();
     void free_FMI(FMI*& fmi);
     void free_suffixArray(suffixArray*& sa);
-    void init(std::string db);
+    void init(char db);
 
     BWT * bwt;
     FMI * fmi;
     AlphabetStruct * astruct;
     SegParameters * blast_seg_params;
     double db_length;
-    bool TransSearch;
-    bool DNASearch;
+    bool transSearch;
+    bool dnaSearch;
+    bool hostSearch;
+    bool markerSearch;
     std::string fmiFile;
-    
+    void print();
+
 private:
     Options * mOptions;
+    std::string database;
 };
 
 class BwtFmiDBPair{
@@ -57,9 +61,14 @@ public:
     ~BwtFmiDBPair();
     bool transSearch;
     bool dnaSearch;
+    bool hostSearch;
+    bool markerSearch;
+
 public:
     BwtFmiDB* tBwtfmiDB;
     BwtFmiDB* dBwtfmiDB;
+    BwtFmiDB* hBwtfmiDB;
+    BwtFmiDB* mBwtfmiDB;
 
 private:
     Options * mOptions;

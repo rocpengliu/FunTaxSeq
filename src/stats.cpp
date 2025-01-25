@@ -272,7 +272,7 @@ void Stats::statRead(Read* r) {
             }
         }
     }
-    mReads++;
+    ++mReads;
 }
 
 int Stats::base2val(char base) {
@@ -541,13 +541,13 @@ void Stats::reportHtmlQuality(ofstream& ofs, string filteringType, string readNa
     if(!isLongRead()) {
         for(int i=0; i<mCycles; i++){
             x[total] = i+1;
-            total++;
+            ++total;
         }
     } else {
         const int fullSampling = 40;
         for(int i=0; i<fullSampling && i<mCycles; i++){
             x[total] = i+1;
-            total++;
+            ++total;
         }
         // down sampling if it's too long
         if(mCycles>fullSampling) {
@@ -557,12 +557,12 @@ void Stats::reportHtmlQuality(ofstream& ofs, string filteringType, string readNa
                 if(pos >= mCycles)
                     break;
                 x[total] = (int)pos;
-                total++;
+                ++total;
             }
             // make sure lsat one is contained
             if(x[total-1] != mCycles){
                 x[total] = mCycles;
-                total++;
+                ++total;
             }
         }
     }
@@ -616,13 +616,13 @@ void Stats::reportHtmlContents(ofstream& ofs, string filteringType, string readN
     if(!isLongRead()) {
         for(int i=0; i<mCycles; i++){
             x[total] = i+1;
-            total++;
+            ++total;
         }
     } else {
         const int fullSampling = 40;
         for(int i=0; i<fullSampling && i<mCycles; i++){
             x[total] = i+1;
-            total++;
+            ++total;
         }
         // down sampling if it's too long
         if(mCycles>fullSampling) {
@@ -632,12 +632,12 @@ void Stats::reportHtmlContents(ofstream& ofs, string filteringType, string readN
                 if(pos >= mCycles)
                     break;
                 x[total] = (int)pos;
-                total++;
+                ++total;
             }
             // make sure lsat one is contained
             if(x[total-1] != mCycles){
                 x[total] = mCycles;
-                total++;
+                ++total;
             }
         }
     }

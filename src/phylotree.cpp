@@ -540,6 +540,10 @@ void PhyloTree::readGeneAnno(std::queue<std::string>& geneAnnoQueue){
                 }
                 std::string line = geneAnnoQueue.front();
                 geneAnnoQueue.pop();
+                if(geneAnnoQueue.size() >= 100000 && geneAnnoQueue.size() % 100000 == 0){
+                    std::string msg = "gene anno remains: " + std::to_string(geneAnnoQueue.size());
+                    loginfo(msg, false);
+                }
                 lock.unlock();
                 if(line.empty())
                     continue;
@@ -590,6 +594,10 @@ void PhyloTree::readOrthAnno(std::queue<std::string>& orthAnnoQueue){
                 }
                 std::string line = orthAnnoQueue.front();
                 orthAnnoQueue.pop();
+                if(orthAnnoQueue.size() >= 100000 && orthAnnoQueue.size() % 100000 == 0){
+                    std::string msg = "ortholog remains: " + std::to_string(orthAnnoQueue.size());
+                    loginfo(msg, false);
+                }
                 lock.unlock();
                 if(line.empty())
                     continue;

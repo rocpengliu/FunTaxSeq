@@ -13,7 +13,7 @@ typedef struct {
   // Suffix array checkpoints
   IndexType ncheck;   // Number of checkpoints
   uchar *sa;          // Actual array holding SA checkpoints
-  int chpt_exp;       // Exponent of checkpoint distance
+  int chpt_exp;       // Exponent of checkpoint distance//5 for protein 2^5 = 32
   int nbytes;         // Number of bytes used per entry
   int sbits;          // Number of bits used for encoding sequence number
   int pbits;          // Number of bits used to encode position
@@ -57,8 +57,7 @@ static inline void suffixArray_decode_number(int *nseq, long *pos, long k, suffi
 /* FUNCTION PROTOTYPES BEGIN  ( by funcprototypes.pl ) */
 void suffixArray_make_hash(SEQstruct *base, suffixArray *s, int Hstep);
 suffixArray *init_suffixArray(SEQstruct *ss, int chpt_exp);
-void write_suffixArray_checkpoints(char **sa, IndexType start, IndexType length,
-				   suffixArray *s, FILE *sa_file);
+void write_suffixArray_checkpoints(char **sa, IndexType start, IndexType length, suffixArray *s, FILE *sa_file);
 void write_suffixArray_header(suffixArray *s, FILE *fp);
 suffixArray *read_suffixArray_header(FILE *fp);
 void read_suffixArray_body(suffixArray *s, FILE *fp);

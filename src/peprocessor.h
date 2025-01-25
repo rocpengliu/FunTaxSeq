@@ -24,7 +24,6 @@
 #include "overlapanalysis.h"
 #include "writerthread.h"
 #include "duplicate.h"
-#include "edlib.h"
 #include "fastqreader.h"
 #include "util.h"
 #include "adaptertrimmer.h"

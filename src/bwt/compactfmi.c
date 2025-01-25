@@ -66,29 +66,88 @@
 */
 
 
-static uchar tlcode[256];
+static uchar tlcode[256];//for protein
 static uchar tncode[256];
-static uchar dlcode[256];
+
+static uchar dlcode[256];//for dna
 static uchar dncode[256];
 
-static inline uchar fmi_decode_letter(uchar code, bool trans) { return (trans ? tlcode[code] : dlcode[code]);}
-static inline uchar fmi_decode_number(uchar code, bool trans) { return (trans ? tncode[code] : dncode[code]);}
+static uchar hlcode[256];//for host
+static uchar hncode[256];
 
+static uchar mlcode[256];//for marker gene, 16s its
+static uchar mncode[256];
 
-static void fmi_fill_codes(int alen, int *startLcode) {
+// static inline uchar fmi_decode_letter(uchar code, bool trans, bool dna) {
+//   return (trans ? tlcode[code] : (dna ? dlcode[code] : hlcode[code]));
+//   }
+// static inline uchar fmi_decode_number(uchar code, bool trans, bool dna) {
+//   return (trans ? tncode[code] : (dna ? dncode[code] : hncode[code]));
+//   }
+
+static inline uchar fmi_decode_letter(uchar code, char db) {
+  if(db == 'p'){
+    return tlcode[code];
+  } else if (db == 'd'){
+    return dlcode[code];
+  } else if (db == 'h'){
+    return hlcode[code];
+  } else {
+    return mlcode[code];
+  }
+}
+static inline uchar fmi_decode_number(uchar code, char db) {
+  if(db == 'p'){
+    return tncode[code];
+  } else if (db == 'd'){
+    return dncode[code];
+  } else if (db == 'h'){
+    return hncode[code];
+  } else {
+    return mncode[code];
+  }
+}
+
+static void fmi_fill_codes(int alen, int *startLcode, char db) {
   int a, n, k;
 
-  // for (a=0;a<alen+1;++a) fprintf(stderr,"fmi_fill_codes %d %d\n",a,startLcode[a]);
-  bool trans = (alen == 21);
-  //printf("fmi_fill_codes alen: %d\n", alen);
+  //for (a=0;a<alen+1;++a) fprintf(stderr,"fmi_fill_codes %d %d\n",a,startLcode[a]);
+  //bool trans = (alen == 21);
+  // printf("fmi_fill_codes alen: %d\n", alen);
   for (a=0;a<alen;++a) {
     n=0;
     for (k=startLcode[a]; k<startLcode[a+1]-1; ++k) {
-      trans ? (tlcode[k] = a) : (dlcode[k] = a);
-      trans ? (tncode[k] = n++) : (dncode[k] =n++);
+      if (db == 'p'){
+        tlcode[k] = a;
+        tncode[k] = n++;
+      } else if(db == 'd'){
+        dlcode[k] = a;
+        dncode[k] = n++;
+      } else if(db == 'h'){
+        hlcode[k] = a;
+        hncode[k] = n++;
+      } else {
+        mlcode[k] = a;
+        mncode[k] = n++;
+      }
+      // trans ? (tlcode[k] = a) : (dna ? (dlcode[k] = a) : (hlcode[k] = a));
+      // trans ? (tncode[k] = n++) : (dna ? (dncode[k] =n++) : (hncode[k] = n++));
     }
-    trans ? (tlcode[k] = a) : (dlcode[k] = a);
-    trans ? (tncode[k]=255) : (dncode[k] = 255);
+    if(db == 'p'){
+      tlcode[k] = a;
+      tncode[k] = 255;
+    } else if(db == 'd'){
+      dlcode[k] = a;
+      dncode[k] = 255;
+    } else if(db == 'h'){
+      hlcode[k] = a;
+      hncode[k] = 255;
+    } else {
+      mlcode[k] = a;
+      mncode[k] = 255;
+    }
+    // trans ? (tlcode[k] = a) : (dna ? (dlcode[k] = a) : (hlcode[k] = a));
+    // trans ? (tncode[k]=255) : (dna ? (dncode[k] = 255) : (hncode[k] == 255));
   }
 }
 
@@ -97,7 +156,6 @@ static void fmi_fill_codes(int alen, int *startLcode) {
 /* Encode letter c and number n as byte code */
 static inline uchar encode_letter_number(uchar c, int n, int *startLcode) {
   int max;
-
   max = startLcode[c+1] - startLcode[c]-1;
   if (n>max) n=max;
   return startLcode[c]+n;
@@ -159,14 +217,14 @@ static int *find_startLcode(const int alen, const uchar *bwt, const IndexType bl
 FMI *alloc_FMI(uchar *bwt, IndexType bwtlen, int alen) {
   FMI *f = alloc_FMI_common(bwt, bwtlen, alen, sizeof(ushort));
   f->startLcode = find_startLcode(alen, bwt, bwtlen);
-  fmi_fill_codes(alen,f->startLcode);
+  fmi_fill_codes(alen,f->startLcode, 'p');//because this func is called when building a fmi, so p or d or h has no effect.
   return f;
 }
 
 
 
 
-FMI *read_fmi(FILE *fp) {
+FMI *read_fmi(FILE *fp, char db) {
   //printf("starting to read_fmi_common!\n");
   FMI *f = read_fmi_common(sizeof(ushort), fp);
   //printf("f->alen in read_fmi1 is %d\n", f->alen);
@@ -178,8 +236,9 @@ FMI *read_fmi(FILE *fp) {
   //printf("reading startLcode completed!\n");
   //printf("starting to fmi_fill_codes\n");
   //printf("f->alen in read_fmi2 is %d\n", f->alen);
-  fmi_fill_codes(f->alen, f->startLcode);
-  //printf("fmi_fill_codes completed!\n");
+  fmi_fill_codes(f->alen, f->startLcode, db);
+  //printf("f->startLcode is %d\n", *(f->startLcode));
+  // printf("fmi_fill_codes completed!\n");
   return f;
 }
 
@@ -211,16 +270,16 @@ void write_fmi(const FMI *f, FILE *fp) {
    will count in order to return the correct FMI value
    Note that it return the number*direction (negative for forward search)
 */
-static inline int fmi_bwt2number(const uchar c, uchar *bwt, const int direction, bool trans) {
+static inline int fmi_bwt2number(const uchar c, uchar *bwt, const int direction, char db) {
   int n, k=0;
 
   //printf("fmi_bwt2number alen: %d\n", trans);
   /* Search if n==255  */
-  while ( ( n = fmi_decode_number(*bwt, trans)) ==255 ) {
+  while ( ( n = fmi_decode_number(*bwt, db)) ==255 ) {
     k += 1;
     /* Find next letter equal to c */
     bwt+=direction;
-    while ( fmi_decode_letter(*bwt, trans) != c) bwt+=direction;
+    while ( fmi_decode_letter(*bwt, db) != c) bwt+=direction;
   }
 
   if (direction <0) return n+k;
@@ -257,11 +316,11 @@ static inline int fmi_chpt_difference(FMI *f, IndexType k, uchar c, int directio
   Returns NULL if letter is NOT found
 */
 static inline uchar *find_closest_letter_with_bound(const uchar ct, uchar *bwt,
-				       const int dir, const uchar *bound, bool trans) {
+				       const int dir, const uchar *bound, char db) {
     
     //printf("find_closest_letter_with_bound alen: %d\n", trans);
    
-  while ( ct != fmi_decode_letter(*bwt, trans)) {
+  while ( ct != fmi_decode_letter(*bwt, db)) {
     if (bwt == bound) { return NULL; }
     bwt += dir;
   }
@@ -277,16 +336,16 @@ static inline uchar *find_closest_letter_with_bound(const uchar ct, uchar *bwt,
    It is possible to optimize this function by using nleft as in FMindexAll
 
 */
-IndexType FMindex(FMI *f, uchar ct, IndexType k) {
+IndexType FMindex(FMI *f, uchar ct, IndexType k, char db) {
   uchar c, *bwt, *bwtstop;
   int direction;
   IndexType fmi, delta=0;
 
   //printf("FMindex alen: %d\n", f->alen);
-  bool trans = (f->alen == 21);
-  
+  //bool trans = (f->alen == 21);
+
   bwt = f->bwt+k;
-  if (k<f->bwtlen) c = fmi_decode_letter(*bwt, trans);
+  if (k<f->bwtlen) c = fmi_decode_letter(*bwt, db);
   else c=255;
   direction=fmi_direction(k);
 
@@ -301,23 +360,23 @@ IndexType FMindex(FMI *f, uchar ct, IndexType k) {
     else {
       /* Find the boundary for the search when direction = +1 */
       if ( direction>0 ) {
-	bwtstop += size2;
-	if (bwtstop>=f->bwt + f->bwtlen) {
-	  bwtstop=f->bwt + f->bwtlen;
-	  if (k>=f->bwtlen) bwt=bwtstop-1;
-	}
-	bwtstop -=1;
+        bwtstop += size2;
+        if (bwtstop>=f->bwt + f->bwtlen) {
+          bwtstop=f->bwt + f->bwtlen;
+          if (k>=f->bwtlen) bwt=bwtstop-1;
+        }
+        bwtstop -=1;
       }
       /* You have to add one to the fmi value if direction < 0 AND ct!=bwt[k] AND a letter is found */
       else delta=1;
 
       if (bwt==bwtstop) bwt=NULL;
-      else bwt = find_closest_letter_with_bound(ct, bwt+direction, direction, bwtstop, trans);
+      else bwt = find_closest_letter_with_bound(ct, bwt+direction, direction, bwtstop, db);
     }
   }
 
   /* If letter is encountered, add proper value */
-  if (bwt) fmi += delta + fmi_bwt2number(ct, bwt, direction, trans);
+  if (bwt) fmi += delta + fmi_bwt2number(ct, bwt, direction, db);
 
   return fmi;
 }
@@ -325,16 +384,16 @@ IndexType FMindex(FMI *f, uchar ct, IndexType k) {
 
 
 /* Return the FMI value for the BWT letter at position k */
-static IndexType FMindexHere(const FMI *f, uchar *bwt, const uchar c, const IndexType k) {
+static IndexType FMindexHere(const FMI *f, uchar *bwt, const uchar c, const IndexType k, char db) {
   int n, direction;
 
   //printf("FMindexHere alen: %d\n", f->alen);
-  bool trans = (f->alen == 21);
+  //bool trans = (f->alen == 21);
   // Is k above or below midpoint of index2?
   direction=fmi_direction(k);
 
   // Get number
-  n = fmi_bwt2number(c, bwt, direction, trans);
+  n = fmi_bwt2number(c, bwt, direction, db);
 
   return n + fmi_chpt_value_with_dir(f, k, c, direction);
 }
@@ -342,19 +401,19 @@ static IndexType FMindexHere(const FMI *f, uchar *bwt, const uchar c, const Inde
 
 
 /* Return the FMI value for the BWT letter at position k */
-IndexType FMindexCurrent(FMI *f, uchar *c, IndexType k) {
+IndexType FMindexCurrent(FMI *f, uchar *c, IndexType k, char db) {
   uchar *bwt;
   int direction;
 
   //printf("FMindexCurrent alen: %d\n", f->alen);
  // printf("debug: FMindexCurrent a: n: %d; direction: %d; c: %d; k: %ld; trans: %d\n", n, direction, (int)c, k, f->alen);
-  bool trans = (f->alen == 21);
+  //bool trans = (f->alen == 21);
   // Read letter
   bwt = f->bwt + k;
   //printf("debug: FMindexCurrent a:  direction: %d; c: %d; k: %ld; trans: %d\n", direction, (int)c, k, f->alen);
-  *c = fmi_decode_letter(*bwt, trans);
+  *c = fmi_decode_letter(*bwt, db);
 //printf("debug: FMindexCurrent a: direction: %d; c: %d; k: %ld; trans: %d\n", direction, (int)c, k, f->alen);
-  return FMindexHere(f, bwt,*c,k);
+  return FMindexHere(f, bwt,*c,k, db);
 }
 
 
@@ -364,14 +423,14 @@ IndexType FMindexCurrent(FMI *f, uchar *c, IndexType k) {
    and return the fmi value.
    A result (fmia) array of length alen must be supplied (not checked!)
 */
-void FMindexAll(FMI *f, IndexType k, IndexType *fmia) {
+void FMindexAll(FMI *f, IndexType k, IndexType *fmia) {//dummy function
   uchar c, *bwt;
   int i, n, nleft, direction;
   IndexType fmi;
 
   //printf("FMindexAll alen: %d\n", f->alen);
   
-  bool trans = (f->alen == 21);
+  //bool trans = (f->alen == 21);
   bwt = f->bwt+k;
   direction=fmi_direction(k);
   for (i=0;i<f->alen;++i) fmia[i] = size2; // If letter has not been found, count = size2
@@ -386,12 +445,12 @@ void FMindexAll(FMI *f, IndexType k, IndexType *fmia) {
   if ( direction>0 && nleft > f->bwtlen-k) nleft = f->bwtlen-k;
 
   while ( nleft>0 ) {
-    c = fmi_decode_letter(*bwt, trans);
+    c = fmi_decode_letter(*bwt, 'p');
     if (c==0) break;
     // k+=direction;  // only for debug
     // DPRINT("nleft=%d k=%ld dist chkpt=%d c=%d fmi=%ld ",nleft,k,(int)(k-(k&round2)),c,fmia[c] );
     if ( fmia[c]>=size2 ) {
-      n = fmi_decode_number(*bwt, trans);
+      n = fmi_decode_number(*bwt, 'p');
       if (n<255) {           // Letter count found
 	n += fmia[c]-size2+1;
 	if (direction<0) fmia[c] = n;
@@ -470,7 +529,6 @@ void FMIrecode(FMI *fmi) {
 */
 FMI *makeIndex(uchar *bwt, long bwtlen, int alen) {
   FMI *fmi;
-
   fmi = makeIndex_common(bwt, bwtlen, alen);
   FMIrecode(fmi);
   return fmi;

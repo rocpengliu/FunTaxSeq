@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
     cmd.add<int>("thread", 'w', "worker thread number, default is 4", false, 4);
     cmd.add("debug", 'd', "If specified, print debug");
     cmd.add("verbose", 'V', "output verbose");
-    
+
     cmd.parse_check(argc, argv);
     if (argc == 1) {
         cerr << cmd.usage() << endl;

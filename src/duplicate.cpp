@@ -67,70 +67,55 @@ void Duplicate::addRecord(uint32 key, uint64 kmer32, uint8 gc) {
 void Duplicate::statRead(Read* r) {
     if(r->length() < 32)
         return;
-
     int start1 = 0;
     int start2 = max(0, r->length() - 32 - 5);
-
     const char* data = r->mSeq.mStr.c_str();
     bool valid = true;
-
     uint64 ret = seq2int(data, start1, mKeyLenInBase, valid);
     uint32 key = (uint32)ret;
     if(!valid)
         return;
-
     uint64 kmer32 = seq2int(data, start2, 32, valid);
     if(!valid)
         return;
-
     int gc = 0;
-
     // not calculated
     if(mCounts[key] == 0) {
         for(int i=0; i<r->length(); i++) {
             if(data[i] == 'C' || data[i] == 'T')
-                gc++;
+                ++gc;
         }
     }
-
     gc = round(255.0 * (double) gc / (double) r->length());
-
     addRecord(key, kmer32, (uint8)gc);
 }
 
 void Duplicate::statPair(Read* r1, Read* r2) {
     if(r1->length() < 32 || r2->length() < 32)
         return;
-
     const char* data1 = r1->mSeq.mStr.c_str();
     const char* data2 = r2->mSeq.mStr.c_str();
     bool valid = true;
-
     uint64 ret = seq2int(data1, 0, mKeyLenInBase, valid);
     uint32 key = (uint32)ret;
     if(!valid)
         return;
-
     uint64 kmer32 = seq2int(data2, 0, 32, valid);
     if(!valid)
         return;
-
     int gc = 0;
-
     // not calculated
     if(mCounts[key] == 0) {
         for(int i=0; i<r1->length(); i++) {
             if(data1[i] == 'G' || data1[i] == 'C')
-                gc++;
+                ++gc;
         }
         for(int i=0; i<r2->length(); i++) {
             if(data2[i] == 'G' || data2[i] == 'C')
-                gc++;
+                ++gc;
         }
     }
-
     gc = round(255.0 * (double) gc / (double)( r1->length() + r2->length()));
-
     addRecord(key, kmer32, gc);
 }
 

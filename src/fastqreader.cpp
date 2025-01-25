@@ -93,15 +93,13 @@ void FastqReader::clearLineBreaks(char* line) {
 
 string FastqReader::getLine(){
 	static int c=0;
-	c++;
+	++c;
 	int copied = 0;
-
 	int start = mBufUsedLen;
 	int end = start;
-
 	while(end < mBufDataLen) {
 		if(mBuf[end] != '\r' && mBuf[end] != '\n')
-			end++;
+			++end;
 		else
 			break;
 	}
@@ -110,13 +108,11 @@ string FastqReader::getLine(){
 	if(end < mBufDataLen || mBufDataLen < FQ_BUF_SIZE) {
 		int len = end - start;
 		string line(mBuf+start, len);
-
 		// skip \n or \r
-		end++;
+		++end;
 		// handle \r\n
 		if(end < mBufDataLen-1 && mBuf[end-1]=='\r' && mBuf[end] == '\n')
-			end++;
-
+			++end;
 		mBufUsedLen = end;
 
 		return line;
@@ -131,7 +127,7 @@ string FastqReader::getLine(){
 		end = 0;
 		while(end < mBufDataLen) {
 			if(mBuf[end] != '\r' && mBuf[end] != '\n')
-				end++;
+				++end;
 			else
 				break;
 		}
@@ -139,13 +135,11 @@ string FastqReader::getLine(){
 		if(end < mBufDataLen || mBufDataLen < FQ_BUF_SIZE) {
 			int len = end - start;
 			str.append(mBuf+start, len);
-
 			// skip \n or \r
-			end++;
+			++end;
 			// handle \r\n
 			if(end < mBufDataLen-1 && mBuf[end] == '\n')
-				end++;
-
+				++end;
 			mBufUsedLen = end;
 			return str;
 		}

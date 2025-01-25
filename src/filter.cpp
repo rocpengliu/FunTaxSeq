@@ -25,18 +25,14 @@ int Filter::passFilter(Read* r) {
     if(mOptions->qualfilter.enabled || mOptions->lengthFilter.enabled) {
         const char* seqstr = r->mSeq.mStr.c_str();
         const char* qualstr = r->mQuality.c_str();
-
         for(int i=0; i<rlen; i++) {
             char base = seqstr[i];
             char qual = qualstr[i];
-
             totalQual += qual - 33;
-
             if(qual < mOptions->qualfilter.qualifiedQual)
-                lowQualNum ++;
-
+                ++lowQualNum;
             if(base == 'N')
-                nBaseNum++;
+                ++nBaseNum;
         }
     }
 
@@ -72,7 +68,7 @@ bool Filter::passLowComplexityFilter(Read* r) {
     const char* data = r->mSeq.mStr.c_str();
     for(int i=0; i<length-1; i++) {
         if(data[i] != data[i+1])
-            diff++;
+            ++diff;
     }
     if( (double)diff/(double)(length-1) >= mOptions->complexityFilter.threshold )
         return true;
@@ -134,7 +130,7 @@ Read* Filter::trimAndCut(Read* r, int front, int tail, int& frontTrimmed) {
         if(s >0 )
             s = s+w-1;
         while(s<l && seq[s] == 'N')
-            s++;
+            ++s;
         front = s;
         rlen = l - front - tail;
     }
@@ -170,7 +166,7 @@ Read* Filter::trimAndCut(Read* r, int front, int tail, int& frontTrimmed) {
         if(foundLowQualWindow ) {
             // keep the good bases in the window
             while(s<l-1 && qualstr[s]>=33 + mOptions->qualityCut.qualityRight)
-                s++;
+                ++s;
             rlen = s - front;
         }
     }
@@ -224,7 +220,7 @@ bool Filter::match(vector<string>& list, string target, int threshold) {
         int len2 = target.length();
         for(int s=0; s<len1 && s<len2; s++) {
             if(list[i][s] != target[s]) {
-                diff++;
+                ++diff;
                 if(diff>threshold)
                     break;
             }

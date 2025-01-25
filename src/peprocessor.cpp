@@ -104,7 +104,7 @@ bool PairEndProcessor::process(){
     if(mFailedWriter){
         failedWriterThread = new std::thread(std::bind(&PairEndProcessor::writeTask, this, mFailedWriter));
     }
-    
+
     producer.join();
     for(int t=0; t<mOptions->thread; t++){
         threads[t]->join();
@@ -118,7 +118,7 @@ bool PairEndProcessor::process(){
         failedWriterThread->join();
 
     destroyPackRepository();
-    
+
     if(mOptions->verbose)
         loginfo("start to generate reports\n");
     // merge stats and filter results
@@ -165,7 +165,7 @@ bool PairEndProcessor::process(){
     cerr << endl;
     cerr << "Insert size peak (evaluated by paired-end reads): " << peakInsertSize << endl;
     // make JSON report
-    
+
     JsonReporter jr(mOptions);
     jr.setDupHist(dupHist, dupMeanGC, dupRate);
     jr.setInsertHist(mInsertSizeHist, peakInsertSize);
@@ -225,7 +225,11 @@ bool PairEndProcessor::processPairEnd(ReadPairPack* pack, ThreadConfig* config){
     string locus = "";
     string failedOutput;
     int readPassed = 0;
-    int numMappedReads = 0;
+    //int numMappedReads = 0;
+    int dnaReads = 0;
+    int proReads = 0;
+    int hostReads = 0;
+    int markerReads = 0;
     for(int p=0;p<pack->count;p++){
         ReadPair* pair = pack->data[p];
         Read* or1 = pair->mLeft;
@@ -310,17 +314,17 @@ bool PairEndProcessor::processPairEnd(ReadPairPack* pack, ThreadConfig* config){
                     Read* merged = OverlapAnalysis::merge(r1, r2, ov);
                     int result = mFilter->passFilter(merged);
                     if (result == PASS_FILTER) {
-                        locus = *(config->getHomoSearcher()->homoSearch(merged));
+                        locus = *(config->getHomoSearcher()->homoSearch(merged, dnaReads, proReads, hostReads, markerReads));
                     } else {
-                        locus = *(config->getHomoSearcher()->homoSearch(r1, r2));
+                        locus = *(config->getHomoSearcher()->homoSearch(r1, r2, dnaReads, proReads, hostReads, markerReads));
                     }
                     delete merged;
                 } else {
-                    locus = *(config->getHomoSearcher()->homoSearch(r1, r2));
+                    locus = *(config->getHomoSearcher()->homoSearch(r1, r2, dnaReads, proReads, hostReads, markerReads));
                 }
                 if (!locus.empty()) {
                     failedOutput += (locus + "\n");
-                    numMappedReads++;
+                    //numMappedReads++;
                 } else {
                     outstr1 += r1->toString();
                     outstr2 += r2->toString();
@@ -330,7 +334,7 @@ bool PairEndProcessor::processPairEnd(ReadPairPack* pack, ThreadConfig* config){
             // stats the read after filtering
             config->getPostStats1()->statRead(r1);
             config->getPostStats2()->statRead(r2);
-            readPassed++;
+            ++readPassed;
         }
 
         delete pair; pair = NULL;
@@ -354,9 +358,18 @@ bool PairEndProcessor::processPairEnd(ReadPairPack* pack, ThreadConfig* config){
 
     // if(mOptions->debug) cCout("consuming reads pack end");
     mOutputMtx.lock();
-    mOptions->mHomoSearchOptions->mappedReads += numMappedReads;
-    if(mOptions->mHomoSearchOptions->mappedReads % 1000 == 0){
-        cerr << "mapped " << (mOptions->mHomoSearchOptions->mappedReads / 1000) << " K reads" << "\n";
+    mOptions->mHomoSearchOptions->dnaReads += dnaReads;
+    mOptions->mHomoSearchOptions->proReads += proReads;
+    mOptions->mHomoSearchOptions->hostReads += hostReads;
+    mOptions->mHomoSearchOptions->markerReads += markerReads;
+    mOptions->mHomoSearchOptions->mappedReads += (dnaReads + proReads + hostReads + markerReads);
+    if (mOptions->mHomoSearchOptions->mappedReads % 1000 == 0){
+        cerr << "mapped " << (mOptions->mHomoSearchOptions->mappedReads / 1000) << "K reads("
+            << (mOptions->mHomoSearchOptions->hostReads / 1000) << "K h|"
+            << (mOptions->mHomoSearchOptions->markerReads / 1000) << "K m|"
+            << (mOptions->mHomoSearchOptions->dnaReads / 1000) << "K d|"
+            << (mOptions->mHomoSearchOptions->proReads / 1000) << "K p"
+            << ")\n";
     }
     // normal output by left/right writer thread
     if(mRightWriter && mLeftWriter && (!outstr1.empty() || !outstr2.empty())) {
@@ -372,8 +385,8 @@ bool PairEndProcessor::processPairEnd(ReadPairPack* pack, ThreadConfig* config){
         char* ldata = new char[singleOutput.size()];
         memcpy(ldata, singleOutput.c_str(), singleOutput.size());
         mLeftWriter->input(ldata, singleOutput.size());
-    } 
-    
+    }
+
     if(mFailedWriter && !failedOutput.empty()){
         char* fdata = new char[failedOutput.size()];
         memcpy(fdata, failedOutput.c_str(), failedOutput.size());
@@ -385,7 +398,7 @@ bool PairEndProcessor::processPairEnd(ReadPairPack* pack, ThreadConfig* config){
     delete pack;
     return true;
 }
-    
+
 void PairEndProcessor::statInsertSize(Read* r1, Read* r2, OverlapResult& ov, int frontTrimmed1, int frontTrimmed2) {
     int isize = mOptions->insertSizeMax;
     if(ov.overlapped) {
@@ -470,7 +483,7 @@ void PairEndProcessor::producerTask(){
             break;
         }
         data[count] = read;
-        count++;
+        ++count;
         // configured to process only first N reads
         if(mOptions->readsToProcess >0 && count + readNum >= mOptions->readsToProcess) {
             needToBreak = true;
@@ -491,7 +504,7 @@ void PairEndProcessor::producerTask(){
             memset(data, 0, sizeof(ReadPair*)*PACK_SIZE);
             // if the consumer is far behind this producer, sleep and wait to limit memory usage
             while(mRepo.writePos - mRepo.readPos > PACK_IN_MEM_LIMIT){
-                slept++;
+                ++slept;
                 usleep(1000);
             }
             readNum += count;
@@ -499,7 +512,7 @@ void PairEndProcessor::producerTask(){
             // check this only when necessary
             if(readNum % (PACK_SIZE * PACK_IN_MEM_LIMIT) == 0 && mLeftWriter) {
                 while( (mLeftWriter && mLeftWriter->bufferLength() > PACK_IN_MEM_LIMIT) || (mRightWriter && mRightWriter->bufferLength() > PACK_IN_MEM_LIMIT) || (mFailedWriter && mFailedWriter->bufferLength() > PACK_IN_MEM_LIMIT)){
-                    slept++;
+                    ++slept;
                     usleep(1000);
                 }
             }
@@ -530,7 +543,7 @@ void PairEndProcessor::producerTask(){
 void PairEndProcessor::consumerTask(ThreadConfig* config){
     while(true) {
         if(config->canBeStopped()){
-            mFinishedThreads++;
+            ++mFinishedThreads;
             break;
         }
         while(mRepo.writePos <= mRepo.readPos) {
@@ -540,7 +553,7 @@ void PairEndProcessor::consumerTask(ThreadConfig* config){
         }
         //std::unique_lock<std::mutex> lock(mRepo.readCounterMtx);
         if(mProduceFinished && mRepo.writePos == mRepo.readPos){
-            mFinishedThreads++;
+            ++mFinishedThreads;
             if(mOptions->verbose) {
                 string msg = "thread " + to_string(config->getThreadId() + 1) + " data processing completed";
                 loginfo(msg);
