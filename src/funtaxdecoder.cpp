@@ -1,4 +1,5 @@
 #include "funtaxdecoder.h"
+#include <chrono> 
 
 FunTaxDecoder::FunTaxDecoder(PhyloOptions *& mOptions){
     this->mOptions = mOptions;
@@ -45,8 +46,10 @@ void FunTaxDecoder::readFunTax(){
     int numThread = std::min(mOptions->thread, static_cast<int>(mOptions->samples.size()));
     std::thread consumerThreads[numThread];
     if(mOptions->verbose) loginfo("start to read");
+    int sample_id = 1;
+    int tot_samples = mOptions->samples.size();
     for (int i = 0; i < numThread; ++i){
-        consumerThreads[i] = std::thread([this, &samQueue, &i](){
+        consumerThreads[i] = std::thread([this, &samQueue, &sample_id, &tot_samples, &i](){
             std::vector<std::string> split_vec;
             split_vec.reserve(3);
             std::string id = "";
@@ -87,8 +90,9 @@ void FunTaxDecoder::readFunTax(){
                 std::unique_lock<std::mutex> lock2(mtxTreW);
                 totFTMap[removeExtension(basename(sample), "_funtax.txt.gz")] = tmpMap;
                 ftSet.insert(tmpSet.begin(), tmpSet.end());
+                ++sample_id;
                 lock2.unlock();
-                loginfo("File " + removeExtension(basename(sample), "_funtax.txt.gz") + " readed");
+                loginfo("File " + std::to_string(sample_id) + "/" + std::to_string(tot_samples) + " " + removeExtension(basename(sample), "_funtax.txt.gz") + " readed");
             }
         });
     }
@@ -106,9 +110,10 @@ void FunTaxDecoder::decode(){
         ftQueue.push(itm);
     }
     loginfo("Start to decode the funtax ids");
+    auto startTime = std::chrono::high_resolution_clock::now();
     uint32 numIds = ftQueue.size();
     for(int i = 0; i < numThreads; ++i){
-        consumerThreads[i] = std::thread([this, &i, &numIds](){
+        consumerThreads[i] = std::thread([this, &i, &numIds, &startTime](){
             std::unordered_set<std::string> locSet;
             std::unordered_map<std::string, std::pair<std::string, std::string>> mFunTaxPairSub;
             while(true){
@@ -119,8 +124,23 @@ void FunTaxDecoder::decode(){
                 }
                 std::string ft = ftQueue.front();
                 ftQueue.pop();
-                if((numIds - ftQueue.size()) % 1000 == 0)
-                    loginfo("decoded " + std::to_string((numIds - ftQueue.size())/1000) + "k funtax ids");
+                size_t decoded = numIds - ftQueue.size();
+                if (decoded % 1000 == 0){
+                    auto now = std::chrono::high_resolution_clock::now();
+                    std::chrono::duration<double> elapsed = now - startTime;
+                    double progress = static_cast<double>(decoded) / numIds;
+                    double timeElapsed = elapsed.count();
+                    double estimatedTotalTime = timeElapsed / progress;
+                    double remainingTime = estimatedTotalTime - timeElapsed;
+                    int remainingHours = static_cast<int>(remainingTime / 3600);
+                    int remainingMinutes = static_cast<int>((remainingTime - remainingHours * 3600) / 60);
+                    int remainingSeconds = static_cast<int>(remainingTime) % 60;
+                    loginfo("decoded " + std::to_string(decoded / 1000) + "k (" +
+                            std::to_string(getPer(decoded, numIds)) + "%) funtax ids. Estimated remaining time: " +
+                            std::to_string(remainingHours) + "h " +
+                            std::to_string(remainingMinutes) + "m " +
+                            std::to_string(remainingSeconds) + "s");
+                }
                 lock.unlock();
                 if(ft.empty())
                     continue;
