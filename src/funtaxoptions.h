@@ -33,6 +33,8 @@ class PhyloOptions{
         std::string tTree;
         std::string geneAno;
         std::string orthAno;
+        std::string geneDNADup;
+        std::string geneProDup;
         std::string sampleDir;
         std::string outTree;
         bool verbose;
@@ -65,7 +67,7 @@ class FunTaxNode{
 
     public:
         tree<std::string*>::leaf_iterator taxLoc;
-        tree<std::string *>::leaf_iterator funLoc;
+        tree<std::string*>::leaf_iterator funLoc;
 };
 
 class GeneNode{
@@ -82,8 +84,8 @@ class GeneNode{
         std::string par;
         std::string taxon;
         std::string anno;
-        std::set<uint16> koSet;
-        std::set<uint32> goSet;
+        std::set<std::string> koSet;
+        std::set<std::string> goSet;
 };
 
 class SimGeneNode{
@@ -96,8 +98,8 @@ class SimGeneNode{
     public:
         std::string id;
         std::string anno;
-        std::set<uint16> koSet;
-        std::set<uint32> goSet;
+        std::set<std::string> koSet;
+        std::set<std::string> goSet;
 };
 
 #endif /* FUNTAXOPTIONS_H */

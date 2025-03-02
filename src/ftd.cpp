@@ -54,8 +54,10 @@ int main(int argc, char* argv[]) {
     opt->outFun = opt->prefix + "_func_abundance.txt";
     opt->gTree = joinpath(opt->db, "ogs_tree.tre");
     opt->tTree = joinpath(opt->db, "taxon_tree.tre");
-    opt->geneAno = joinpath(opt->db, "gene_leaf_par_anno_go_ko_clean.txt.gz");
-    opt->orthAno = joinpath(opt->db, "all_orth_anno_go_ko_clean.txt.gz");
+    opt->geneAno = joinpath(opt->db, "genes_anno.tab.gz");
+    opt->orthAno = joinpath(opt->db, "ogs_anno.tab.gz");
+    opt->geneDNADup = joinpath(opt->db, "dna_duplicated.tab.gz");
+    opt->geneProDup = joinpath(opt->db, "pro_duplicated.tab.gz");
     opt->verbose = cmd.exist("verbose");
     opt->debug = cmd.exist("debug");
     opt->thread = cmd.get<int>("thread");

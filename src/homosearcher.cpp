@@ -59,13 +59,20 @@ HomoSearcher::~HomoSearcher() {
     }
 }
 
-void HomoSearcher::postProcess(){
+void HomoSearcher::postProcess(char type){
     if (!match_ids.empty()) {
         for(const auto & match : match_ids){
             if(match != nullptr){
                 //cCout("match id is", match, 'b');
                 locus->append(match);
                 locus->append(";");
+                if(type == 'd'){
+
+                } else if(type == 'p'){
+
+                } else {
+
+                }
             }
         }
     }
@@ -80,7 +87,7 @@ std::string* HomoSearcher::homoSearch(Read* & item, int & dnaReads, int & proRea
             if(!match_ids.empty()){
                 ++hostReads;
                 locus->append(trimName2(item->mName) + "\thost\t");
-                postProcess();
+                postProcess('h');
                 return locus;
             }
         }
@@ -92,7 +99,7 @@ std::string* HomoSearcher::homoSearch(Read* & item, int & dnaReads, int & proRea
             if(!match_ids.empty()){
                 ++markerReads;
                 locus->append(trimName2(item->mName) + "\tmarker\t");
-                postProcess();
+                postProcess('m');
                 return locus;
             }
         }
@@ -104,7 +111,7 @@ std::string* HomoSearcher::homoSearch(Read* & item, int & dnaReads, int & proRea
             if (!match_ids.empty()){
                 ++dnaReads;
                 locus->append(trimName2(item->mName) + "\tdna\t");
-                postProcess();
+                postProcess('d');
                 return locus;
             }
         }
@@ -116,7 +123,7 @@ std::string* HomoSearcher::homoSearch(Read* & item, int & dnaReads, int & proRea
             if(!match_ids.empty()){
                 ++proReads;
                 locus->append(trimName2(item->mName) + "\tpro\t");
-                postProcess();
+                postProcess('m');
                 return locus;
             }
         }
@@ -140,7 +147,7 @@ std::string* HomoSearcher::homoSearch(Read* & item1, Read* & item2, int & dnaRea
         if(!match_ids.empty()){
             ++hostReads;
             locus->append(trimName2(item1->mName) + "\thost\t");
-            postProcess();
+            postProcess('h');
             return locus;
         }
     }
@@ -157,7 +164,7 @@ std::string* HomoSearcher::homoSearch(Read* & item1, Read* & item2, int & dnaRea
         if(!match_ids.empty()){
             ++markerReads;
             locus->append(trimName2(item1->mName) + "\tmarker\t");
-            postProcess();
+            postProcess('m');
             return locus;
         }
     }
@@ -174,7 +181,7 @@ std::string* HomoSearcher::homoSearch(Read* & item1, Read* & item2, int & dnaRea
         if(!match_ids.empty()){
             ++dnaReads;
             locus->append(trimName2(item1->mName) + "\tdna\t");
-            postProcess();
+            postProcess('d');
             return locus;
         }
     }
@@ -191,7 +198,7 @@ std::string* HomoSearcher::homoSearch(Read* & item1, Read* & item2, int & dnaRea
         if(!match_ids.empty()){
             ++proReads;
             locus->append(trimName2(item1->mName) + "\tpro\t");
-            postProcess();
+            postProcess('p');
             return locus;
         }
     }

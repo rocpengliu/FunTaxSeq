@@ -35,18 +35,21 @@ public:
     //tree<std::string*>* geneTree;
     std::unordered_map<std::string, GeneNode*> geneAnoMap;
     std::unordered_map<std::string, GeneNode*> orthAnoMap;
+    std::unordered_map<std::string, std::string> geneDNADupMap;
+    std::unordered_map<std::string, std::string> geneProDupMap;
     std::shared_ptr<tree<std::string*>> taxonTree;
     //std::shared_ptr<tree<uint32*>> taxonTree;
     std::shared_ptr<tree<std::string*>> geneTree;
     std::shared_ptr<tree<SimGeneNode*>> geneNodeTree;
     
 private:
-    const int buffer_size = 8192;
+    const int buffer_size = 16384;
     void init();
     void printParKid(std::string tre);
     std::queue<std::string> readGZ(std::string & fl);
     void readGeneAnno(std::queue<std::string>& geneAnnoQueue);
     void readOrthAnno(std::queue<std::string>& orthAnnoQueue);
+    void readGeneDup(std::queue<std::string>& geneDupQueue, char type);
     void populateGeneTre();
     // tree<std::string*>* buildTreeLoopPtr(std::string* str);
     // tree<std::string*>* buildTreePtr(std::queue<std::string> & linQue, int numThreads);

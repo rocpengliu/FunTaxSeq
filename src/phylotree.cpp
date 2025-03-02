@@ -7,6 +7,8 @@ PhyloTree::PhyloTree(PhyloOptions *& mOptions) {
     taxonTree = nullptr;
     geneAnoMap.clear();
     orthAnoMap.clear();
+    geneDNADupMap.clear();
+    geneProDupMap.clear();
     init();
 }
 
@@ -120,14 +122,33 @@ void PhyloTree::init(){
     std::thread readOrth = std::thread([this, &orthAnnoQueue]{
        orthAnnoQueue = readGZ(mOptions->orthAno);
     });
+
+    std::queue<std::string> geneDNADupQueue;
+    std::thread geneDNADup = std::thread([this, &geneDNADupQueue]{
+        geneDNADupQueue = readGZ(mOptions->geneDNADup);
+    });
+
+    std::queue<std::string> geneProDupQueue;
+    std::thread geneProDup = std::thread([this, &geneProDupQueue]{
+        geneProDupQueue = readGZ(mOptions->geneProDup);
+    });
+
     if(readGeno.joinable()){
         readGeno.join();
     }
     if(readOrth.joinable()){
         readOrth.join();
     }
+    if(geneDNADup.joinable()){
+        geneDNADup.join();
+    }
+    if(geneProDup.joinable()){
+        geneProDup.join();
+    }
     readGeneAnno(geneAnnoQueue);
     readOrthAnno(orthAnnoQueue);
+    readGeneDup(geneDNADupQueue, 'd');
+    readGeneDup(geneProDupQueue, 'p');
     if (mOptions->verbose)
         loginfo("start to build taxon tree!");
     taxonTree = buildTreePtr(mOptions->tTree);
@@ -491,6 +512,7 @@ void PhyloTree::populateGeneTre(){
 
     //delete the orthmap to save memeory
 }
+
 void PhyloTree::printParKid(std::string tre){
     if(tre == "taxon"){
 
@@ -556,10 +578,10 @@ void PhyloTree::readGeneAnno(std::queue<std::string>& geneAnnoQueue){
                     tmp->taxon = strVec[2];
                     tmp->anno = strVec[3];
                     if(strVec[4] != "0"){
-                        tmp->goSet = splitStrInt<std::set, uint32>(strVec[4]);
+                        tmp->goSet = splitStrInt<std::set, std::string>(strVec[4]);
                     }
                     if (strVec[5] != "0"){
-                         tmp->koSet = splitStrInt<std::set, uint16>(strVec[5]);
+                         tmp->koSet = splitStrInt<std::set, std::string>(strVec[5]);
                     }
                     std::unique_lock<std::mutex> lock2(mtxTreW);
                     geneAnoMap[strVec[0]] = tmp;
@@ -610,10 +632,10 @@ void PhyloTree::readOrthAnno(std::queue<std::string>& orthAnnoQueue){
                     tmp->taxon = strVec[2];
                     tmp->anno = strVec[3];
                     if(strVec[4] != "0"){
-                        tmp->goSet = splitStrInt<std::set, uint32>(strVec[4], ",");
+                        tmp->goSet = splitStrInt<std::set, std::string>(strVec[4], ";");
                     }
                     if (strVec[5] != "0"){
-                        tmp->koSet = splitStrInt<std::set, uint16>(strVec[5], ",");
+                        tmp->koSet = splitStrInt<std::set, std::string>(strVec[5], ";");
                     }
                     std::unique_lock<std::mutex> lock2(mtxTreW);
                     orthAnoMap[strVec[0]] = tmp;
@@ -630,6 +652,53 @@ void PhyloTree::readOrthAnno(std::queue<std::string>& orthAnnoQueue){
         loginfo("populate ortho map done with size " + std::to_string(orthAnoMap.size()));
     }
 }
+
+void PhyloTree::readGeneDup(std::queue<std::string>& geneDupQueue, char type){
+    if(mOptions->verbose){
+        loginfo("start to populate gene dup map");
+    }
+    int numThreads = std::min(static_cast<int>(geneDupQueue.size()), mOptions->thread);
+    std::thread consumerThreads[numThreads];
+    for(int i = 0; i < numThreads; ++i){
+        consumerThreads[i] = std::thread([this, &geneDupQueue, &i, &type](){
+            while(true){
+                std::unique_lock<std::mutex> lock(mtxTreR);
+                if(geneDupQueue.empty()){
+                    lock.unlock();
+                    break;
+                }
+                std::string line = geneDupQueue.front();
+                geneDupQueue.pop();
+                if(geneDupQueue.size() >= 100000 && geneDupQueue.size() % 100000 == 0){
+                    std::string msg = "gene dup remains: " + std::to_string(geneDupQueue.size());
+                    loginfo(msg, false);
+                }
+                lock.unlock();
+                if(line.empty())
+                    continue;
+                std::vector<std::string> strVec;
+                splitStr(line, strVec);
+                if(strVec.size() == 2){
+                    std::unique_lock<std::mutex> lock2(mtxTreW);
+                    if(type == 'd'){
+                        geneDNADupMap[strVec.at(0)] = strVec.at(1);
+                    } else if(type == 'p') {
+                        geneProDupMap[strVec.at(0)] = strVec.at(1);
+                    }
+                    lock2.unlock();
+                }
+            } });
+    }
+    for(int i = 0; i < numThreads; i++){
+        if(consumerThreads[i].joinable()){
+            consumerThreads[i].join();
+        }
+    }
+    if(mOptions->verbose){
+        loginfo("populate dup map done with size " + std::to_string(geneDNADupMap.size()));
+    }
+}
+
 std::queue<std::string> PhyloTree::readGZ(std::string & fl){
     std::queue<std::string> lineQueue;
     std::string line = "";

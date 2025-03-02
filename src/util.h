@@ -181,6 +181,12 @@ inline void trimLeft(string &str, std::string sep = ";"){
     }
 }
 
+inline void trimRight(string &str, std::string sep = ";"){
+    if(str.back() == sep[0]){
+        str.pop_back();
+    }
+}
+
 inline void trimEnds(std::string* str) {
     if(str == nullptr) return;
     while (!str->empty() && (str->back() == '\n' || str->back() == '\r')) {
@@ -236,13 +242,16 @@ inline int splitStr(const string& str, vector<string> &ret_, string sep = "\t"){
     return 0;
 }
 
-inline std::vector<std::string> splitStr(string& str, string sep = ";") {
+inline std::vector<std::string> splitStr(string str, string sep = ";") {
     std::vector<std::string> ret_;
     if (str.empty()) {
         return ret_;
     }
-    if(str[0] == sep[0]){
+    if(str.front() == sep[0]){
         str.erase(0, 1);
+    }
+    if(str.back() == sep[0]){
+        str.pop_back();
     }
     int s = 0;
     for(const char & c : str){
@@ -267,18 +276,6 @@ inline std::vector<std::string> splitStr(string& str, string sep = ";") {
         tmp.clear();
     }
     return ret_;
-}
-
-template<typename T>
-inline std::string getStrVec(std::vector<T> vec, char sep = '|'){
-    std::stringstream ss;
-    for(const auto & it : vec){
-        ss << it;
-        if (&it != &(*vec.rbegin())) {
-            ss << sep;
-        }
-    }
-    return ss.str();
 }
 
 inline std::unordered_set<std::string> splitStr2(string str, string sep = ";") {
@@ -314,6 +311,18 @@ inline std::unordered_set<std::string> splitStr2(string str, string sep = ";") {
     return ret_;
 }
 
+template<typename T>
+inline std::string getStrVec(std::vector<T> vec, char sep = '|'){
+    std::stringstream ss;
+    for(const auto & it : vec){
+        ss << it;
+        if (&it != &(*vec.rbegin())) {
+            ss << sep;
+        }
+    }
+    return ss.str();
+}
+
 inline std::string getFirstNsSeps(std::string str, int n, char sep = ';'){
     std::size_t pos = str.find_first_of(sep);
     int i = 1;
@@ -337,6 +346,9 @@ inline Container<T, Args...> splitStrInt(string str, std::string sep = ";") {
     if (str.empty()) {
         return ret_;
     }
+    if(str.front() == sep[0]){
+        str.erase(0,1);
+    }
     if(str.back() == sep[0]) {
         str.pop_back();
     }
@@ -352,7 +364,8 @@ inline Container<T, Args...> splitStrInt(string str, std::string sep = ";") {
             tmp = str.substr(pos_begin);
             pos_begin = comma_pos;
         }
-        ret_.insert(static_cast<T>(std::stoul(tmp)));
+        //ret_.insert(static_cast<T>(std::stoul(tmp)));
+        ret_.insert(tmp);
         tmp.clear();
     }
     return ret_;
@@ -690,5 +703,18 @@ inline std::string convertSeconds(const T & t) {
     std::stringstream ss;
     ss << hours << " hours " << minutes % 60 << " minutes " << seconds % 60 << " seconds";
     return ss.str();
+}
+
+template<typename T>
+inline T getMapMaxKey(std::map<T, int>&m){
+    int maxValKey = 0;
+    T key;
+    for(const auto & it : m){
+        if(it.second > maxValKey){
+            key = it.first;
+            maxValKey = it.second;
+        }
+    }
+    return key;
 }
 #endif /* UTIL_H */

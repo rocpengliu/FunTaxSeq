@@ -9,6 +9,8 @@
      tTree = "";
      geneAno = "";
      orthAno = "";
+     geneDNADup = "";
+     geneProDup = "";
      sampleDir = "";
      verbose = false;
      debug = false;
@@ -74,10 +76,11 @@ std::string GeneNode::print(std::string idpar, std::string type){
             ss << 0;
         } else {
                 for (const auto & it : goSet){
-                    if(it == 0){
+                    if(it == "0"){
                         ss << 0;
                     } else {
-                        ss << "GO:" << std::setw(7) << std::setfill('0') << it << (it == *goSet.rbegin() ? "" : ";");
+                        ss << it << (it == *goSet.rbegin() ? "" : ";");
+                        //ss << "GO:" << std::setw(7) << std::setfill('0') << it << (it == *goSet.rbegin() ? "" : ";");
                     }
                 }
         }
@@ -89,10 +92,10 @@ std::string GeneNode::print(std::string idpar, std::string type){
             ss << 0;
         } else{
             for (const auto &it : koSet){
-                if (it == 0){
+                if (it == "0"){
                     ss << 0;
                 } else{
-                    ss << "K" << std::setw(5) << std::setfill('0') << it << (it == *koSet.rbegin() ? "" : ";");
+                    ss << it << (it == *koSet.rbegin() ? "" : ";");
                 }
             }
         }
@@ -115,10 +118,11 @@ std::string GeneNode::print3(){
             ss << 0;
         } else {
                 for (const auto & it : goSet){
-                    if(it == 0){
+                    if(it == "0"){
                         ss << 0;
                     } else {
-                        ss << "GO:" << std::setw(7) << std::setfill('0') << it << (it == *goSet.rbegin() ? "" : ";");
+                        ss << it << (it == *goSet.rbegin() ? "" : ";");
+                        //ss << "GO:" << std::setw(7) << std::setfill('0') << it << (it == *goSet.rbegin() ? "" : ";");
                     }
                 }
         }
@@ -130,10 +134,11 @@ std::string GeneNode::print3(){
             ss << 0;
         } else{
             for (const auto &it : koSet){
-                if (it == 0){
+                if (it == "0"){
                     ss << 0;
                 } else{
-                    ss << "K" << std::setw(5) << std::setfill('0') << it << (it == *koSet.rbegin() ? "" : ";");
+                    ss << it << (it == *koSet.rbegin() ? "" : ";");
+                    //ss << "K" << std::setw(5) << std::setfill('0') << it << (it == *koSet.rbegin() ? "" : ";");
                 }
             }
         }
