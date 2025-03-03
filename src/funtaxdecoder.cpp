@@ -375,21 +375,6 @@ void FunTaxDecoder::decodeFunSample(std::map<std::string, std::map<std::string, 
                 }
             }
         }
-
-        std::ofstream* otf = new std::ofstream();
-        std::string fn = mOptions->prefix + "_func_" + it.first + ".txt";
-        otf->open(fn.c_str(), std::ofstream::out);
-        if(!otf->is_open()) error_exit("can not open " + fn);
-        *otf << "#orthology\tnumReads\n";
-        for(const auto & itf : finalFunMap[it.first]){
-            *otf << itf.first << "\t" << itf.second << "\n";
-        }
-        otf->close();
-        if(otf){
-            delete otf;
-            otf = nullptr;
-        }
-    }
     */
 }
 
