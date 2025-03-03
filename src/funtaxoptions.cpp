@@ -114,7 +114,7 @@ std::string GeneNode::print3(){
     std::stringstream ss;
     std::string pure_anno = std::regex_replace(anno, std::regex("\\["), "(");
     pure_anno = std::regex_replace(pure_anno, std::regex("\\]"), ")");
-    ss << anno << "|" << taxon << "|" << id;
+    ss << pure_anno << "|" << taxon << "|" << id;
     if(goGo){
         ss << "|";
         if(goSet.empty()){
