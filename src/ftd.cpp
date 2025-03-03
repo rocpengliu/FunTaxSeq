@@ -51,7 +51,8 @@ int main(int argc, char* argv[]) {
     opt->db = cmd.get<string>("database");
     opt->prefix = cmd.get<string>("outprefix");
     opt->outTaxon =  opt->prefix + "_taxon_abundance.txt";
-    opt->outFun = opt->prefix + "_func_abundance.txt";
+    opt->outFun = opt->prefix + "_raw_func_abundance.txt";
+    opt->outPureFun = opt->prefix + "_pure_func_abundance.txt";
     opt->gTree = joinpath(opt->db, "ogs_tree.tre");
     opt->tTree = joinpath(opt->db, "taxon_tree.tre");
     opt->geneAno = joinpath(opt->db, "genes_anno.tab.gz");

@@ -15,8 +15,10 @@ FunTaxDecoder::FunTaxDecoder(PhyloOptions *& mOptions){
     mFunTaxFreq = new FunTaxFreq();
     mFunTaxPair.clear();
     uniqFuns.clear();
+    uniqPureFuns.clear();
     uniqTaxons.clear();
-    taxRankMap = {{'k', 0},{'p', 1},{'c', 2},{'o', 3},{'f', 4},{'g', 5},{'s', 6},{'t', 7}};
+    //taxRankMap = {{'k', 0},{'p', 1},{'c', 2},{'o', 3},{'f', 4},{'g', 5},{'s', 6},{'t', 7}};
+    taxRankMap = {{'k', 0},{'p', 1},{'c', 2},{'o', 3},{'f', 4},{'g', 5},{'s', 6}};
 }
 
 FunTaxDecoder::~FunTaxDecoder(){
@@ -204,8 +206,9 @@ void FunTaxDecoder::decode(){
 void FunTaxDecoder::decodeEach(){
     if(mOptions->verbose)
         loginfo("start to decode each sample");
-    std::map<std::string, std::map<std::string, uint32>> tTaxMap; // sample, fun, count;
-    std::map<std::string, std::map<std::string, uint32>> tFunMap; // sample, fun, count;
+    std::map<std::string, std::map<std::string, uint32>> tTaxMap; // sample, tax, count;
+    std::map<std::string, std::map<std::string, uint32>> tFunMap; // sample, fun with taxon and orth, count;
+    std::map<std::string, std::map<std::string, uint32>> tPureFunMap; // sample, only fun, count;
     for(const auto & it : totFTMap){
         for(const auto & it2 : it.second) {
             auto it3 = mFunTaxPair.find(it2.first);
@@ -213,12 +216,16 @@ void FunTaxDecoder::decodeEach(){
                 continue;
             if(!it3->second.first.empty()) 
                 tTaxMap[it.first][it3->second.first] += it2.second;
-            if(!it3->second.second.empty()) 
+            if(!it3->second.second.empty()) {
                 tFunMap[it.first][it3->second.second] += it2.second;
+                std::string pure_orth = removeNMpart(it3->second.second, 1, 2, '|');
+                tPureFunMap[it.first][pure_orth] += it2.second;
+                uniqPureFuns.insert(pure_orth);
+            }
         }
     }
     std::thread dTaxThread = std::thread(&FunTaxDecoder::decodeTaxonSample, this, std::ref(tTaxMap));
-    std::thread dFunThread = std::thread(&FunTaxDecoder::decodeFunSample, this, std::ref(tFunMap));
+    std::thread dFunThread = std::thread(&FunTaxDecoder::decodeFunSample, this, std::ref(tFunMap), std::ref(tPureFunMap));
     if(dTaxThread.joinable()) dTaxThread.join();
     if(dFunThread.joinable()) dFunThread.join();
     if(mOptions->verbose)
@@ -280,11 +287,11 @@ void FunTaxDecoder::decodeTaxonSample(std::map<std::string, std::map<std::string
     }
 }
 
-void FunTaxDecoder::decodeFunSample(std::map<std::string, std::map<std::string, uint32>>& tFunMap){
+void FunTaxDecoder::decodeFunSample(std::map<std::string, std::map<std::string, uint32>>& tFunMap, std::map<std::string, std::map<std::string, uint32>>& tPureFunMap){
     std::ofstream* otf = new std::ofstream();
     otf->open(mOptions->outFun.c_str(), std::ofstream::out);
     if(!otf->is_open()) error_exit("can not open " + mOptions->outFun);
-    *otf << "#orthology" << "\t";
+    *otf << "#ortholog" << "\t";
     for(auto prt = tFunMap.begin(); prt != tFunMap.end(); ++prt){
         *otf << prt->first << (std::next(prt) == tFunMap.end() ? "\n" : "\t");
     }
@@ -298,6 +305,24 @@ void FunTaxDecoder::decodeFunSample(std::map<std::string, std::map<std::string, 
             *otf << (pr2 == pr->second.end() ? 0 : pr2->second) << (std::next(pr) == tFunMap.end() ? "\n" : "\t");
         }
     }
+    otf->flush();
+    otf->clear();
+    otf->close();
+
+    otf->open(mOptions->outPureFun.c_str(), std::ofstream::out);
+    if(!otf->is_open()) error_exit("can not open " + mOptions->outPureFun);
+    *otf << "#ortholog" << "\t";
+    for(auto prt = tPureFunMap.begin(); prt != tPureFunMap.end(); ++prt){
+        *otf << prt->first << (std::next(prt) == tPureFunMap.end() ? "\n" : "\t");
+    }
+    for(const auto & it : uniqPureFuns) {
+        *otf << it << "\t";
+        for (auto pr = tPureFunMap.begin(); pr != tPureFunMap.end(); ++pr){
+            auto pr2 = pr->second.find(it);
+            *otf << (pr2 == pr->second.end() ? 0 : pr2->second) << (std::next(pr) == tPureFunMap.end() ? "\n" : "\t");
+        }
+    }
+    otf->flush();
     otf->clear();
     otf->close();
     if(otf){

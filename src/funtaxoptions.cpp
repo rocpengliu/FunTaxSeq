@@ -1,4 +1,5 @@
 #include "funtaxoptions.h"
+#include <regex>
 
  PhyloOptions::PhyloOptions(){
      db = "";
@@ -111,7 +112,9 @@ std::string GeneNode::print3(){
     bool goGo = true;
     bool goKo = true;
     std::stringstream ss;
-    ss << id << "|" << taxon << "|" << anno;
+    std::string pure_anno = std::regex_replace(anno, std::regex("\\["), "(");
+    pure_anno = std::regex_replace(pure_anno, std::regex("\\]"), ")");
+    ss << anno << "|" << taxon << "|" << id;
     if(goGo){
         ss << "|";
         if(goSet.empty()){

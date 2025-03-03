@@ -29,6 +29,7 @@ class PhyloOptions{
         std::string prefix;
         std::string outTaxon;
         std::string outFun;
+        std::string outPureFun;
         std::string gTree;
         std::string tTree;
         std::string geneAno;

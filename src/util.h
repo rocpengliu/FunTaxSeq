@@ -717,4 +717,18 @@ inline T getMapMaxKey(std::map<T, int>&m){
     }
     return key;
 }
+inline std::string removeNMpart(std::string & str, int m, int n, char sep){
+    std::string ret_str = "";
+    std::vector<std::string::size_type> pos_vec;
+    std::string::size_type pos_begin = str.find_first_of(sep);
+    while(pos_begin != std::string::npos){
+        pos_vec.emplace_back(pos_begin);
+        pos_begin = str.find_first_of(sep, pos_begin+1);
+    }
+    if(m < pos_vec.size() && n < pos_vec.size() && m < n){
+        ret_str = str.substr(0, pos_vec.at(m-1));
+        ret_str += str.substr(pos_vec.at(n));
+    }
+    return ret_str;
+}
 #endif /* UTIL_H */

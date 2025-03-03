@@ -37,9 +37,8 @@ LD_LIBS_STATIC = -Wl,--whole-archive -lpthread -lz -Wl,--no-whole-archive
 endif
 
 all: makefile  src/fts src/ftd src/bwt/mkbwt
+	@echo "Creating bin directory..."
 	mkdir -p bin
-	# mv src/fts bin/
-	# mv src/ftd bin/
 	mv src/bwt/mkbwt bin/mkbwt
 	mv src/bwt/mkfmi bin/mkfmi
 	find src/ -name "*.o" -delete
