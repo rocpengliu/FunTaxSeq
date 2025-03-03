@@ -341,7 +341,6 @@ void FunTaxDecoder::decodeFunSample(std::map<std::string, std::map<std::string, 
             annoFunMap.insert(std::make_pair(vec.at(0), std::make_pair(vec, it2.second)));
             uniqFunSet.insert(vec.at(0));
         }
-
         for(const auto & it2 : uniqFunSet){
             auto range = annoFunMap.equal_range(it2);
             uint32 numReadsTmp = 0;
