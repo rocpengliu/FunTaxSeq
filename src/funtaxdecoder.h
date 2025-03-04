@@ -52,7 +52,9 @@ class FunTaxDecoder{
         std::string decodeTax(std::unordered_set<std::string>& locSet);
         std::string decodeFun(std::unordered_set<std::string>& locSet);
         void decodeTaxonSample(std::map<std::string, std::map<std::string, uint32>>& tTaxMap);
-        void decodeFunSample(std::map<std::string, std::map<std::string, uint32>>& tFunMap, std::map<std::string, std::map<std::string, uint32>>& tPureFunMap);
+        void decodeFunSample(std::map<std::string, std::map<std::string, uint32>>& tFunMap, 
+            std::map<std::string, std::map<std::string, uint32>>& tPureFunMap, 
+            std::map<std::string, std::map<std::string, uint32>>& tGeneFunMap);
 
     private:
         PhyloOptions *mOptions;
@@ -70,6 +72,7 @@ class FunTaxDecoder{
         std::unordered_map<std::string, std::pair<std::string, std::string>> mFunTaxPair;//line, tax, fun
         std::set<std::string> uniqFuns;
         std::set<std::string> uniqPureFuns;
+        std::set<std::string> uniqGeneFuns;
         std::set<std::string> uniqTaxons;
         std::map<char, uint8_t> taxRankMap;
 };

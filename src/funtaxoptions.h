@@ -30,6 +30,7 @@ class PhyloOptions{
         std::string outTaxon;
         std::string outFun;
         std::string outPureFun;
+        std::string outGeneFun;
         std::string gTree;
         std::string tTree;
         std::string geneAno;

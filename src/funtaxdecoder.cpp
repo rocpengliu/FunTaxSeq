@@ -17,6 +17,7 @@ FunTaxDecoder::FunTaxDecoder(PhyloOptions *& mOptions){
     mFunTaxPair.clear();
     uniqFuns.clear();
     uniqPureFuns.clear();
+    uniqGeneFuns.clear();
     uniqTaxons.clear();
     //taxRankMap = {{'k', 0},{'p', 1},{'c', 2},{'o', 3},{'f', 4},{'g', 5},{'s', 6},{'t', 7}};
     taxRankMap = {{'k', 0},{'p', 1},{'c', 2},{'o', 3},{'f', 4},{'g', 5},{'s', 6}};
@@ -210,6 +211,7 @@ void FunTaxDecoder::decodeEach(){
     std::map<std::string, std::map<std::string, uint32>> tTaxMap; // sample, tax, count;
     std::map<std::string, std::map<std::string, uint32>> tFunMap; // sample, fun with taxon and orth, count;
     std::map<std::string, std::map<std::string, uint32>> tPureFunMap; // sample, only fun, count;
+    std::map<std::string, std::map<std::string, uint32>> tGeneFunMap;
     for(const auto & it : totFTMap){
         for(const auto & it2 : it.second) {
             auto it3 = mFunTaxPair.find(it2.first);
@@ -222,11 +224,14 @@ void FunTaxDecoder::decodeEach(){
                 std::string pure_orth = removeNMpart(it3->second.second, 1, 2, '|');
                 tPureFunMap[it.first][pure_orth] += it2.second;
                 uniqPureFuns.insert(pure_orth);
+                std::string pure_gene = removeNMpart(it3->second.second, 1, 4, '|');
+                tGeneFunMap[it.first][pure_gene] += it2.second;
+                uniqGeneFuns.insert(pure_gene);
             }
         }
     }
     std::thread dTaxThread = std::thread(&FunTaxDecoder::decodeTaxonSample, this, std::ref(tTaxMap));
-    std::thread dFunThread = std::thread(&FunTaxDecoder::decodeFunSample, this, std::ref(tFunMap), std::ref(tPureFunMap));
+    std::thread dFunThread = std::thread(&FunTaxDecoder::decodeFunSample, this, std::ref(tFunMap), std::ref(tPureFunMap), std::ref(tGeneFunMap));
     if(dTaxThread.joinable()) dTaxThread.join();
     if(dFunThread.joinable()) dFunThread.join();
     if(mOptions->verbose)
@@ -288,7 +293,9 @@ void FunTaxDecoder::decodeTaxonSample(std::map<std::string, std::map<std::string
     }
 }
 
-void FunTaxDecoder::decodeFunSample(std::map<std::string, std::map<std::string, uint32>>& tFunMap, std::map<std::string, std::map<std::string, uint32>>& tPureFunMap){
+void FunTaxDecoder::decodeFunSample(std::map<std::string, std::map<std::string, uint32>>& tFunMap, 
+    std::map<std::string, std::map<std::string, uint32>>& tPureFunMap, 
+    std::map<std::string, std::map<std::string, uint32>>& tGeneFunMap){
     std::ofstream* otf = new std::ofstream();
     otf->open(mOptions->outFun.c_str(), std::ofstream::out);
     if(!otf->is_open()) error_exit("can not open " + mOptions->outFun);
@@ -326,6 +333,24 @@ void FunTaxDecoder::decodeFunSample(std::map<std::string, std::map<std::string, 
     otf->flush();
     otf->clear();
     otf->close();
+
+    otf->open(mOptions->outGeneFun.c_str(), std::ofstream::out);
+    if(!otf->is_open()) error_exit("can not open " + mOptions->outGeneFun);
+    *otf << "#ortholog" << "\t";
+    for(auto prt = tGeneFunMap.begin(); prt != tGeneFunMap.end(); ++prt){
+        *otf << prt->first << (std::next(prt) == tGeneFunMap.end() ? "\n" : "\t");
+    }
+    for(const auto & it : uniqGeneFuns) {
+        *otf << it << "\t";
+        for (auto pr = tGeneFunMap.begin(); pr != tGeneFunMap.end(); ++pr){
+            auto pr2 = pr->second.find(it);
+            *otf << (pr2 == pr->second.end() ? 0 : pr2->second) << (std::next(pr) == tGeneFunMap.end() ? "\n" : "\t");
+        }
+    }
+    otf->flush();
+    otf->clear();
+    otf->close();
+
     if(otf){
         delete otf;
         otf = nullptr;

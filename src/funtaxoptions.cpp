@@ -6,6 +6,8 @@
      prefix = "";
      outTaxon = "";
      outFun = "";
+     outGeneFun = "";
+     outPureFun = "";
      gTree = "";
      tTree = "";
      geneAno = "";
