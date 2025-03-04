@@ -51,7 +51,7 @@ void FunTaxDecoder::readFunTax(){
     std::thread consumerThreads[numThread];
     if(mOptions->verbose) loginfo("start to read");
     int sample_id = 1;
-    int tot_samples = mOptions->samples.size() + 1;
+    int tot_samples = mOptions->samples.size();
     for (int i = 0; i < numThread; ++i){
         consumerThreads[i] = std::thread([this, &samQueue, &sample_id, &tot_samples, &i](){
             std::vector<std::string> split_vec;
