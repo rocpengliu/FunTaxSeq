@@ -1,4 +1,5 @@
 #include <chrono> 
+#include "tree.h"
 #include "funtaxdecoder.h"
 #include "util.h"
 
@@ -448,28 +449,32 @@ std::string FunTaxDecoder::decodeFun(std::unordered_set<std::string>& locSet) {
             return gene;
         }
     }
+    std::unordered_set<std::string> tmpSet2;
     std::set<tree<std::string*>::iterator, tree<std::string*>::iterator_base_less> treItSet;
-    tree<std::string*>::post_order_iterator locf;
+    tree<std::string*>::leaf_iterator locf;
     for (const auto & it : tmpSet) {
-        locf = std::find_if(mPhyloTree->geneTree->begin_post(), mPhyloTree->geneTree->end_post(),
+        locf = std::find_if(mPhyloTree->geneTree->begin_leaf(), mPhyloTree->geneTree->end_leaf(),
                 [&it](std::string* & itp) {
                     return *itp == it;
                 });
         if (mPhyloTree->geneTree->is_valid(locf)) {
             treItSet.insert(locf);
+        } else {
+            tmpSet2.insert(it);
         }
     }
-    // tree<std::string*>::leaf_iterator locf;
-    // for (const auto & it : tmpSet) {
-    //     locf = std::find_if(mPhyloTree->geneTree->begin_leaf(),
-    //             mPhyloTree->geneTree->end_leaf(),
-    //             [&it](std::string* & itp) {
-    //                 return *itp == it;
-    //             });
-    //     if (mPhyloTree->geneTree->is_valid(locf)) {
-    //         treItSet.insert(locf);
-    //     }
-    // }
+
+    if(!tmpSet2.empty()){
+        for (const auto & it : tmpSet2) {
+            locf = std::find_if(mPhyloTree->geneTree->begin_post(), mPhyloTree->geneTree->end_post(),
+                        [&it](std::string* & itp) {
+                            return *itp == it;
+                        });
+            if (mPhyloTree->geneTree->is_valid(locf)) {
+                treItSet.insert(locf);
+            }
+        }
+    }
 
     // if(treItSet.empty()){
     //     tree<std::string*>::pre_order_iterator locf2;

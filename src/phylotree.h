@@ -41,7 +41,7 @@ public:
     //std::shared_ptr<tree<uint32*>> taxonTree;
     std::shared_ptr<tree<std::string*>> geneTree;
     std::shared_ptr<tree<SimGeneNode*>> geneNodeTree;
-    
+
 private:
     const int buffer_size = 16384;
     void init();

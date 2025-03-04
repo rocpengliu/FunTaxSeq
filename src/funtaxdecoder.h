@@ -13,8 +13,10 @@
 #include <mutex>
 #include <unordered_map>
 #include <unordered_set>
-#include <cstdint> 
+#include <cstdint>
 #include <algorithm>
+#include <functional>
+#include <vector>
 
 #include "common.h"
 #include "phylotree.h"
@@ -24,6 +26,16 @@ extern std::mutex mtxTreR;
 extern std::mutex mtxTreW;
 
 using namespace std;
+
+struct VectorHash {
+    size_t operator()(const std::vector<int>& v) const {
+        size_t seed = 0;
+        for (const auto& elem : v) {
+            seed ^= std::hash<int>()(elem) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+        }
+        return seed;
+    }
+};
 class FunTaxDecoder{
     public:
         FunTaxDecoder(PhyloOptions *& mOptions);
