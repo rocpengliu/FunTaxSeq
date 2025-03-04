@@ -449,10 +449,9 @@ std::string FunTaxDecoder::decodeFun(std::unordered_set<std::string>& locSet) {
         }
     }
     std::set<tree<std::string*>::iterator, tree<std::string*>::iterator_base_less> treItSet;
-    tree<std::string*>::leaf_iterator locf;
+    tree<std::string*>::post_order_iterator locf;
     for (const auto & it : tmpSet) {
-        locf = std::find_if(mPhyloTree->geneTree->begin_leaf(),
-                mPhyloTree->geneTree->end_leaf(),
+        locf = std::find_if(mPhyloTree->geneTree->begin_post(), mPhyloTree->geneTree->end_post(),
                 [&it](std::string* & itp) {
                     return *itp == it;
                 });
@@ -460,19 +459,30 @@ std::string FunTaxDecoder::decodeFun(std::unordered_set<std::string>& locSet) {
             treItSet.insert(locf);
         }
     }
+    // tree<std::string*>::leaf_iterator locf;
+    // for (const auto & it : tmpSet) {
+    //     locf = std::find_if(mPhyloTree->geneTree->begin_leaf(),
+    //             mPhyloTree->geneTree->end_leaf(),
+    //             [&it](std::string* & itp) {
+    //                 return *itp == it;
+    //             });
+    //     if (mPhyloTree->geneTree->is_valid(locf)) {
+    //         treItSet.insert(locf);
+    //     }
+    // }
 
-    if(treItSet.empty()){
-        tree<std::string*>::pre_order_iterator locf2;
-        for (const auto & it : tmpSet) {
-            locf2 = std::find_if(mPhyloTree->geneTree->begin(), mPhyloTree->geneTree->end(),
-                    [&it](std::string* & itp) {
-                        return *itp == it;
-                    });
-            if (mPhyloTree->geneTree->is_valid(locf2)) {
-                treItSet.insert(locf2);
-            }
-        }
-    }
+    // if(treItSet.empty()){
+    //     tree<std::string*>::pre_order_iterator locf2;
+    //     for (const auto & it : tmpSet) {
+    //         locf2 = std::find_if(mPhyloTree->geneTree->begin(), mPhyloTree->geneTree->end(),
+    //                 [&it](std::string* & itp) {
+    //                     return *itp == it;
+    //                 });
+    //         if (mPhyloTree->geneTree->is_valid(locf2)) {
+    //             treItSet.insert(locf2);
+    //         }
+    //     }
+    // }
 
     //treItSet is size is 1, then just search the ortho map
     if (!treItSet.empty()) {
