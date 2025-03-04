@@ -331,7 +331,7 @@ void FunTaxDecoder::decodeFunSample(std::map<std::string, std::map<std::string, 
     }
 
     /*
-    
+
     std::map<std::string, std::map<std::string, uint32>> finalFunMap;
     for(const auto & it : tFunMap){
         std::multimap<std::string, std::pair<std::vector<std::string>, uint32>> annoFunMap;
@@ -417,7 +417,7 @@ std::string FunTaxDecoder::decodeTax(std::unordered_set<std::string>& locSet) {
 }
 
 std::string FunTaxDecoder::decodeFun(std::unordered_set<std::string>& locSet) {
-    std::map<std::string, int> gene_anno_map;
+    std::unordered_map<std::string, int> gene_anno_map;
     std::string gene = "";
     if(locSet.size() == 1){
         auto it = mPhyloTree->geneAnoMap.find(*(locSet.begin()));
@@ -437,7 +437,17 @@ std::string FunTaxDecoder::decodeFun(std::unordered_set<std::string>& locSet) {
             tmpSet.insert(it2->second->par);
         }
     }
+
     auto gene2 = getMapMaxKey(gene_anno_map);
+    if(tmpSet.empty()) {
+        return gene2;
+    } else if(tmpSet.size() == 1){
+        auto it2 = mPhyloTree->orthAnoMap.find(*(tmpSet.begin()));
+        if(it2 != mPhyloTree->orthAnoMap.end()){
+            gene = it2->second->print3();
+            return gene;
+        }
+    }
     std::set<tree<std::string*>::iterator, tree<std::string*>::iterator_base_less> treItSet;
     tree<std::string*>::leaf_iterator locf;
     for (const auto & it : tmpSet) {
@@ -450,7 +460,21 @@ std::string FunTaxDecoder::decodeFun(std::unordered_set<std::string>& locSet) {
             treItSet.insert(locf);
         }
     }
-    
+
+    if(treItSet.empty()){
+        tree<std::string*>::pre_order_iterator locf2;
+        for (const auto & it : tmpSet) {
+            locf2 = std::find_if(mPhyloTree->geneTree->begin(), mPhyloTree->geneTree->end(),
+                    [&it](std::string* & itp) {
+                        return *itp == it;
+                    });
+            if (mPhyloTree->geneTree->is_valid(locf2)) {
+                treItSet.insert(locf2);
+            }
+        }
+    }
+
+    //treItSet is size is 1, then just search the ortho map
     if (!treItSet.empty()) {
         //ftNode->funLoc = mPhyloTree->geneTree->lowest_common_ancestor(treItSet);
         auto itt = mPhyloTree->geneTree->lowest_common_ancestor(treItSet);
@@ -458,11 +482,10 @@ std::string FunTaxDecoder::decodeFun(std::unordered_set<std::string>& locSet) {
         if(itt2 != mPhyloTree->orthAnoMap.end()){
             //gene = itt2->second->id;
             //gene = itt2->first;
-            if(tmpSet.size() > gene_anno_map.size()){
-                gene = itt2->second->print3();
-            } else {
-                gene = gene2;
-            }
+            gene = itt2->second->print3();
+            // else {
+            //     gene = gene2;
+            // }
         } else {
             gene = gene2;
         }

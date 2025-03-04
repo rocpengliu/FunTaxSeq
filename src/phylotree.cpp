@@ -151,7 +151,7 @@ void PhyloTree::init(){
     readGeneDup(geneProDupQueue, 'p');
     if (mOptions->verbose)
         loginfo("start to build taxon tree!");
-    taxonTree = buildTreePtr(mOptions->tTree);
+    taxonTree = buildTreePtr(mOptions->tTree, "taxon");
     if(mOptions->verbose) loginfo("finished to build taxon tree!");
     if(taxonTree->size() < 3) error_exit("built taxon tree size must be no less than 2: ");
     if(mOptions->verbose) cerr << "taxon tree size is " << taxonTree->size() << " and has " << taxonTree->begin().number_of_descent() << " descents" << "\n";
@@ -159,10 +159,26 @@ void PhyloTree::init(){
     if(mOptions->verbose) loginfo("start to build gene ortholog tree!");
     //geneNodeTree = buildTreePtrNode(mOptions->gTree);
     //populateGeneTre();
-    geneTree = buildTreePtr(mOptions->gTree);
+    geneTree = buildTreePtr(mOptions->gTree, "ortholog");
     if(mOptions->verbose) loginfo("finished to build gene ortholog tree!");
     if(geneTree->size() < 1) error_exit("built gene tree size must be no less than 1: ");
     if(mOptions->verbose) cerr << "gene ortholog tree size is " << geneTree->size() << " and has " << geneTree->begin().number_of_descent() << " descents" << "\n";
+
+//     tree<std::string*>::post_order_iterator locf;
+//     locf = std::find_if(geneTree->begin_post(), geneTree->end_post(),
+//                 [](std::string* & itp) {
+//                     return *itp == "9807975at2";
+//                 });
+//     cCout("searching in a tree");
+//     if (geneTree->is_valid(locf)) {
+//         cCout("locf leaf is", *(locf.node->data), 'y');
+//     }
+//     for (tree<std::string*>::pre_order_iterator it = geneTree->begin(); it != geneTree->end(); it++) {
+//        //if(tre.is_valid(it)){
+//        if (it.node->data) {
+//         cCout(*(it.node->data));
+//        }
+//    }
 }
 
 /*
@@ -277,7 +293,7 @@ std::shared_ptr<tree<std::string*>> PhyloTree::buildTreeLoopPtr(std::string* str
     return tre;
 }
 
-std::shared_ptr<tree<std::string*>> PhyloTree::buildTreePtr(std::string & db) {
+std::shared_ptr<tree<std::string*>> PhyloTree::buildTreePtr(std::string & db, std::string type) {
     std::ifstream ifs(db.c_str());
     if(!ifs.is_open()) error_exit("can not open tree file: " + db);
     std::string line = "";
@@ -288,12 +304,12 @@ std::shared_ptr<tree<std::string*>> PhyloTree::buildTreePtr(std::string & db) {
         linQue.push(line);
     }
     ifs.close();
-    if(mOptions->verbose) cerr << linQue.size() << " lines are readed for taxon tree" << "\n";
+    if(mOptions->verbose) cerr << linQue.size() << " lines are readed for " << type << " tree" << "\n";
  
     std::shared_ptr<tree<std::string*>> tre(new tree<std::string*>());
     tre->set_head(new std::string("root"));
     auto locDummy = tre->append_child(tre->begin(), new std::string("dummy"));
-    cCout("intitate a super root tree", tre->size());
+    cCout("initiate a super root tree", tre->size());
     int numThreads = std::min(mOptions->thread, static_cast<int>(linQue.size()));
     std::thread consumerThreads[numThreads];
     for (int i = 0; i < numThreads; ++i) {
@@ -377,7 +393,7 @@ std::shared_ptr<tree<uint32*>> PhyloTree::buildTreeIntPtr(std::queue<std::string
     std::shared_ptr<tree<uint32*>> tre(new tree<uint32*>());
     tre->set_head(new uint32(0));
     auto locDummy = tre->append_child(tre->begin(), new uint32(4294967295));
-    cCout("intitate a super root tree", tre->size());
+    cCout("initiate a super root tree", tre->size());
     numThreads = std::min(numThreads, static_cast<int> (linQue.size()));
     std::thread consumerThreads[numThreads];
     for (int i = 0; i < numThreads; ++i) {
@@ -785,7 +801,7 @@ std::shared_ptr<tree<SimGeneNode*>> PhyloTree::buildTreePtrNode(std::string & db
     std::shared_ptr<tree<SimGeneNode*>> tre(new tree<SimGeneNode*>());
     tre->set_head(new SimGeneNode("root"));
     auto locDummy = tre->append_child(tre->begin(), new SimGeneNode("dummy"));
-    cCout("intitate a super root tree", tre->size());
+    cCout("initiate a super root tree", tre->size());
     int numThreads = std::min(mOptions->thread, static_cast<int>(linQue.size()));
     std::thread consumerThreads[numThreads];
     for (int i = 0; i < numThreads; ++i) {

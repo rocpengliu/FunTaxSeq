@@ -706,7 +706,7 @@ inline std::string convertSeconds(const T & t) {
 }
 
 template<typename T>
-inline T getMapMaxKey(std::map<T, int>&m){
+inline T getMapMaxKey(std::unordered_map<T, int>&m){
     int maxValKey = 0;
     T key;
     for(const auto & it : m){

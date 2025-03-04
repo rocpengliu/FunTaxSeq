@@ -55,7 +55,7 @@ private:
     // tree<std::string*>* buildTreePtr(std::queue<std::string> & linQue, int numThreads);
 
     std::shared_ptr<tree<std::string *>> buildTreeLoopPtr(std::string *str);
-    std::shared_ptr<tree<std::string *>> buildTreePtr(std::string& db);
+    std::shared_ptr<tree<std::string *>> buildTreePtr(std::string& db, std::string type);
 
     std::shared_ptr<tree<SimGeneNode *>> buildTreeLoopPtrNode(std::string *str);
     std::shared_ptr<tree<SimGeneNode *>> buildTreePtrNode(std::string& db);
