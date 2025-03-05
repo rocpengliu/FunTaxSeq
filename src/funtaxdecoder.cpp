@@ -217,14 +217,14 @@ void FunTaxDecoder::decodeEach(){
             auto it3 = mFunTaxPair.find(it2.first);
             if(it3 == mFunTaxPair.end())
                 continue;
-            if(!it3->second.first.empty()) 
+            if(!it3->second.first.empty())
                 tTaxMap[it.first][it3->second.first] += it2.second;
             if(!it3->second.second.empty()) {
                 tFunMap[it.first][it3->second.second] += it2.second;
                 std::string pure_orth = removeNMpart(it3->second.second, 1, 2, '|');
                 tPureFunMap[it.first][pure_orth] += it2.second;
                 uniqPureFuns.insert(pure_orth);
-                std::string pure_gene = removeNMpart(it3->second.second, 1, 4, '|');
+                std::string pure_gene = removeNMpart(it3->second.second, 0, 0, '|', true);
                 tGeneFunMap[it.first][pure_gene] += it2.second;
                 uniqGeneFuns.insert(pure_gene);
             }
