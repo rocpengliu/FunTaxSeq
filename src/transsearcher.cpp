@@ -3,6 +3,7 @@
 TransSearcher::TransSearcher(Options * & opt, BwtFmiDB* & mBwtfmiDB) {
     mOptions = opt;
     tbwtfmiDB = mBwtfmiDB;
+    min_match_length = 0;
     //match_str.clear();
     blosum_subst = {
         {'A',
@@ -743,7 +744,8 @@ Fragment *TransSearcher::getNextFragment(unsigned int min_score) {
                     ss << "SEG region: " << curr_loc->ssr->left << " - " << curr_loc->ssr->right << " = " << f->seq.substr(curr_loc->ssr->left, curr_loc->ssr->right - curr_loc->ssr->left + 1);
                     cCout(ss.str(), 'g');
                 }
-                if (length > mOptions->mTransSearchOptions->comOptions.minFragLength) {
+                //if (length > mOptions->mTransSearchOptions->comOptions.minFragLength) {
+                if (length > min_match_length) {
                     if (mOptions->mTransSearchOptions->comOptions.mode == GREEDY) {
                         unsigned int score = calcScore(f->seq, start, length, 0);
                         if (score >= mOptions->mTransSearchOptions->comOptions.minScore) {
@@ -756,7 +758,8 @@ Fragment *TransSearcher::getNextFragment(unsigned int min_score) {
                 start = curr_loc->ssr->right + 1;
             } while ((curr_loc = curr_loc->next) != NULL);
             size_t len_last_piece = f->seq.length() - start;
-            if (len_last_piece > mOptions->mTransSearchOptions->comOptions.minFragLength) {
+            //if (len_last_piece > mOptions->mTransSearchOptions->comOptions.minFragLength) {
+            if (len_last_piece > min_match_length) {
                 if (mOptions->mTransSearchOptions->comOptions.mode == GREEDY) {
                     unsigned int score = calcScore(f->seq, start, len_last_piece, 0);
                     if (score >= mOptions->mTransSearchOptions->comOptions.minScore) {
@@ -797,7 +800,8 @@ void TransSearcher::getAllFragmentsBits(const std::string& line) {
         if (aa == '*') {
             size_t index = count % 3;
             // finished one of the translations, so add it to fragments
-            if (translations[index].length() >= mOptions->mTransSearchOptions->comOptions.minFragLength) {
+            //if (translations[index].length() >= mOptions->mTransSearchOptions->comOptions.minFragLength) {
+            if (translations[index].length() >= min_match_length) {
                 if (mOptions->mTransSearchOptions->comOptions.mode == GREEDY) {
                     unsigned int score = calcScore(translations[index]);
                     if (score >= mOptions->mTransSearchOptions->comOptions.minScore)
@@ -814,7 +818,8 @@ void TransSearcher::getAllFragmentsBits(const std::string& line) {
 
     for (unsigned int i = 0; i <= 2; i++) {
         //add remaining stuff to fragments
-        if (translations[i].length() >= mOptions->mTransSearchOptions->comOptions.minFragLength) {
+        //if (translations[i].length() >= mOptions->mTransSearchOptions->comOptions.minFragLength) {
+        if (translations[i].length() >= min_match_length) {
             if (mOptions->mTransSearchOptions->comOptions.mode == GREEDY) {
                 unsigned int score = calcScore(translations[i]);
                 if (score >= mOptions->mTransSearchOptions->comOptions.minScore)
@@ -833,7 +838,8 @@ void TransSearcher::getAllFragmentsBits(const std::string& line) {
         if (aa == '*') {
             size_t index = count % 3;
             // finished one of the translations, so add it to fragments
-            if (translations[index].length() >= mOptions->mTransSearchOptions->comOptions.minFragLength) {
+            //if (translations[index].length() >= mOptions->mTransSearchOptions->comOptions.minFragLength) {
+            if (translations[index].length() >= min_match_length) {
                 if (mOptions->mTransSearchOptions->comOptions.mode == GREEDY) {
                     unsigned int score = calcScore(translations[index]);
                     if (score >= mOptions->mTransSearchOptions->comOptions.minScore)
@@ -850,7 +856,8 @@ void TransSearcher::getAllFragmentsBits(const std::string& line) {
 
     for (unsigned int i = 0; i <= 2; i++) {
         //add remaining stuff to fragments
-        if (translations[i].length() >= mOptions->mTransSearchOptions->comOptions.minFragLength) {
+        //if (translations[i].length() >= mOptions->mTransSearchOptions->comOptions.minFragLength) {
+        if (translations[i].length() >= min_match_length) {
             if (mOptions->mTransSearchOptions->comOptions.mode == GREEDY) {
                 unsigned int score = calcScore(translations[i]);
                 if (score >= mOptions->mTransSearchOptions->comOptions.minScore)
@@ -872,7 +879,8 @@ void TransSearcher::getLongestFragmentsBits(const std::string& line) {
         min_len_cutoff = floor(line.length() / 3) - 1;
     }
 
-    min_len_cutoff = max(min_len_cutoff, mOptions->mTransSearchOptions->comOptions.minFragLength);
+    min_len_cutoff = max(min_len_cutoff, min_match_length);
+    //min_len_cutoff = max(min_len_cutoff, mOptions->mTransSearchOptions->comOptions.minFragLength);
 
     for (unsigned int i = 0; i <= 2; i++) {
         translations[i].clear();
@@ -953,7 +961,8 @@ void TransSearcher::addAllMismatchVariantsAtPosSI(const Fragment *f, unsigned in
     assert(f->num_mm == 0 || pos < f->pos_lastmm);
 
     std::string fragment = f->seq; // make a copy to modify the sequence at pos
-    assert(fragment.length() >= mOptions->mTransSearchOptions->comOptions.minFragLength);
+    assert(fragment.length() >= min_match_length);
+    //assert(fragment.length() >= mOptions->mTransSearchOptions->comOptions.minFragLength);
     char origchar = fragment[pos];
     assert(blosum_subst.count(origchar) > 0);
 
@@ -1039,7 +1048,8 @@ void TransSearcher::eval_match_scores(SI *si, Fragment *frag) {
     // eval the remaining same-length and shorter matches
     if (si->samelen)
         eval_match_scores(si->samelen, frag);
-    if (si->next && si->next->ql >= (int) mOptions->mTransSearchOptions->comOptions.minFragLength)
+    //if (si->next && si->next->ql >= (int) mOptions->mTransSearchOptions->comOptions.minFragLength)
+    if (si->next && si->next->ql >= (int) min_match_length)
         eval_match_scores(si->next, frag);
     else if (si->next)
         recursive_free_SI(si->next);
@@ -1133,7 +1143,8 @@ void TransSearcher::classify_greedyblosum() {
         SI *si = NULL;
         if (num_mm > 0) {
             if (num_mm == mOptions->mTransSearchOptions->comOptions.misMatches) { //after last mm has been done, we need to have at least reached the min_length
-                si = maxMatches_withStart(tbwtfmiDB->fmi, seq, (unsigned int) length, mOptions->mTransSearchOptions->comOptions.minFragLength, 1, t->si0, t->si1, t->matchlen, 'p');
+                //si = maxMatches_withStart(tbwtfmiDB->fmi, seq, (unsigned int) length, mOptions->mTransSearchOptions->comOptions.minFragLength, 1, t->si0, t->si1, t->matchlen, 'p');
+                si = maxMatches_withStart(tbwtfmiDB->fmi, seq, (unsigned int) length, min_match_length, 1, t->si0, t->si1, t->matchlen, 'p');
             } else {
                 si = maxMatches_withStart(tbwtfmiDB->fmi, seq, (unsigned int) length, t->matchlen, 1, t->si0, t->si1, t->matchlen, 'p');
             }
@@ -1167,7 +1178,8 @@ void TransSearcher::classify_greedyblosum() {
                     ss << "Match from " << si_it->qi << " to " << match_right_end << ": " << fragment.substr(si_it->qi, match_right_end - si_it->qi + 1) << " (" << si_it->ql << ")";
                     cCout(ss.str(), 'g');
                 }
-                if (si_it->qi > 0 && match_right_end + 1 >= mOptions->mTransSearchOptions->comOptions.minFragLength) {
+                //if (si_it->qi > 0 && match_right_end + 1 >= mOptions->mTransSearchOptions->comOptions.minFragLength) {
+                if (si_it->qi > 0 && match_right_end + 1 >= min_match_length) {
                     //1. match must end before beginning of fragment, i.e. it is extendable
                     //2. remaining fragment, from zero to end of current match, must be longer than minimum length of accepted matches
                     const size_t erase_pos = (match_right_end < length - 1) ? match_right_end + 1 : std::string::npos;
@@ -1177,7 +1189,8 @@ void TransSearcher::classify_greedyblosum() {
             }
         }
 
-        if ((unsigned int) si->ql < mOptions->mTransSearchOptions->comOptions.minFragLength) { // match was too short
+        //if ((unsigned int) si->ql < mOptions->mTransSearchOptions->comOptions.minFragLength) { // match was too short
+        if ((unsigned int) si->ql < min_match_length) { // match was too short
             if (mOptions->debug) {
                 std::stringstream ss;
                 ss << "Match of length " << si->ql << " is too short";
@@ -1252,7 +1265,8 @@ void TransSearcher::classify_length() {
 
         translate2numbers((uchar *) seq, length, tbwtfmiDB->astruct);
         //use longest_match_length here too:
-        SI *si = maxMatches(tbwtfmiDB->fmi, seq, length, std::max(mOptions->mTransSearchOptions->comOptions.minFragLength, longest_match_length), 1, 'p');
+        //SI *si = maxMatches(tbwtfmiDB->fmi, seq, length, std::max(mOptions->mTransSearchOptions->comOptions.minFragLength, longest_match_length), 1, 'p');
+        SI *si = maxMatches(tbwtfmiDB->fmi, seq, length, std::max(min_match_length, longest_match_length), 1, 'p');
 
         if (!si) { // no match for this fragment
             if (mOptions->debug) {
@@ -1315,18 +1329,17 @@ void TransSearcher::postProcess() {
 
 std::set<char *>& TransSearcher::transSearchWuKong(Read* & item) {
     //match_str.clear();
+    min_match_length = static_cast<uint>(mOptions->mTransSearchOptions->comOptions.lenper * item->length() / 3);
     clearFragments();
     //clearMatchedIds();
     match_ids.clear();
     query_len = static_cast<double> (item->length()) / 3.0;
-    if (item->length() >= mOptions->mTransSearchOptions->comOptions.minFragLength * 3) {
-        if (mOptions->debug) {
-            std::stringstream ss;
-            ss << "Getting fragments for read: " << item->mName << "\t" << item->mSeq.mStr;
-            cCout(ss.str(), 'g');
-        }
-        getAllFragmentsBits(item->mSeq.mStr);
+    if (mOptions->debug) {
+        std::stringstream ss;
+        ss << "Getting fragments for read: " << item->mName << "\t" << item->mSeq.mStr;
+        cCout(ss.str(), 'g');
     }
+    getAllFragmentsBits(item->mSeq.mStr);
 
     if (mOptions->debug) {
         std::stringstream ss;
@@ -1352,28 +1365,25 @@ std::set<char *>& TransSearcher::transSearchWuKong(Read* & item) {
 
 std::set<char *>& TransSearcher::transSearchWuKong(Read* & item1, Read* & item2) {
     //match_str.clear();
+    min_match_length = static_cast<uint>(mOptions->mTransSearchOptions->comOptions.lenper * std::min(item1->length(), item2->length()) / 3);
     clearFragments();
     //clearMatchedIds();
     match_ids.clear();
     query_len = static_cast<double> (item1->length()) / 3.0;
-    if (item1->length() >= mOptions->mTransSearchOptions->comOptions.minFragLength * 3) {
-        if (mOptions->debug) {
-            std::stringstream ss;
-            ss << "Getting fragments for read1: " << item1->mName << "\t" << item1->mSeq.mStr;
-            cCout(ss.str(), 'g');
-        }
-        getAllFragmentsBits(item1->mSeq.mStr);
+    if (mOptions->debug) {
+        std::stringstream ss;
+        ss << "Getting fragments for read1: " << item1->mName << "\t" << item1->mSeq.mStr;
+        cCout(ss.str(), 'g');
     }
+    getAllFragmentsBits(item1->mSeq.mStr);
 
     query_len += static_cast<double> (item2->length()) / 3.0;
-    if (item2->length() >= mOptions->mTransSearchOptions->comOptions.minFragLength * 3) {
-        if (mOptions->debug) {
-            std::stringstream ss;
-            ss << "Getting fragments for read2: " << item2->mName << "\t" << item2->mSeq.mStr;
-            cCout(ss.str(), 'g');
-        }
-        getAllFragmentsBits(item2->mSeq.mStr);
+    if (mOptions->debug) {
+        std::stringstream ss;
+        ss << "Getting fragments for read2: " << item2->mName << "\t" << item2->mSeq.mStr;
+        cCout(ss.str(), 'g');
     }
+    getAllFragmentsBits(item2->mSeq.mStr);
 
     if (mOptions->debug) {
         std::stringstream ss;

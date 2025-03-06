@@ -257,6 +257,7 @@ struct CommonSearchOptions{
     bool SEG;
     bool useEvalue;
     double minEvalue;
+    float lenper;
     unsigned int minFragLength;
     unsigned int misMatches;
     unsigned int minScore;
@@ -274,6 +275,7 @@ public:
         comOptions.SEG = true;
         comOptions.useEvalue = false;
         comOptions.minEvalue = 0.01;
+        comOptions.lenper = 0.9;
         comOptions.minFragLength = 11;
         comOptions.misMatches = 3;
         comOptions.minScore = 65;
@@ -297,6 +299,7 @@ public:
         comOptions.SEG = true;
         comOptions.useEvalue = false;
         comOptions.minEvalue = 0.01;
+        comOptions.lenper = 0.9;
         comOptions.minFragLength = 60;
         comOptions.misMatches = 6;
         comOptions.minScore = 50;
@@ -319,6 +322,7 @@ public:
         comOptions.SEG = true;
         comOptions.useEvalue = false;
         comOptions.minEvalue = 0.01;
+        comOptions.lenper = 0.9;
         comOptions.minFragLength = 90;
         comOptions.misMatches = 6;
         comOptions.minScore = 80;
@@ -341,6 +345,7 @@ public:
         comOptions.SEG = true;
         comOptions.useEvalue = false;
         comOptions.minEvalue = 0.01;
+        comOptions.lenper = 0.9;
         comOptions.minFragLength = 90;
         comOptions.misMatches = 6;
         comOptions.minScore = 80;

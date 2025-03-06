@@ -39,6 +39,7 @@ int main(int argc, char* argv[]) {
     cmd.add<string>("tfmi", 'd', "fmi index of Protein database", false, "");
     cmd.add<string>("tmode", 'K', "searching mode either GREEDY or MEM (maximum exactly match). By default greedy", false, "GREEDY");
     cmd.add<int>("tmismatch", 'E', "number of mismatched amino acid in sequence comparison with protein database with default value 3", false, 3);
+    cmd.add<float>("tlenper", 0, "percentage of matching amino acid in sequence comparison with default value 0.9", false, 0.9);
     cmd.add<int>("tminscore", 'j', "minimum matching score of amino acid sequence in comparison with protein database with default value 65", false, 65);
     cmd.add<int>("tminlength", 'J', "minimum matching length of amino acid sequence in comparison with protein database with default value 13 for GREEDY and 11 for MEM model", false, 0);
     // cmd.add<int>("maxtranslength", 'm', "maximum cutoff of translated peptides, it must be no less than minlength, with default 60", false, 60);
@@ -47,6 +48,7 @@ int main(int argc, char* argv[]) {
     // DNA search
     cmd.add<string>("dfmi", 0, "fmi index of DNA database", false, "");
     cmd.add<string>("dmode", 0, "searching mode either GREEDY or MEM (maximum exactly match) in a DNA database. By default greedy", false, "GREEDY");
+    cmd.add<float>("dlenper", 0, "percentage of matching DNA in sequence comparison with default value 0.9", false, 0.9);
     cmd.add<int>("dmismatch", 0, "number of mismatches in sequence comparison with DNA database with default value 6", false, 6);
     cmd.add<int>("dminlength", 0, "minimum matching length of DNA sequence in comparison with DNA database with default value 40", false, 60);
     cmd.add<int>("dminscore", 0, "minimum matching score of DNA sequence in comparison with DNA database with default value 50", false, 50);
@@ -263,6 +265,7 @@ int main(int argc, char* argv[]) {
     if(cmd.get<string>("tmode") == "MEM"){
         opt->mTransSearchOptions->comOptions.mode = MEM;
     }
+    opt->mTransSearchOptions->comOptions.lenper = cmd.get<float>("tlenper");
     if (cmd.get<int>("tminlength") == 0) {
         if (opt->mTransSearchOptions->comOptions.mode == GREEDY) {
             opt->mTransSearchOptions->comOptions.minFragLength = 13;
@@ -276,6 +279,7 @@ int main(int argc, char* argv[]) {
     if(cmd.get<string>("dmode") == "MEM"){
         opt->mDNASearchOptions->comOptions.mode = MEM;
     }
+    opt->mDNASearchOptions->comOptions.lenper = cmd.get<float>("dlenper");
     if(cmd.get<int>("dminlength") == 0){
         if (opt->mDNASearchOptions->comOptions.mode == GREEDY) {
             opt->mDNASearchOptions->comOptions.minFragLength = 60;

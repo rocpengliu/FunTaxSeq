@@ -84,6 +84,7 @@ class TransSearcher{
         void eval_match_scores(SI *si, Fragment *);
         void getAllFragmentsBits(const std::string& line);
         void getLongestFragmentsBits(const std::string& line);
+        uint min_match_length;
 
     protected:
         void classify_length();

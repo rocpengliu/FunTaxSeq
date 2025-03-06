@@ -29,7 +29,7 @@ public:
 
 private:
     void clearMatchedIds();
-    void postProcess(char type);
+    void postProcess();
 
 private:
     Options * mOptions;

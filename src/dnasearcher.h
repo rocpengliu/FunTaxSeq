@@ -73,6 +73,7 @@ private:
     std::map<char, std::vector<char>> blosum_subst;
     //std::string readName;
     std::stringstream ss;
+    uint min_match_length;
 
 private:
     Options* mOptions;

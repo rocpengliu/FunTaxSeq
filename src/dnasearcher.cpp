@@ -3,6 +3,7 @@
 DNASearcher::DNASearcher(Options * & opt, BwtFmiDB* & bwtfmiDB, char db) {
     mOptions = opt;
     mBwtfmiDB = bwtfmiDB;
+    min_match_length = 0;
     if(db == 'd'){
         mCommonOptions = opt->mDNASearchOptions->comOptions;
     } else if(db == 'h'){
@@ -98,6 +99,7 @@ void DNASearcher::getAllFragments(Read * & item) {
 }
 
 std::set<char *>& DNASearcher::dnaSearchWuNeng(Read* & item) {
+    min_match_length = static_cast<uint>(mCommonOptions.lenper * item->length());
     clearFragments();
     //clearMatchedIds();
     match_ids.clear();
@@ -115,6 +117,7 @@ std::set<char *>& DNASearcher::dnaSearchWuNeng(Read* & item) {
 }
 
 std::set<char *>& DNASearcher::dnaSearchWuNeng(Read* & item1, Read* & item2) {
+    min_match_length = static_cast<uint>(mCommonOptions.lenper * std::min(item1->length(), item2->length()));
     clearFragments();
     match_ids.clear();
     //readName = item1->mName;
@@ -168,7 +171,8 @@ void DNASearcher::classify_length() {
         std::strcpy(seq, fragment.c_str());
         translate2numbers((uchar*) seq, length, mBwtfmiDB->astruct);
         //need to delete si;
-        SI* si = maxMatches(mBwtfmiDB->fmi, seq, length, std::max(mCommonOptions.minFragLength, longest_match_length), 1, mCommonOptions.db);
+        //SI* si = maxMatches(mBwtfmiDB->fmi, seq, length, std::max(mCommonOptions.minFragLength, longest_match_length), 1, mCommonOptions.db);
+        SI* si = maxMatches(mBwtfmiDB->fmi, seq, length, std::max(min_match_length, longest_match_length), 1, mCommonOptions.db);
         if (!si) {
             if (mOptions->debug) {
                 std::stringstream ss;
@@ -240,7 +244,8 @@ void DNASearcher::classify_greedyblosum() {
         SI *si = NULL;
         if (num_mm > 0) {
             if (num_mm == mCommonOptions.misMatches) { //after last mm has been done, we need to have at least reached the min_length
-                si = maxMatches_withStart(mBwtfmiDB->fmi, seq, (uint32) length, mCommonOptions.minFragLength, 1, t->si0, t->si1, t->matchlen, mCommonOptions.db);
+                //si = maxMatches_withStart(mBwtfmiDB->fmi, seq, (uint32) length, mCommonOptions.minFragLength, 1, t->si0, t->si1, t->matchlen, mCommonOptions.db);
+                si = maxMatches_withStart(mBwtfmiDB->fmi, seq, (uint32) length, min_match_length, 1, t->si0, t->si1, t->matchlen, mCommonOptions.db);
             } else {
                 si = maxMatches_withStart(mBwtfmiDB->fmi, seq, (uint32) length, t->matchlen, 1, t->si0, t->si1, t->matchlen, mCommonOptions.db);
             }
@@ -274,7 +279,8 @@ void DNASearcher::classify_greedyblosum() {
                     ss << "DNA Match from " << si_it->qi << " to " << match_right_end << ": " << fragment.substr(si_it->qi, match_right_end - si_it->qi + 1) << " (" << si_it->ql << ")";
                     cCout(ss.str(), 'y');
                 }
-                if (si_it->qi > 0 && match_right_end + 1 >= mCommonOptions.minFragLength) {
+                //if (si_it->qi > 0 && match_right_end + 1 >= mCommonOptions.minFragLength) {
+                if (si_it->qi > 0 && match_right_end + 1 >= min_match_length) {
                     //1. match must end before beginning of fragment, i.e. it is extendable
                     //2. remaining fragment, from zero to end of current match, must be longer than minimum length of accepted matches
                     const size_t erase_pos = (match_right_end < length - 1) ? match_right_end + 1 : std::string::npos;
@@ -283,7 +289,8 @@ void DNASearcher::classify_greedyblosum() {
                 si_it = si_it->samelen ? si_it->samelen : si_it->next;
             }
         }
-        if ((unsigned int) si->ql < mCommonOptions.minFragLength) { // match was too short
+        //if ((unsigned int) si->ql < mCommonOptions.minFragLength) { // match was too short
+        if ((unsigned int) si->ql < min_match_length) { // match was too short
             if (mOptions->debug) {
                 std::stringstream ss;
                 ss << "Match of length (DNA) " << si->ql << " is too short";
@@ -332,7 +339,8 @@ void DNASearcher::eval_match_scores(SI *si, Fragment *frag) {
     if (!si) return;
     // eval the remaining same-length and shorter matches
     if (si->samelen) eval_match_scores(si->samelen, frag);
-    if (si->next && si->next->ql >= (int) mCommonOptions.minFragLength) {
+    //if (si->next && si->next->ql >= (int) mCommonOptions.minFragLength) {
+    if (si->next && si->next->ql >= (int) min_match_length) {
         eval_match_scores(si->next, frag);
     } else if (si->next) {
         recursive_free_SI(si->next);
@@ -375,7 +383,8 @@ void DNASearcher::addAllMismatchVariantsAtPosSI(const Fragment *f, unsigned int 
     assert(pos < erase_pos);
     assert(f->num_mm == 0 || pos < f->pos_lastmm);
     std::string fragment = f->seq; // make a copy to modify the sequence at pos
-    assert(fragment.length() >= mCommonOptions.minFragLength);
+    //assert(fragment.length() >= mCommonOptions.minFragLength);
+    assert(fragment.length() >= min_match_length);
     char origchar = fragment[pos];
     assert(blosum_subst.count(origchar) > 0);
     if(blosum_subst.find(origchar) == blosum_subst.end()){
