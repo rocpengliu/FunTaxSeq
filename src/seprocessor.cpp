@@ -46,11 +46,9 @@ SingleEndProcessor::~SingleEndProcessor() {
 }
 
 void SingleEndProcessor::initOutput() {
-    if(mOptions->out1.empty())
-        return;
-    mLeftWriter = new WriterThread(mOptions, mOptions->out1);
-
-    if (!mOptions->outFRFile.empty()) {
+    if(!mOptions->out1.empty())
+        mLeftWriter = new WriterThread(mOptions, mOptions->out1);
+    if (!mOptions->outFRFile.empty()){
         mFailedWriter = new WriterThread(mOptions, mOptions->outFRFile);
     }
 }
@@ -74,7 +72,6 @@ void SingleEndProcessor::initConfig(ThreadConfig* config) {
 
 bool SingleEndProcessor::process(){
     initOutput();
-
     initPackRepository();
     std::thread producer(std::bind(&SingleEndProcessor::producerTask, this));
 
@@ -121,7 +118,6 @@ bool SingleEndProcessor::process(){
     vector<Stats*> postStats;
     vector<FilterResult*> filterResults;
 
-    
     for(int t=0; t<mOptions->thread; t++){
         preStats.push_back(configs[t]->getPreStats1());
         postStats.push_back(configs[t]->getPostStats1());
@@ -188,8 +184,8 @@ bool SingleEndProcessor::process(){
 }
 
 bool SingleEndProcessor::processSingleEnd(ReadPack* pack, ThreadConfig* config){
-    string outstr;
-    string failedOutput;
+    string outstr = "";
+    string failedOutput = "";
     string locus = "";
     int readPassed = 0;
     int dnaReads = 0;
@@ -247,10 +243,10 @@ bool SingleEndProcessor::processSingleEnd(ReadPack* pack, ThreadConfig* config){
 
         if( r1 != NULL &&  result == PASS_FILTER) {
             locus.clear();
-            config->getHomoSearcher()->homoSearch(r1, dnaReads, proReads, hostReads, markerReads);
+            locus = *(config->getHomoSearcher()->homoSearch(r1, dnaReads, proReads, hostReads, markerReads));
             if (!locus.empty()) {
-                failedOutput += r1->toStringWithTag(locus);
-            } else {
+                failedOutput += (locus + "\n");
+            } else{
                 outstr += r1->toString();
             }
             // stats the read after filtering
@@ -293,7 +289,7 @@ bool SingleEndProcessor::processSingleEnd(ReadPack* pack, ThreadConfig* config){
     }
 
     if (mFailedWriter && !failedOutput.empty()) {
-        char* fdata = new char[failedOutput.size()];
+        char *fdata = new char[failedOutput.size()];
         memcpy(fdata, failedOutput.c_str(), failedOutput.size());
         mFailedWriter->input(fdata, failedOutput.size());
     }
@@ -457,7 +453,6 @@ void SingleEndProcessor::consumerTask(ThreadConfig* config){
     if(mFinishedThreads == mOptions->thread) {
         if(mLeftWriter)
             mLeftWriter->setInputCompleted();
-        
         if(mFailedWriter)
             mFailedWriter->setInputCompleted();
     }

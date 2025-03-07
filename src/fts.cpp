@@ -372,7 +372,7 @@ int main(int argc, char* argv[]) {
         opt->htmlFile = sam.prefix + ".html";
         opt->reportTitle = sam.prefix;
         opt->samVec.push_back(sam);
-    } else {
+    }else{
         opt->parseSampleTable();
     }
 
