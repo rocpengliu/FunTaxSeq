@@ -364,12 +364,18 @@ bool PairEndProcessor::processPairEnd(ReadPairPack* pack, ThreadConfig* config){
     mOptions->mHomoSearchOptions->markerReads += markerReads;
     mOptions->mHomoSearchOptions->mappedReads += (dnaReads + proReads + hostReads + markerReads);
     if (mOptions->mHomoSearchOptions->mappedReads % 1000 == 0){
-        cerr << "mapped " << (mOptions->mHomoSearchOptions->mappedReads / 1000) << "K reads("
-            << (mOptions->mHomoSearchOptions->hostReads / 1000) << "K h|"
-            << (mOptions->mHomoSearchOptions->markerReads / 1000) << "K m|"
-            << (mOptions->mHomoSearchOptions->dnaReads / 1000) << "K d|"
-            << (mOptions->mHomoSearchOptions->proReads / 1000) << "K p"
-            << ")\n";
+        std::string msg = "mapped " + 
+            std::to_string(mOptions->mHomoSearchOptions->mappedReads / 1000) +
+            "K reads(" + 
+            std::to_string(mOptions->mHomoSearchOptions->hostReads / 1000) +
+            "K h|" +
+            std::to_string(mOptions->mHomoSearchOptions->markerReads / 1000) +
+            "K m|" +
+            std::to_string(mOptions->mHomoSearchOptions->dnaReads / 1000) +
+            "K d|" +
+            std::to_string(mOptions->mHomoSearchOptions->proReads / 1000) +
+            "K p" + ")\n";
+        loginfo(msg);
     }
     // normal output by left/right writer thread
     if(mRightWriter && mLeftWriter && (!outstr1.empty() || !outstr2.empty())) {
