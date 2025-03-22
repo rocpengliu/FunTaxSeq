@@ -275,7 +275,7 @@ public:
         comOptions.SEG = true;
         comOptions.useEvalue = false;
         comOptions.minEvalue = 0.01;
-        comOptions.lenper = 0.9;
+        comOptions.lenper = 0.8;
         comOptions.minFragLength = 11;
         comOptions.misMatches = 3;
         comOptions.minScore = 65;

@@ -191,9 +191,9 @@ bool Options::validate() {
 
     if(thread < 1) {
         thread = 1;
-    } else if(thread > 16) {
+    } else if(thread > 24) {
         cerr << "WARNING: funtaxseq uses up to 16 threads although you specified " << thread << endl;
-        thread = 16;
+        thread = 24;
     }
 
     if(trim.front1 < 0 || trim.front1 > 30)
@@ -408,7 +408,6 @@ void Options::parseSampleTable(){
         splitStr(line, strVec);
         if(strVec.size() == 2){
             samVec.emplace_back(Sample(strVec[0], strVec[1], ""));
-            
         } else if(strVec.size() == 3){
             samVec.emplace_back(Sample(strVec[0], strVec[1], strVec[2]));
         } else {

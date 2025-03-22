@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
     cmd.add<string>("tfmi", 'd', "fmi index of Protein database", false, "");
     cmd.add<string>("tmode", 'K', "searching mode either GREEDY or MEM (maximum exactly match). By default greedy", false, "GREEDY");
     cmd.add<int>("tmismatch", 'E', "number of mismatched amino acid in sequence comparison with protein database with default value 3", false, 3);
-    cmd.add<float>("tlenper", 0, "percentage of matching amino acid in sequence comparison with default value 0.9", false, 0.9);
+    cmd.add<float>("tlenper", 0, "percentage of matching amino acid in sequence comparison with default value 0.8", false, 0.8);
     cmd.add<int>("tminscore", 'j', "minimum matching score of amino acid sequence in comparison with protein database with default value 65", false, 65);
     cmd.add<int>("tminlength", 'J', "minimum matching length of amino acid sequence in comparison with protein database with default value 13 for GREEDY and 11 for MEM model", false, 0);
     // cmd.add<int>("maxtranslength", 'm', "maximum cutoff of translated peptides, it must be no less than minlength, with default 60", false, 60);
