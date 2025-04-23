@@ -16,10 +16,12 @@ FunTaxDecoder::FunTaxDecoder(PhyloOptions *& mOptions){
     mFunTaxFreq = new FunTaxFreq();
     mFunTaxPair.clear();
     uniqFuns.clear();
-    uniqPureFuns.clear();
-    uniqGeneFuns.clear();
+    // uniqPureFuns.clear();
+    // uniqGeneFuns.clear();
     uniqTaxons.clear();
-    //taxRankMap = {{'k', 0},{'p', 1},{'c', 2},{'o', 3},{'f', 4},{'g', 5},{'s', 6},{'t', 7}};
+    pureFunSizeCountPairMap.clear();
+    geneSizeCountPairMap.clear();
+    // taxRankMap = {{'k', 0},{'p', 1},{'c', 2},{'o', 3},{'f', 4},{'g', 5},{'s', 6},{'t', 7}};
     taxRankMap = {{'k', 0},{'p', 1},{'c', 2},{'o', 3},{'f', 4},{'g', 5},{'s', 6}};
 }
 
@@ -95,7 +97,7 @@ void FunTaxDecoder::readFunTax(){
                             for(const auto & itv : split_vec2){
                                 auto tmp_id = mPhyloTree->geneDNADupMap.find(itv);
                                 if(tmp_id == mPhyloTree->geneDNADupMap.end()) continue;
-                                auto tmp_id_set = splitStrInt<std::set, std::string>(tmp_id->second, ";");
+                                auto tmp_id_set = splitStrInt2<std::set, std::string>(tmp_id->second);
                                 id_set.insert(tmp_id_set.begin(), tmp_id_set.end());
                             }
                         } else if(split_vec[1] == "pro"){
@@ -104,7 +106,7 @@ void FunTaxDecoder::readFunTax(){
                             for(const auto & itv : split_vec2){
                                 auto tmp_id = mPhyloTree->geneProDupMap.find(itv);
                                 if(tmp_id == mPhyloTree->geneProDupMap.end()) continue;
-                                auto tmp_id_set = splitStrInt<std::set, std::string>(tmp_id->second, ";");
+                                auto tmp_id_set = splitStrInt2<std::set, std::string>(tmp_id->second);
                                 id_set.insert(tmp_id_set.begin(), tmp_id_set.end());
                             }
                         }
@@ -221,12 +223,17 @@ void FunTaxDecoder::decodeEach(){
                 tTaxMap[it.first][it3->second.first] += it2.second;
             if(!it3->second.second.empty()) {
                 tFunMap[it.first][it3->second.second] += it2.second;
-                std::string pure_orth = removeNMpart(it3->second.second, 1, 2, '|');
-                tPureFunMap[it.first][pure_orth] += it2.second;
-                uniqPureFuns.insert(pure_orth);
-                std::string pure_gene = removeNMpart(it3->second.second, 0, 0, '|', true);
-                tGeneFunMap[it.first][pure_gene] += it2.second;
-                uniqGeneFuns.insert(pure_gene);
+                uniqFuns.insert(it3->second.second);
+
+                auto pure_orth_count = getSomeParts(it3->second.second, "gene");
+                tPureFunMap[it.first][pure_orth_count.first] += it2.second;
+                pureFunSizeCountPairMap[pure_orth_count.first].first += pure_orth_count.second;
+                pureFunSizeCountPairMap[pure_orth_count.first].second++;
+
+                auto pure_gene_count = getSomeParts(it3->second.second, "gene_ko_go");
+                tGeneFunMap[it.first][pure_gene_count.first] += it2.second;
+                geneSizeCountPairMap[pure_gene_count.first].first += pure_gene_count.second;
+                geneSizeCountPairMap[pure_gene_count.first].second++;
             }
         }
     }
@@ -242,13 +249,19 @@ void FunTaxDecoder::decodeTaxonSample(std::map<std::string, std::map<std::string
     std::ofstream *of = new std::ofstream();
     of->open(mOptions->outTaxon.c_str(), std::ofstream::out);
     if(!of->is_open()) error_exit("can not open " + mOptions->outTaxon);
-    *of << "#taxon" << "\t";
+    *of << "#taxon" << "\t" << "genome_size" << "\t";
     for(auto prt = tTaxMap.begin(); prt != tTaxMap.end(); ++prt){
         *of << prt->first << (std::next(prt) == tTaxMap.end() ? "\n" : "\t");
     }
+    std::string taxon = "";
+    std::unordered_map<std::string, int>::iterator taxon_pair;
     for(const auto & it : uniqTaxons){
         *of << it << "\t";
-        for(auto prt = tTaxMap.begin(); prt != tTaxMap.end(); ++prt){
+        taxon.clear();
+        taxon = getFirstLastElement(it, false, ';');
+        taxon_pair = mPhyloTree->genomeSizeMap.find(taxon);
+        *of << (taxon_pair == mPhyloTree->genomeSizeMap.end() ? 0 : taxon_pair->second) << "\t";
+        for (auto prt = tTaxMap.begin(); prt != tTaxMap.end(); ++prt){
             auto prt2 = prt->second.find(it);
             *of << (prt2 == prt->second.end() ? 0 : prt2->second) << (std::next(prt) == tTaxMap.end() ? "\n" : "\t");
         }
@@ -274,17 +287,22 @@ void FunTaxDecoder::decodeTaxonSample(std::map<std::string, std::map<std::string
         std::ofstream *of = new std::ofstream();
         of->open(mOptions->prefix + "_taxon_abundance_" + mOptions->taxLevels.at(i) + ".txt", std::ofstream::out);
         if(!of->is_open()) error_exit("can not open " + mOptions->prefix + "_taxon_abundance_" + mOptions->taxLevels.at(i) + ".txt");
-        *of << "#taxon:" << mOptions->taxLevels.at(i) << "\t";
+        *of << "#taxon:" << mOptions->taxLevels.at(i) << "\t" << "genome_size" << "\t";
         for(auto sam = subTaxMap.begin(); sam != subTaxMap.end(); ++sam){
             *of << sam->first << (std::next(sam) == subTaxMap.end() ? "\n" : "\t");
         }
         for(const auto & it : subUniqTaxon) {
             *of << it << "\t";
+            taxon.clear();
+            taxon = getFirstLastElement(it, false, ';');
+            taxon_pair = mPhyloTree->genomeSizeMap.find(taxon);
+            *of << (taxon_pair == mPhyloTree->genomeSizeMap.end() ? 0 : taxon_pair->second) << "\t";
             for(auto sam = subTaxMap.begin(); sam != subTaxMap.end(); ++sam){
                 auto sam2 = sam->second.find(it);
                 *of << (sam2 == sam->second.end() ? 0 : sam2->second) << (std::next(sam) == subTaxMap.end() ? "\n" : "\t");
             }
         }
+        of->clear();
         of->close();
         if(of){
             delete of;
@@ -299,15 +317,45 @@ void FunTaxDecoder::decodeFunSample(std::map<std::string, std::map<std::string, 
     std::ofstream* otf = new std::ofstream();
     otf->open(mOptions->outFun.c_str(), std::ofstream::out);
     if(!otf->is_open()) error_exit("can not open " + mOptions->outFun);
-    *otf << "#ortholog" << "\t";
+    std::string gene = "";
+    std::unordered_map<std::string, GeneNode *>::iterator gene_itr;
+    *otf << "#ortholog" << "\t" << "gene_size" << "\t";
     for(auto prt = tFunMap.begin(); prt != tFunMap.end(); ++prt){
         *otf << prt->first << (std::next(prt) == tFunMap.end() ? "\n" : "\t");
     }
     for(const auto & it : uniqFuns) {
+        *otf << it << "\t";
         // auto itt = mPhyloTree->orthAnoMap.find(it);
         // if(itt == mPhyloTree->orthAnoMap.end()) continue;
         // *otf << itt->second->print3() << "\t";
-        *otf << it << "\t";
+        // gene.clear();
+        // gene = getFirstLastElement(it, true, '|');
+        // gene_itr = mPhyloTree->geneAnoMap.find(gene);
+        // *otf << it << "\t";
+        // bool go = false;
+        // if(gene_itr != mPhyloTree->geneAnoMap.end()){
+        //     if(gene_itr->second->geneSize != 0){
+        //         *otf << gene_itr->second->geneSize << "\t";
+        //     } else {
+        //         go = true;
+        //     }
+        // } else {
+        //     go = true;
+        // }
+
+        // if(go){
+        //     gene_itr = mPhyloTree->orthAnoMap.find(gene);
+        //     if(gene_itr != mPhyloTree->orthAnoMap.end()){
+        //         if(gene_itr->second->geneSize != 0){
+        //             *otf << gene_itr->second->geneSize << "\t";
+        //         } else {
+        //             *otf << 0 << "\t";
+        //         }
+        //     } else {
+        //         *otf << 0 << "\t";
+        //     }
+        // }
+
         for (auto pr = tFunMap.begin(); pr != tFunMap.end(); ++pr){
             auto pr2 = pr->second.find(it);
             *otf << (pr2 == pr->second.end() ? 0 : pr2->second) << (std::next(pr) == tFunMap.end() ? "\n" : "\t");
@@ -319,14 +367,14 @@ void FunTaxDecoder::decodeFunSample(std::map<std::string, std::map<std::string, 
 
     otf->open(mOptions->outPureFun.c_str(), std::ofstream::out);
     if(!otf->is_open()) error_exit("can not open " + mOptions->outPureFun);
-    *otf << "#ortholog" << "\t";
+    *otf << "#ortholog" << "\t" << "gene_size" << "\t";
     for(auto prt = tPureFunMap.begin(); prt != tPureFunMap.end(); ++prt){
         *otf << prt->first << (std::next(prt) == tPureFunMap.end() ? "\n" : "\t");
     }
-    for(const auto & it : uniqPureFuns) {
-        *otf << it << "\t";
+    for(const auto & it : pureFunSizeCountPairMap) {
+        *otf << it.first << "\t" << (it.second.first / it.second.second) << "\t";
         for (auto pr = tPureFunMap.begin(); pr != tPureFunMap.end(); ++pr){
-            auto pr2 = pr->second.find(it);
+            auto pr2 = pr->second.find(it.first);
             *otf << (pr2 == pr->second.end() ? 0 : pr2->second) << (std::next(pr) == tPureFunMap.end() ? "\n" : "\t");
         }
     }
@@ -340,10 +388,10 @@ void FunTaxDecoder::decodeFunSample(std::map<std::string, std::map<std::string, 
     for(auto prt = tGeneFunMap.begin(); prt != tGeneFunMap.end(); ++prt){
         *otf << prt->first << (std::next(prt) == tGeneFunMap.end() ? "\n" : "\t");
     }
-    for(const auto & it : uniqGeneFuns) {
-        *otf << it << "\t";
+    for(const auto & it : geneSizeCountPairMap) {
+        *otf << it.first << "\t" << (it.second.first / it.second.second) << "\t";
         for (auto pr = tGeneFunMap.begin(); pr != tGeneFunMap.end(); ++pr){
-            auto pr2 = pr->second.find(it);
+            auto pr2 = pr->second.find(it.first);
             *otf << (pr2 == pr->second.end() ? 0 : pr2->second) << (std::next(pr) == tGeneFunMap.end() ? "\n" : "\t");
         }
     }
@@ -355,53 +403,6 @@ void FunTaxDecoder::decodeFunSample(std::map<std::string, std::map<std::string, 
         delete otf;
         otf = nullptr;
     }
-
-    /*
-
-    std::map<std::string, std::map<std::string, uint32>> finalFunMap;
-    for(const auto & it : tFunMap){
-        std::multimap<std::string, std::pair<std::vector<std::string>, uint32>> annoFunMap;
-        std::set<std::string> uniqFunSet;
-        for(const auto & it2 : it.second){
-            std::string tmpStr = it2.first;
-            auto vec = splitStr(tmpStr, "|");
-            annoFunMap.insert(std::make_pair(vec.at(0), std::make_pair(vec, it2.second)));
-            uniqFunSet.insert(vec.at(0));
-        }
-        for(const auto & it2 : uniqFunSet){
-            auto range = annoFunMap.equal_range(it2);
-            uint32 numReadsTmp = 0;
-            std::multimap<uint8, std::vector<std::string>> tmpMap;
-            for(auto itr = range.first; itr != range.second; ++itr){
-                numReadsTmp += itr->second.second;
-                if(!itr->second.first.at(1).empty()){
-                    auto va = taxRankMap[itr->second.first.at(1)[0]];
-                    tmpMap.insert(std::make_pair(va, itr->second.first));
-                }
-            }
-            if(!tmpMap.empty()){
-                uint8 rankKey = tmpMap.begin()->first;
-                auto rangeIt = tmpMap.equal_range(rankKey);
-                int len = std::distance(rangeIt.first, rangeIt.second);
-                if(len == 1){
-                    finalFunMap[it.first][getStrVec(rangeIt.first->second)] = numReadsTmp;
-                } else {
-                    std::vector<std::pair<uint32, uint32>> freqVec;
-                    uint32 ii = 0;
-                    for(auto rIt = rangeIt.first; rIt != rangeIt.second; ++rIt){
-                        freqVec.push_back(std::make_pair(ii, static_cast<uint32>(rIt->second.at(2).length() + rIt->second.at(3).length())));
-                    }
-                    std::sort(freqVec.begin(), freqVec.end(), [](const std::pair<uint32, uint32>& a, const std::pair<uint32, uint32>& b) {
-                        return a.second > b.second;
-                    });
-                    std::advance(rangeIt.first, freqVec.at(0).first);
-                    if ( rangeIt.first != rangeIt.second){
-                        finalFunMap[it.first][getStrVec(rangeIt.first->second)] = numReadsTmp;
-                    }
-                }
-            }
-        }
-    */
 }
 
 std::pair<std::string, std::string> FunTaxDecoder::decodeFunTax(std::unordered_set<std::string>& locSet) {
@@ -448,7 +449,7 @@ std::string FunTaxDecoder::decodeFun(std::unordered_set<std::string>& locSet) {
     if(locSet.size() == 1){
         auto it = mPhyloTree->geneAnoMap.find(*(locSet.begin()));
         if(it != mPhyloTree->geneAnoMap.end()){
-            gene = it->second->print3();
+            gene = it->second->print3(true);
         }
         return gene;
     }
@@ -458,19 +459,24 @@ std::string FunTaxDecoder::decodeFun(std::unordered_set<std::string>& locSet) {
         if(it2 == mPhyloTree->geneAnoMap.end())
             continue;
         if(it2->second->par == "0"){
-            gene_anno_map[it2->second->print3()]++;
+            gene_anno_map[it2->second->print3(true)]++;
         } else {
             tmpSet.insert(it2->second->par);
         }
     }
 
     auto gene2 = getMapMaxKey(gene_anno_map);
+    // if(mPhyloTree->geneSizeMap.find(gene2) == mPhyloTree->geneSizeMap.end()){
+    //     gene2.append("|0");
+    // } else {
+    //     gene2.append("|" + std::to_string(mPhyloTree->geneSizeMap.find(gene2)->second));
+    // }
     if(tmpSet.empty()) {
         return gene2;
     } else if(tmpSet.size() == 1){
         auto it2 = mPhyloTree->orthAnoMap.find(*(tmpSet.begin()));
         if(it2 != mPhyloTree->orthAnoMap.end()){
-            gene = it2->second->print3();
+            gene = it2->second->print3(true);
             return gene;
         }
     }
@@ -501,31 +507,13 @@ std::string FunTaxDecoder::decodeFun(std::unordered_set<std::string>& locSet) {
         }
     }
 
-    // if(treItSet.empty()){
-    //     tree<std::string*>::pre_order_iterator locf2;
-    //     for (const auto & it : tmpSet) {
-    //         locf2 = std::find_if(mPhyloTree->geneTree->begin(), mPhyloTree->geneTree->end(),
-    //                 [&it](std::string* & itp) {
-    //                     return *itp == it;
-    //                 });
-    //         if (mPhyloTree->geneTree->is_valid(locf2)) {
-    //             treItSet.insert(locf2);
-    //         }
-    //     }
-    // }
-
     //treItSet is size is 1, then just search the ortho map
     if (!treItSet.empty()) {
         //ftNode->funLoc = mPhyloTree->geneTree->lowest_common_ancestor(treItSet);
         auto itt = mPhyloTree->geneTree->lowest_common_ancestor(treItSet);
         auto itt2 = mPhyloTree->orthAnoMap.find(*(itt.node->data));
         if(itt2 != mPhyloTree->orthAnoMap.end()){
-            //gene = itt2->second->id;
-            //gene = itt2->first;
-            gene = itt2->second->print3();
-            // else {
-            //     gene = gene2;
-            // }
+            gene = itt2->second->print3(true);
         } else {
             gene = gene2;
         }
@@ -535,48 +523,3 @@ std::string FunTaxDecoder::decodeFun(std::unordered_set<std::string>& locSet) {
     }
     return gene;
 }
-
-/*
-std::string FunTaxDecoder::decodeFun(std::unordered_set<std::string>& locSet) {
-    std::string gene = "";
-    if(locSet.size() == 1){
-        auto it = mPhyloTree->geneAnoMap.find(*(locSet.begin()));
-        if(it != mPhyloTree->geneAnoMap.end()){
-            gene = it->second->print2("par");
-        }
-        return gene;
-    }
-    std::unordered_set<std::string> tmpSet;
-    for (const auto & it : locSet){
-        auto it2 = mPhyloTree->geneAnoMap.find(it);
-        if(it2 == mPhyloTree->geneAnoMap.end())
-            continue;
-        if(it2->second->par != "0") tmpSet.insert(it2->second->par);
-    }
-
-    std::set<tree<std::string*>::iterator, tree<std::string*>::iterator_base_less> treItSet;
-    tree<std::string*>::leaf_iterator locf;
-    for (const auto & it : tmpSet) {
-        locf = std::find_if(mPhyloTree->geneTree->begin_leaf(),
-                mPhyloTree->geneTree->end_leaf(),
-                [&it](std::string* & itp) {
-                    return *itp == it;
-                });
-        if (mPhyloTree->geneTree->is_valid(locf)) {
-            treItSet.insert(locf);
-        }
-    }
-    
-    if (!treItSet.empty()) {
-        //ftNode->funLoc = mPhyloTree->geneTree->lowest_common_ancestor(treItSet);
-        auto itt = mPhyloTree->geneTree->lowest_common_ancestor(treItSet);
-        auto itt2 = mPhyloTree->orthAnoMap.find(*(itt.node->data));
-        if(itt2 != mPhyloTree->orthAnoMap.end()){
-            gene = itt2->second->print2();
-            //gene = itt2->first;
-        }
-        treItSet.clear();
-    }
-    return gene;
-}
-*/

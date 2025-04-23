@@ -20,10 +20,8 @@ class PhyloOptions{
     public:
         PhyloOptions();
         virtual ~PhyloOptions();
-
     public:
         void parseSample();
-
     public:
         std::string db;
         std::string prefix;
@@ -33,6 +31,8 @@ class PhyloOptions{
         std::string outGeneFun;
         std::string gTree;
         std::string tTree;
+        std::string taxonGenomeSize;
+        std::string orthGeneSize;
         std::string geneAno;
         std::string orthAno;
         std::string geneDNADup;
@@ -56,7 +56,6 @@ class FunTaxFreq{
             geneFreq.clear();
             taxonFreq.clear();
         }
-
     public:
         std::unordered_map<std::string*, int> geneFreq;
         std::unordered_map<std::string*, int> taxonFreq;
@@ -64,9 +63,8 @@ class FunTaxFreq{
 
 class FunTaxNode{
     public:
-    FunTaxNode(){
-    }
-
+        FunTaxNode(){
+        }
     public:
         tree<std::string*>::leaf_iterator taxLoc;
         tree<std::string*>::leaf_iterator funLoc;
@@ -76,18 +74,17 @@ class GeneNode{
     public:
         GeneNode();
         ~GeneNode();
-
         std::string print(std::string idpar = "id", std::string type = "full");
         std::string print2(std::string idpar = "id");
-        std::string print3();
-
+        std::string print3(bool printGeneSize);
     public:
         std::string id;
+        int geneSize;
         std::string par;
         std::string taxon;
         std::string anno;
-        std::set<std::string> koSet;
-        std::set<std::string> goSet;
+        std::set<uint16_t> koSet;
+        std::set<uint32_t> goSet;
 };
 
 class SimGeneNode{

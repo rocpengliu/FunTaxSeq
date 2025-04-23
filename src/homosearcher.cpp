@@ -196,7 +196,7 @@ std::string* HomoSearcher::homoSearch(Read* & item1, Read* & item2, int & dnaRea
             return locus;
         }
     }
-    // if(!match_ids.empty()){
+    // if(!match_ids.empty()){            
     //     postProcess();
     // }
     return locus;

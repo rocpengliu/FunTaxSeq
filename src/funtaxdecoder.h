@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <functional>
 #include <vector>
+#include <utility>
 
 #include "common.h"
 #include "phylotree.h"
@@ -27,15 +28,15 @@ extern std::mutex mtxTreW;
 
 using namespace std;
 
-struct VectorHash {
-    size_t operator()(const std::vector<int>& v) const {
-        size_t seed = 0;
-        for (const auto& elem : v) {
-            seed ^= std::hash<int>()(elem) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-        }
-        return seed;
-    }
-};
+// struct VectorHash {
+//     size_t operator()(const std::vector<int>& v) const {
+//         size_t seed = 0;
+//         for (const auto& elem : v) {
+//             seed ^= std::hash<int>()(elem) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+//         }
+//         return seed;
+//     }
+// };
 class FunTaxDecoder{
     public:
         FunTaxDecoder(PhyloOptions *& mOptions);
@@ -52,8 +53,8 @@ class FunTaxDecoder{
         std::string decodeTax(std::unordered_set<std::string>& locSet);
         std::string decodeFun(std::unordered_set<std::string>& locSet);
         void decodeTaxonSample(std::map<std::string, std::map<std::string, uint32>>& tTaxMap);
-        void decodeFunSample(std::map<std::string, std::map<std::string, uint32>>& tFunMap, 
-            std::map<std::string, std::map<std::string, uint32>>& tPureFunMap, 
+        void decodeFunSample(std::map<std::string, std::map<std::string, uint32>>& tFunMap,
+            std::map<std::string, std::map<std::string, uint32>>& tPureFunMap,
             std::map<std::string, std::map<std::string, uint32>>& tGeneFunMap);
 
     private:
@@ -71,8 +72,10 @@ class FunTaxDecoder{
         FunTaxFreq* mFunTaxFreq;
         std::unordered_map<std::string, std::pair<std::string, std::string>> mFunTaxPair;//line, tax, fun
         std::set<std::string> uniqFuns;
-        std::set<std::string> uniqPureFuns;
-        std::set<std::string> uniqGeneFuns;
+        //std::set<std::string> uniqPureFuns;
+        std::map<std::string, std::pair<int, int>> pureFunSizeCountPairMap; //fun with taxon and orth, sum of gene size and number of genes
+        //std::set<std::string> uniqGeneFuns;
+        std::map<std::string, std::pair<int, int>> geneSizeCountPairMap; //fun with taxon and orth, sum of gene size and number of genes
         std::set<std::string> uniqTaxons;
         std::map<char, uint8_t> taxRankMap;
 };

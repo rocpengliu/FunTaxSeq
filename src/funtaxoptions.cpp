@@ -10,6 +10,8 @@
      outPureFun = "";
      gTree = "";
      tTree = "";
+     taxonGenomeSize = "";
+     orthGeneSize = "";
      geneAno = "";
      orthAno = "";
      geneDNADup = "";
@@ -44,6 +46,7 @@ void PhyloOptions::parseSample(){
 
 GeneNode::GeneNode(){
     id = "";
+    geneSize = 0;
     par = "";
     taxon = "";
     anno = "";
@@ -79,11 +82,10 @@ std::string GeneNode::print(std::string idpar, std::string type){
             ss << 0;
         } else {
                 for (const auto & it : goSet){
-                    if(it == "0"){
+                    if(it == 0){
                         ss << 0;
                     } else {
-                        ss << it << (it == *goSet.rbegin() ? "" : ";");
-                        //ss << "GO:" << std::setw(7) << std::setfill('0') << it << (it == *goSet.rbegin() ? "" : ";");
+                        ss << "GO:" << std::setw(7) << std::setfill('0') << it << (it == *goSet.rbegin() ? "" : ";");
                     }
                 }
         }
@@ -95,10 +97,10 @@ std::string GeneNode::print(std::string idpar, std::string type){
             ss << 0;
         } else{
             for (const auto &it : koSet){
-                if (it == "0"){
+                if (it == 0){
                     ss << 0;
                 } else{
-                    ss << it << (it == *koSet.rbegin() ? "" : ";");
+                    ss << "K" << std::setw(5) << std::setfill('0') << it << (it == *koSet.rbegin() ? "" : ";");
                 }
             }
         }
@@ -110,7 +112,7 @@ std::string GeneNode::print2(std::string idpar){
     return (idpar == "id" ? id : par);
 }
 
-std::string GeneNode::print3(){
+std::string GeneNode::print3(bool printGeneSize = false){
     bool goGo = true;
     bool goKo = true;
     std::stringstream ss;
@@ -123,11 +125,11 @@ std::string GeneNode::print3(){
             ss << 0;
         } else {
                 for (const auto & it : goSet){
-                    if(it == "0"){
+                    if(it == 0){
                         ss << 0;
                     } else {
-                        ss << it << (it == *goSet.rbegin() ? "" : ";");
-                        //ss << "GO:" << std::setw(7) << std::setfill('0') << it << (it == *goSet.rbegin() ? "" : ";");
+                        //ss << it << (it == *goSet.rbegin() ? "" : ";");
+                        ss << "GO:" << std::setw(7) << std::setfill('0') << it << (it == *goSet.rbegin() ? "" : ";");
                     }
                 }
         }
@@ -139,15 +141,17 @@ std::string GeneNode::print3(){
             ss << 0;
         } else{
             for (const auto &it : koSet){
-                if (it == "0"){
+                if (it == 0){
                     ss << 0;
                 } else{
-                    ss << it << (it == *koSet.rbegin() ? "" : ";");
-                    //ss << "K" << std::setw(5) << std::setfill('0') << it << (it == *koSet.rbegin() ? "" : ";");
+                    //ss << it << (it == *koSet.rbegin() ? "" : ";");
+                    ss << "K" << std::setw(5) << std::setfill('0') << it << (it == *koSet.rbegin() ? "" : ";");
                 }
             }
         }
     }
+    if(printGeneSize)
+        ss << "|" << geneSize;
     return ss.str();
 }
 

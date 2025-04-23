@@ -29,7 +29,7 @@ public:
     PhyloTree(PhyloOptions *& mOptions);
     PhyloTree(const PhyloTree& orig);
     virtual ~PhyloTree();
-    
+
 public:
     //tree<std::string*>* taxonTree;
     //tree<std::string*>* geneTree;
@@ -37,6 +37,8 @@ public:
     std::unordered_map<std::string, GeneNode*> orthAnoMap;
     std::unordered_map<std::string, std::string> geneDNADupMap;
     std::unordered_map<std::string, std::string> geneProDupMap;
+    std::unordered_map<std::string, int> genomeSizeMap;
+    //std::unordered_map<std::string, int> geneSizeMap;
     std::shared_ptr<tree<std::string*>> taxonTree;
     //std::shared_ptr<tree<uint32*>> taxonTree;
     std::shared_ptr<tree<std::string*>> geneTree;
@@ -47,22 +49,20 @@ private:
     void init();
     void printParKid(std::string tre);
     std::queue<std::string> readGZ(std::string & fl);
-    void readGeneAnno(std::queue<std::string>& geneAnnoQueue);
+    void readGZ(std::string &fl, char type);
+    void readGeneAnno(std::queue<std::string> &geneAnnoQueue);
     void readOrthAnno(std::queue<std::string>& orthAnnoQueue);
     void readGeneDup(std::queue<std::string>& geneDupQueue, char type);
     void populateGeneTre();
     // tree<std::string*>* buildTreeLoopPtr(std::string* str);
     // tree<std::string*>* buildTreePtr(std::queue<std::string> & linQue, int numThreads);
-
     std::shared_ptr<tree<std::string *>> buildTreeLoopPtr(std::string *str);
     std::shared_ptr<tree<std::string *>> buildTreePtr(std::string& db, std::string type);
-
     std::shared_ptr<tree<SimGeneNode *>> buildTreeLoopPtrNode(std::string *str);
     std::shared_ptr<tree<SimGeneNode *>> buildTreePtrNode(std::string& db);
-
     std::shared_ptr<tree<uint32 *>> buildTreeLoopIntPtr(std::string *str);
     std::shared_ptr<tree<uint32 *>> buildTreeIntPtr(std::queue<std::string> &linQue, int numThreads);
-    
+    void print_children_par(std::shared_ptr<tree<std::string *>>& tre, std::string fpath);
 private:
     PhyloOptions * mOptions;
 };

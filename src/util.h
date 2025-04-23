@@ -311,6 +311,24 @@ inline std::unordered_set<std::string> splitStr2(string str, string sep = ";") {
     return ret_;
 }
 
+inline std::string getFirstLastElement(std::string str, bool first, char sep){
+    if(first){
+        std::string::size_type pos = str.find_first_of(sep);
+        if(pos == std::string::npos){
+            return str;
+        } else {
+            return str.substr(0, pos);
+        }
+    } else {
+        std::string::size_type pos = str.find_last_of(sep);
+        if(pos == std::string::npos){
+            return str;
+        } else {
+            return str.substr(pos+1);
+        }
+    }
+}
+
 template<typename T>
 inline std::string getStrVec(std::vector<T> vec, char sep = '|'){
     std::stringstream ss;
@@ -341,7 +359,7 @@ inline std::string getFirstNsSeps(std::string str, int n, char sep = ';'){
     }
 }
 template <template<typename, typename...> class Container, typename T, typename... Args>
-inline Container<T, Args...> splitStrInt(string str, std::string sep = ";") {
+inline Container<T, Args...> splitStrInt(string str, char type, std::string sep = ";") {
     Container<T, Args...> ret_;
     if (str.empty()) {
         return ret_;
@@ -364,7 +382,41 @@ inline Container<T, Args...> splitStrInt(string str, std::string sep = ";") {
             tmp = str.substr(pos_begin);
             pos_begin = comma_pos;
         }
-        //ret_.insert(static_cast<T>(std::stoul(tmp)));
+        if(type == 'g'){
+            tmp.erase(0, 3);
+        } else if(type == 'k'){
+            tmp.erase(0, 1);
+        }
+        ret_.insert(static_cast<T>(std::stoul(tmp)));
+        tmp.clear();
+    }
+    return ret_;
+}
+
+template <template<typename, typename...> class Container, typename T, typename... Args>
+inline Container<T, Args...> splitStrInt2(string str, std::string sep = ";") {
+    Container<T, Args...> ret_;
+    if (str.empty()) {
+        return ret_;
+    }
+    if(str.front() == sep[0]){
+        str.erase(0,1);
+    }
+    if(str.back() == sep[0]) {
+        str.pop_back();
+    }
+    string tmp = "";
+    string::size_type pos_begin = str.find_first_not_of(sep);
+    string::size_type comma_pos = 0;
+    while (pos_begin != string::npos) {
+        comma_pos = str.find(sep, pos_begin);
+        if (comma_pos != string::npos) {
+            tmp = str.substr(pos_begin, comma_pos - pos_begin);
+            pos_begin = comma_pos + sep.length();
+        } else {
+            tmp = str.substr(pos_begin);
+            pos_begin = comma_pos;
+        }
         ret_.insert(tmp);
         tmp.clear();
     }
@@ -734,5 +786,23 @@ inline std::string removeNMpart(std::string & str, int m, int n, char sep = '|',
         }
     }
     return ret_str;
+}
+inline std::pair<std::string, int> getSomeParts(std::string & str, std::string part, std::string sep = "|"){
+    std::string ret_str = "";
+    int geneSize = 0;
+    auto strVec = splitStr(str, sep);
+    if(strVec.size() == 6){
+        geneSize = std::stoi(strVec.at(5));
+        if(part == "gene"){
+            ret_str = strVec.at(0);
+        } else if(part == "gene_ko"){
+            ret_str = strVec.at(0) + "|" + strVec.at(4);
+        } else if(part == "gene_go"){
+            ret_str = strVec.at(0) + "|" + strVec.at(3);
+        } else if(part == "gene_ko_go"){
+            ret_str = strVec.at(0) + "|" + strVec.at(3) + "|" + strVec.at(4);
+        }
+    }
+    return std::make_pair(ret_str, geneSize);
 }
 #endif /* UTIL_H */
