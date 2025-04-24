@@ -705,6 +705,14 @@ void PhyloTree::readGZ(std::string & fl, char type){
         trimEnds(&line);
         strVec.clear();
         splitStr(line, strVec);
+        try{
+            int num = std::stoi(strVec.at(1));
+        }  catch (const std::invalid_argument& e) {
+            std::cerr << "Invalid input: not a number -> " << e.what() << std::endl;
+        } catch (const std::out_of_range& e) {
+            std::cerr << "Number out of range -> " << e.what() << std::endl;
+        }
+
         if(strVec.size() == 2){
             if(type == 't'){
                 genomeSizeMap[strVec.at(0)] = std::stoi(strVec.at(1));
