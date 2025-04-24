@@ -704,19 +704,19 @@ void PhyloTree::readGZ(std::string & fl, char type){
         line = buffer;
         trimEnds(&line);
         strVec.clear();
-        cCout(line, 'y');
-        splitStr(line, strVec);
-        cCout(strVec.at(1), 'g');
+        
         try
         {
             int num = std::stoi(strVec.at(1));
         }
         catch (const std::invalid_argument &e)
         {
+            cCout(line, 'y');
             std::cerr << "Invalid input: not a number -> " << e.what() << std::endl;
         }
         catch (const std::out_of_range &e)
         {
+            cCout(line, 'g');
             std::cerr << "Number out of range -> " << e.what() << std::endl;
         }
 
