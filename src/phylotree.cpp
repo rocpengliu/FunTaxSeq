@@ -715,7 +715,7 @@ void PhyloTree::readGZ(std::string & fl, char type){
             } else if(type == 'p'){
                 geneProDupMap[strVec.at(0)] = strVec.at(1);
             }
-        } else if(strVec.size() == 6) {
+        } else if(strVec.size() == 7) {
             GeneNode *tmp = new GeneNode();
             tmp->id = strVec[0];
             tmp->geneSize = std::stoi(strVec[1]);
