@@ -704,6 +704,7 @@ void PhyloTree::readGZ(std::string & fl, char type){
         line = buffer;
         trimEnds(&line);
         strVec.clear();
+        cCout(line, 'y');
         splitStr(line, strVec);
         cCout(strVec.at(1), 'g');
         try
