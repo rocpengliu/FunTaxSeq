@@ -704,7 +704,7 @@ void PhyloTree::readGZ(std::string & fl, char type){
         line = buffer;
         trimEnds(&line);
         strVec.clear();
-        
+        splitStr(line, strVec);
         try
         {
             int num = std::stoi(strVec.at(1));
