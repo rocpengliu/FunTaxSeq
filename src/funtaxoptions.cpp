@@ -49,6 +49,7 @@ GeneNode::GeneNode(){
     geneSize = 0;
     par = "";
     taxon = "";
+    taxonLev = 0;
     anno = "";
     koSet.clear();
     goSet.clear();

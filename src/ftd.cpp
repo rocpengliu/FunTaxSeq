@@ -30,6 +30,7 @@ int main(int argc, char* argv[]) {
     cmd.add<string>("outprefix", 'o', "output file prefix", false, "");
     cmd.add<string>("otre", 't', "output tree par kid file", false, "");
     cmd.add<string>("database", 'b', "datbase directory", false, "");
+    cmd.add("useogtree", 't', "If specified, using ortholog tree(slow)");
     cmd.add<int>("thread", 'w', "worker thread number, default is 4", false, 4);
     cmd.add("debug", 'd', "If specified, print debug");
     cmd.add("verbose", 'V', "output verbose");
@@ -54,7 +55,9 @@ int main(int argc, char* argv[]) {
     opt->outFun = opt->prefix + "_raw_func_abundance.txt";
     opt->outPureFun = opt->prefix + "_gene_go_ko_func_abundance.txt";
     opt->outGeneFun = opt->prefix + "_gene_func_abundance.txt";
-    opt->gTree = joinpath(opt->db, "ogs_tree.tre");
+    if(cmd.exist("useogtree")){
+        opt->gTree = joinpath(opt->db, "ogs_tree.tre");
+    }
     opt->tTree = joinpath(opt->db, "taxon_tree.tre");
     opt->taxonGenomeSize = joinpath(opt->db, "taxon_genome_size.tab.gz");
     //opt->orthGeneSize = joinpath(opt->db, "orth_gene_size.tab.gz");

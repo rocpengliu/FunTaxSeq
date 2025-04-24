@@ -81,6 +81,7 @@ class GeneNode{
         std::string id;
         int geneSize;
         std::string par;
+        uint8_t taxonLev;
         std::string taxon;
         std::string anno;
         std::set<uint16_t> koSet;

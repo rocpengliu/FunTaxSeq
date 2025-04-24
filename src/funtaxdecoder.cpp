@@ -408,7 +408,7 @@ void FunTaxDecoder::decodeFunSample(std::map<std::string, std::map<std::string, 
 std::pair<std::string, std::string> FunTaxDecoder::decodeFunTax(std::unordered_set<std::string>& locSet) {
     std::pair<std::string, std::string> ftp;
     ftp.first = decodeTax(locSet);
-    ftp.second = decodeFun(locSet);
+    ftp.second = mOptions->gTree.empty() ? decodeFun2(locSet) : decodeFun(locSet);
     return ftp;
 }
 
@@ -466,11 +466,6 @@ std::string FunTaxDecoder::decodeFun(std::unordered_set<std::string>& locSet) {
     }
 
     auto gene2 = getMapMaxKey(gene_anno_map);
-    // if(mPhyloTree->geneSizeMap.find(gene2) == mPhyloTree->geneSizeMap.end()){
-    //     gene2.append("|0");
-    // } else {
-    //     gene2.append("|" + std::to_string(mPhyloTree->geneSizeMap.find(gene2)->second));
-    // }
     if(tmpSet.empty()) {
         return gene2;
     } else if(tmpSet.size() == 1){
@@ -522,4 +517,85 @@ std::string FunTaxDecoder::decodeFun(std::unordered_set<std::string>& locSet) {
         gene = gene2;
     }
     return gene;
+}
+
+std::string FunTaxDecoder::decodeFun2(std::unordered_set<std::string>& locSet){
+    std::string gene = "";
+    if(locSet.size() == 1){
+        auto it = mPhyloTree->geneAnoMap.find(*(locSet.begin()));
+        if(it != mPhyloTree->geneAnoMap.end()){
+            gene = it->second->print3(true);
+        }
+        return gene;
+    }
+    std::unordered_map<std::string, int> gene_anno_map;
+    std::unordered_set<std::string> parSet;
+    for (const auto & it : locSet){
+        auto it2 = mPhyloTree->geneAnoMap.find(it);
+        if(it2 == mPhyloTree->geneAnoMap.end())
+            continue;
+        if(it2->second->par == "0"){
+            gene_anno_map[it2->second->print3(true)]++;
+        } else {
+            parSet.insert(it2->second->par);
+        }
+    }
+
+    auto gene2 = getMapMaxKey(gene_anno_map);
+    if(parSet.empty()) {
+        return gene2;
+    } else if(parSet.size() == 1){
+        auto it2 = mPhyloTree->orthAnoMap.find(*(parSet.begin()));
+        if(it2 != mPhyloTree->orthAnoMap.end()){
+            gene = it2->second->print3(true);
+            return gene;
+        }
+    }
+    std::vector<uint8_t> levVec;
+    levVec.reserve(parSet.size());
+    std::unordered_set<std::string> tmpParSet;
+    while(parSet.size() > 1){
+        tmpParSet.clear();
+        levVec.clear();
+        for(const auto & it : parSet){
+            auto it2 = mPhyloTree->orthAnoMap.find(it);
+            if(it2 == mPhyloTree->orthAnoMap.end()){
+                continue;
+            }
+            levVec.emplace_back(it2->second->taxonLev);
+        }
+        auto min_lev = std::min_element(levVec.begin(), levVec.end());
+        if(min_lev == levVec.end() || static_cast<int>(*min_lev) == 7){
+            return "";
+        }
+        for(const auto & it : parSet){
+            auto it2 = mPhyloTree->orthAnoMap.find(it);
+            if(it2 == mPhyloTree->orthAnoMap.end()){
+                continue;
+            }
+            if(it2->second->taxonLev == *min_lev){
+                if(it2->second->par == "0"){
+                    tmpParSet.insert(it2->second->anno);
+                } else {
+                    tmpParSet.insert(it2->second->par);
+                }
+            } else {
+                tmpParSet.insert(it);
+            }
+        }
+        if(tmpParSet.empty()){
+            return "";
+        } else if(tmpParSet.size() == 1){
+            auto it2 = mPhyloTree->orthAnoMap.find(*(tmpParSet.begin()));
+            if(it2 == mPhyloTree->orthAnoMap.end()){
+                return "";
+            } else {
+                return it2->second->print3(true);
+            }
+        } else {
+            std::swap(parSet, tmpParSet);
+            tmpParSet.clear();
+            levVec.clear();
+        }
+    }
 }

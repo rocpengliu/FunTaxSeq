@@ -52,6 +52,7 @@ class FunTaxDecoder{
         std::pair<std::string, std::string> decodeFunTax(std::unordered_set<std::string> &locSet);
         std::string decodeTax(std::unordered_set<std::string>& locSet);
         std::string decodeFun(std::unordered_set<std::string>& locSet);
+        std::string decodeFun2(std::unordered_set<std::string>& locSet);
         void decodeTaxonSample(std::map<std::string, std::map<std::string, uint32>>& tTaxMap);
         void decodeFunSample(std::map<std::string, std::map<std::string, uint32>>& tFunMap,
             std::map<std::string, std::map<std::string, uint32>>& tPureFunMap,

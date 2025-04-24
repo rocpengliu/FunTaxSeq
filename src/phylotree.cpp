@@ -32,17 +32,20 @@ PhyloTree::~PhyloTree() {
         if(mOptions->verbose) cerr << "taxon tree free finished" << "\n";
     });
 
-    std::thread dFTreThread = std::thread([this](){
-        if(mOptions->verbose) cerr << "start to free gene ortholog tree" << "\n";
-        for(auto it = geneTree->begin(); it != geneTree->end(); ++it){
-            if(it.node->data){
-            delete it.node->data;
-            it.node->data = nullptr;
+    std::thread dFTreThread;
+    if(!mOptions->gTree.empty()){
+        dFTreThread = std::thread([this](){
+            if(mOptions->verbose) cerr << "start to free gene ortholog tree" << "\n";
+            for(auto it = geneTree->begin(); it != geneTree->end(); ++it){
+                if(it.node->data){
+                delete it.node->data;
+                it.node->data = nullptr;
+                }
             }
-        }
-        //delete geneTree;
-        if(mOptions->verbose) cerr << "gene ortholog tree free finished" << "\n";
-    });
+            //delete geneTree;
+            if(mOptions->verbose) cerr << "gene ortholog tree free finished" << "\n";
+        });
+    }
 
 /*
     std::thread dGenThread = std::thread([this](){
@@ -174,13 +177,13 @@ void PhyloTree::init(){
     if(mOptions->verbose) cerr << "taxon tree size is " << taxonTree->size() << " and has " << taxonTree->begin().number_of_descent() << " descents" << "\n";
     //print_children_par(taxonTree, "taxon_tree_par_children.txt");
 
-    if(mOptions->verbose) loginfo("start to build gene ortholog tree!");
-    //geneNodeTree = buildTreePtrNode(mOptions->gTree);
-    //populateGeneTre();
-    geneTree = buildTreePtr(mOptions->gTree, "ortholog");
-    if(mOptions->verbose) loginfo("finished to build gene ortholog tree!");
-    if(geneTree->size() < 1) error_exit("built gene tree size must be no less than 1: ");
-    if(mOptions->verbose) cerr << "gene ortholog tree size is " << geneTree->size() << " and has " << geneTree->begin().number_of_descent() << " descents" << "\n";
+    if(!mOptions->gTree.empty()){
+        if(mOptions->verbose) loginfo("start to build gene ortholog tree!");
+        geneTree = buildTreePtr(mOptions->gTree, "ortholog");
+        if(mOptions->verbose) loginfo("finished to build gene ortholog tree!");
+        if(geneTree->size() < 1) error_exit("built gene tree size must be no less than 1: ");
+        if(mOptions->verbose) cerr << "gene ortholog tree size is " << geneTree->size() << " and has " << geneTree->begin().number_of_descent() << " descents" << "\n";
+    }
     //print_children_par(geneTree, "ogs_tree_par_children.txt");
     //     tree<std::string*>::post_order_iterator locf;
     //     locf = std::find_if(geneTree->begin_post(), geneTree->end_post(),
@@ -705,21 +708,6 @@ void PhyloTree::readGZ(std::string & fl, char type){
         trimEnds(&line);
         strVec.clear();
         splitStr(line, strVec);
-        try
-        {
-            int num = std::stoi(strVec.at(1));
-        }
-        catch (const std::invalid_argument &e)
-        {
-            cCout(line, 'y');
-            std::cerr << "Invalid input: not a number -> " << e.what() << std::endl;
-        }
-        catch (const std::out_of_range &e)
-        {
-            cCout(line, 'g');
-            std::cerr << "Number out of range -> " << e.what() << std::endl;
-        }
-
         if(strVec.size() == 2){
             if(type == 't'){
                 genomeSizeMap[strVec.at(0)] = std::stoi(strVec.at(1));
@@ -745,7 +733,22 @@ void PhyloTree::readGZ(std::string & fl, char type){
             }
             if(type == 'g'){
                 geneAnoMap[strVec[0]] = tmp;
-            } else if(type == 'o'){
+            } 
+        } else if(strVec.size() == 8){
+            GeneNode *tmp = new GeneNode();
+            tmp->id = strVec[0];
+            tmp->geneSize = std::stoi(strVec[1]);
+            tmp->par = strVec[2];
+            tmp->taxonLev = static_cast<uint8_t>(strVec[3][0] - '0');
+            tmp->taxon = strVec[4];
+            tmp->anno = strVec[5];
+            if(strVec[5] != "0"){
+                tmp->goSet = splitStrInt<std::set, uint32_t>(strVec[6], 'g');
+            }
+            if (strVec[6] != "0"){
+                tmp->koSet = splitStrInt<std::set, uint16_t>(strVec[7], 'k');
+            }
+            if(type == 'o'){
                 orthAnoMap[strVec[0]] = tmp;
             }
         } else {
