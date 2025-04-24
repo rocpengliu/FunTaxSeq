@@ -21,8 +21,6 @@ FunTaxDecoder::FunTaxDecoder(PhyloOptions *& mOptions){
     uniqTaxons.clear();
     pureFunSizeCountPairMap.clear();
     geneSizeCountPairMap.clear();
-    // taxRankMap = {{'k', 0},{'p', 1},{'c', 2},{'o', 3},{'f', 4},{'g', 5},{'s', 6},{'t', 7}};
-    taxRankMap = {{'k', 0},{'p', 1},{'c', 2},{'o', 3},{'f', 4},{'g', 5},{'s', 6}};
 }
 
 FunTaxDecoder::~FunTaxDecoder(){
@@ -437,7 +435,7 @@ std::string FunTaxDecoder::decodeTax(std::unordered_set<std::string>& locSet) {
     if (!treItSet.empty()) {
         //ftNode->taxLoc = mPhyloTree->taxonTree->lowest_common_ancestor(treItSet);
         taxon = mPhyloTree->taxonTree->lowest_common_ancestor_str(treItSet);
-        trimLeft(taxon, "root;");
+        getTaxon(taxon);
         treItSet.clear();
     }
     return taxon;

@@ -78,7 +78,6 @@ class FunTaxDecoder{
         //std::set<std::string> uniqGeneFuns;
         std::map<std::string, std::pair<int, int>> geneSizeCountPairMap; //fun with taxon and orth, sum of gene size and number of genes
         std::set<std::string> uniqTaxons;
-        std::map<char, uint8_t> taxRankMap;
 };
 
 #endif /* FUNTAXDECODER_H */

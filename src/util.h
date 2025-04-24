@@ -311,6 +311,20 @@ inline std::unordered_set<std::string> splitStr2(string str, string sep = ";") {
     return ret_;
 }
 
+inline void getTaxon(std::string& taxon_str){
+    trimLeft(taxon_str, "root;");
+    if(!taxon_str.empty()){
+        auto taxon_vec = splitStr(taxon_str, ";");
+        if(taxon_vec.size() > 7){
+            std::stringstream ss;
+            for (size_t i = 0; i != 7; ++i){
+                ss << taxon_vec[i] << (i == 6 ? "" : ";");
+            }
+            taxon_str = ss.str();
+        }
+    }
+}
+
 inline std::string getFirstLastElement(std::string str, bool first, char sep){
     if(first){
         std::string::size_type pos = str.find_first_of(sep);

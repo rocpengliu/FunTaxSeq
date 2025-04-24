@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
     cmd.add<string>("outprefix", 'o', "output file prefix", false, "");
     cmd.add<string>("otre", 't', "output tree par kid file", false, "");
     cmd.add<string>("database", 'b', "datbase directory", false, "");
-    cmd.add("useogtree", 't', "If specified, using ortholog tree(slow)");
+    cmd.add("useogtree", 'g', "If specified, using ortholog tree(slow)");
     cmd.add<int>("thread", 'w', "worker thread number, default is 4", false, 4);
     cmd.add("debug", 'd', "If specified, print debug");
     cmd.add("verbose", 'V', "output verbose");

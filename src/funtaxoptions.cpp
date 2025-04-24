@@ -22,7 +22,7 @@
      samples.clear();
      thread = 4;
      outTree = "";
-     taxLevels = {"kindom", "phylum", "class", "order", "family", "genus", "species", "strain"};
+     taxLevels = {"kindom", "phylum", "class", "order", "family", "genus", "species"};
  }
 
 PhyloOptions::~PhyloOptions(){
