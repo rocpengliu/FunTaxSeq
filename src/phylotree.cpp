@@ -588,7 +588,7 @@ void PhyloTree::readAnno(std::queue<std::string>& annoQueue, char type){
         }
     }
     if(mOptions->verbose){
-        loginfo("read anno map done with size " + std::to_string(annoQueue.size()));
+        loginfo("read anno map done with size " + std::to_string(type == 'g' ? geneAnoMap.size() : orthAnoMap.size()));
     }
 }
 

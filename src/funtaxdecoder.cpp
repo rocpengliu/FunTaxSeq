@@ -257,7 +257,6 @@ void FunTaxDecoder::decodeTaxonSample(std::map<std::string, std::map<std::string
         *of << it << "\t";
         taxon.clear();
         taxon = getFirstLastElement(it, false, ';');
-        cCout(it, taxon, 'g');
         taxon_pair = mPhyloTree->genomeSizeMap.find(taxon);
         *of << (taxon_pair == mPhyloTree->genomeSizeMap.end() ? 0 : taxon_pair->second) << "\t";
         for (auto prt = tTaxMap.begin(); prt != tTaxMap.end(); ++prt){
