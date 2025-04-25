@@ -801,7 +801,7 @@ inline std::string removeNMpart(std::string & str, int m, int n, char sep = '|',
     }
     return ret_str;
 }
-inline std::pair<std::string, int> getSomeParts(std::string & str, std::string part, std::string sep = "|"){
+inline std::pair<std::string, int> getSomeParts(std::string & str, std::string part, std::string sep = "\t"){
     std::string ret_str = "";
     int geneSize = 0;
     auto strVec = splitStr(str, sep);
@@ -810,13 +810,27 @@ inline std::pair<std::string, int> getSomeParts(std::string & str, std::string p
         if(part == "gene"){
             ret_str = strVec.at(0);
         } else if(part == "gene_ko"){
-            ret_str = strVec.at(0) + "|" + strVec.at(4);
+            ret_str = strVec.at(0) + sep + strVec.at(4);
         } else if(part == "gene_go"){
-            ret_str = strVec.at(0) + "|" + strVec.at(3);
+            ret_str = strVec.at(0) + sep + strVec.at(3);
         } else if(part == "gene_ko_go"){
-            ret_str = strVec.at(0) + "|" + strVec.at(3) + "|" + strVec.at(4);
+            ret_str = strVec.at(0) + "\t" + strVec.at(3) + "\t" + strVec.at(4);
         }
     }
     return std::make_pair(ret_str, geneSize);
+}
+inline string formatNumber(long number) {
+    double num = (double) number;
+    string unit[6] = {"", "K", "M", "G", "T", "P"};
+    int order = 0;
+    while (num > 1000.0) {
+        order += 1;
+        num /= 1000.0;
+    }
+
+    if (order == 0)
+        return to_string(number);
+    else
+        return to_string(num) + " " + unit[order];
 }
 #endif /* UTIL_H */

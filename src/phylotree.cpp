@@ -147,9 +147,7 @@ void PhyloTree::init(){
     //     readGZ(mOptions->orthGeneSize, 'h');
     // });
 
-    if(readGenoThread.joinable()){
-        readGenoThread.join();
-    }
+    
     if(readOrthThread.joinable()){
         readOrthThread.join();
     }
@@ -183,6 +181,9 @@ void PhyloTree::init(){
         if(mOptions->verbose) loginfo("finished to build gene ortholog tree!");
         if(geneTree->size() < 1) error_exit("built gene tree size must be no less than 1: ");
         if(mOptions->verbose) cerr << "gene ortholog tree size is " << geneTree->size() << " and has " << geneTree->begin().number_of_descent() << " descents" << "\n";
+    }
+    if(readGenoThread.joinable()){
+        readGenoThread.join();
     }
     //print_children_par(geneTree, "ogs_tree_par_children.txt");
     //     tree<std::string*>::post_order_iterator locf;
@@ -755,7 +756,7 @@ void PhyloTree::readGZ(std::string & fl, char type){
             error_exit(basename(fl) + " contains invalid lines!");
         }
         if(count >= 100000 && count % 100000 == 0){
-            std::string msg = "read " + std::to_string(count) + " lines!";
+            std::string msg = "read " + formatNumber(count) + " lines for " + type + "!";
             loginfo(msg, false);
         }
         ++count;

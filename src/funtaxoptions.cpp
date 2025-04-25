@@ -119,9 +119,9 @@ std::string GeneNode::print3(bool printGeneSize = false){
     std::stringstream ss;
     std::string pure_anno = std::regex_replace(anno, std::regex("\\["), "(");
     pure_anno = std::regex_replace(pure_anno, std::regex("\\]"), ")");
-    ss << pure_anno << "|" << taxon << "|" << id;
+    ss << pure_anno << "\t" << taxon << "\t" << id;
     if(goGo){
-        ss << "|";
+        ss << "\t";
         if(goSet.empty()){
             ss << 0;
         } else {
@@ -137,7 +137,7 @@ std::string GeneNode::print3(bool printGeneSize = false){
     }
 
     if(goKo){
-        ss << "|";
+        ss << "\t";
         if (koSet.empty()){
             ss << 0;
         } else{
@@ -152,7 +152,7 @@ std::string GeneNode::print3(bool printGeneSize = false){
         }
     }
     if(printGeneSize)
-        ss << "|" << geneSize;
+        ss << "\t" << geneSize;
     return ss.str();
 }
 
