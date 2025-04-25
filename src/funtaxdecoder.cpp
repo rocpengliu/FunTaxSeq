@@ -323,37 +323,6 @@ void FunTaxDecoder::decodeFunSample(std::map<std::string, std::map<std::string, 
     }
     for(const auto & it : uniqFuns) {
         *otf << it << "\t";
-        // auto itt = mPhyloTree->orthAnoMap.find(it);
-        // if(itt == mPhyloTree->orthAnoMap.end()) continue;
-        // *otf << itt->second->print3() << "\t";
-        // gene.clear();
-        // gene = getFirstLastElement(it, true, '|');
-        // gene_itr = mPhyloTree->geneAnoMap.find(gene);
-        // *otf << it << "\t";
-        // bool go = false;
-        // if(gene_itr != mPhyloTree->geneAnoMap.end()){
-        //     if(gene_itr->second->geneSize != 0){
-        //         *otf << gene_itr->second->geneSize << "\t";
-        //     } else {
-        //         go = true;
-        //     }
-        // } else {
-        //     go = true;
-        // }
-
-        // if(go){
-        //     gene_itr = mPhyloTree->orthAnoMap.find(gene);
-        //     if(gene_itr != mPhyloTree->orthAnoMap.end()){
-        //         if(gene_itr->second->geneSize != 0){
-        //             *otf << gene_itr->second->geneSize << "\t";
-        //         } else {
-        //             *otf << 0 << "\t";
-        //         }
-        //     } else {
-        //         *otf << 0 << "\t";
-        //     }
-        // }
-
         for (auto pr = tFunMap.begin(); pr != tFunMap.end(); ++pr){
             auto pr2 = pr->second.find(it);
             *otf << (pr2 == pr->second.end() ? 0 : pr2->second) << (std::next(pr) == tFunMap.end() ? "\n" : "\t");
@@ -546,8 +515,8 @@ std::string FunTaxDecoder::decodeFun2(std::unordered_set<std::string>& locSet){
         auto it2 = mPhyloTree->orthAnoMap.find(*(parSet.begin()));
         if(it2 != mPhyloTree->orthAnoMap.end()){
             gene = it2->second->print3(true);
-            return gene;
         }
+        return gene;
     }
     std::vector<uint8_t> levVec;
     levVec.reserve(parSet.size());
@@ -596,4 +565,5 @@ std::string FunTaxDecoder::decodeFun2(std::unordered_set<std::string>& locSet){
             levVec.clear();
         }
     }
+    return "";
 }

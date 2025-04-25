@@ -742,10 +742,10 @@ void PhyloTree::readGZ(std::string & fl, char type){
             tmp->taxonLev = static_cast<uint8_t>(strVec[3][0] - '0');
             tmp->taxon = strVec[4];
             tmp->anno = strVec[5];
-            if(strVec[5] != "0"){
+            if(strVec[6] != "0"){
                 tmp->goSet = splitStrInt<std::set, uint32_t>(strVec[6], 'g');
             }
-            if (strVec[6] != "0"){
+            if (strVec[7] != "0"){
                 tmp->koSet = splitStrInt<std::set, uint16_t>(strVec[7], 'k');
             }
             if(type == 'o'){
