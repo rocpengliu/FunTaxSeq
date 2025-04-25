@@ -50,8 +50,8 @@ private:
     void printParKid(std::string tre);
     std::queue<std::string> readGZ(std::string & fl);
     void readGZ(std::string &fl, char type);
-    void readGeneAnno(std::queue<std::string> &geneAnnoQueue);
-    void readOrthAnno(std::queue<std::string>& orthAnnoQueue);
+    void readAnno(std::queue<std::string> &annoQueue, char type);
+    //void readOrthAnno(std::queue<std::string>& orthAnnoQueue);
     void readGeneDup(std::queue<std::string>& geneDupQueue, char type);
     void populateGeneTre();
     // tree<std::string*>* buildTreeLoopPtr(std::string* str);
