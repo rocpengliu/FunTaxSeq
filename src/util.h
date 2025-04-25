@@ -311,14 +311,14 @@ inline std::unordered_set<std::string> splitStr2(string str, string sep = ";") {
     return ret_;
 }
 
-inline void getTaxon(std::string& taxon_str){
+inline void getTaxon(std::string& taxon_str, std::string sep = ";"){
     trimLeft(taxon_str, "root;");
     if(!taxon_str.empty()){
-        auto taxon_vec = splitStr(taxon_str, ";");
+        auto taxon_vec = splitStr(taxon_str, sep);
         if(taxon_vec.size() > 7){
             std::stringstream ss;
             for (size_t i = 0; i != 7; ++i){
-                ss << taxon_vec[i] << (i == 6 ? "" : ";");
+                ss << taxon_vec[i] << (i == 6 ? "" : sep);
             }
             taxon_str = ss.str();
         }
