@@ -10,7 +10,9 @@ PhyloTree::PhyloTree(PhyloOptions *& mOptions) {
     geneDNADupMap.clear();
     geneProDupMap.clear();
     genomeSizeMap.clear();
-    //geneSizeMap.clear();
+    makerSizeMap.clear();
+    makerTaxonMap.clear();
+    // geneSizeMap.clear();
     init();
 }
 
@@ -142,6 +144,10 @@ void PhyloTree::init(){
         readGZ(mOptions->taxonGenomeSize, 't');
     });
 
+    std::thread makerTaxonThread = std::thread([this]{
+        readGZ(mOptions->makerTaxa, 'm');
+    });
+
     if(readGenoThread.joinable()){
         readGenoThread.join();
     }
@@ -157,6 +163,9 @@ void PhyloTree::init(){
     }
     if(taxonGenomeSizeThread.joinable()){
         taxonGenomeSizeThread.join();
+    }
+    if(makerTaxonThread.joinable()){
+        makerTaxonThread.join();
     }
     // if(orthGeneSizeThread.joinable()){
     //     orthGeneSizeThread.join();
@@ -535,7 +544,7 @@ void PhyloTree::readAnno(std::queue<std::string>& annoQueue, char type){
                 std::string line = annoQueue.front();
                 annoQueue.pop();
                 if(annoQueue.size() >= 100000 && annoQueue.size() % 100000 == 0){
-                    std::string msg = "gene anno remains: " + std::to_string(annoQueue.size());
+                    std::string msg = "anno remains: " + std::to_string(annoQueue.size());
                     loginfo(msg, false);
                 }
                 lock.unlock();
@@ -718,8 +727,13 @@ void PhyloTree::readGZ(std::string & fl, char type){
     std::vector<std::string> strVec;
     char buffer[buffer_size];
     gzFile file = gzopen(fl.c_str(), "rb");
-    if (!file)
-        error_exit("can not open annotation file: " + fl);
+    if (!file){
+        if(type == 'm'){
+            return;
+        } else {
+            error_exit("can not open annotation file: " + fl);
+        }
+    }
     if(mOptions->verbose) loginfo("start to read file " + basename(fl));
     uint32_t count = 0;
     while (gzgets(file, buffer, buffer_size) != NULL){
@@ -730,46 +744,21 @@ void PhyloTree::readGZ(std::string & fl, char type){
         if(strVec.size() == 2){
             if(type == 't'){
                 genomeSizeMap[strVec.at(0)] = std::stoi(strVec.at(1));
-            } else if(type == 'h'){
-                //geneSizeMap[strVec.at(0)] = std::stoi(strVec.at(1));
             } else if(type == 'd'){
                 geneDNADupMap[strVec.at(0)] = strVec.at(1);
             } else if(type == 'p'){
                 geneProDupMap[strVec.at(0)] = strVec.at(1);
             }
-        // } else if(strVec.size() == 7) {
-        //     GeneNode *tmp = new GeneNode();
-        //     tmp->id = strVec[0];
-        //     tmp->geneSize = std::stoi(strVec[1]);
-        //     tmp->par = strVec[2];
-        //     tmp->taxon = strVec[3];
-        //     tmp->anno = strVec[4];
-        //     if(strVec[5] != "0"){
-        //         tmp->goSet = splitStrInt<std::set, uint32_t>(strVec[5], 'g');
-        //     }
-        //     if (strVec[6] != "0"){
-        //         tmp->koSet = splitStrInt<std::set, uint16_t>(strVec[6], 'k');
-        //     }
-        //     if(type == 'g'){
-        //         geneAnoMap[strVec[0]] = tmp;
-        //     }
-        // } else if(strVec.size() == 8){
-        //     GeneNode *tmp = new GeneNode();
-        //     tmp->id = strVec[0];
-        //     tmp->geneSize = std::stoi(strVec[1]);
-        //     tmp->par = strVec[2];
-        //     tmp->taxonLev = static_cast<uint8_t>(strVec[3][0] - '0');
-        //     tmp->taxon = strVec[4];
-        //     tmp->anno = strVec[5];
-        //     if(strVec[6] != "0"){
-        //         tmp->goSet = splitStrInt<std::set, uint32_t>(strVec[6], 'g');
-        //     }
-        //     if (strVec[7] != "0"){
-        //         tmp->koSet = splitStrInt<std::set, uint16_t>(strVec[7], 'k');
-        //     }
-        //     if(type == 'o'){
-        //         orthAnoMap[strVec[0]] = tmp;
-        //     }
+        } else if(strVec.size() == 3){
+            if(type == 'm'){
+                makerTaxonMap[strVec.at(0)] = strVec.at(1);
+                int num = std::stoi(strVec.at(2));
+                if(num > 0 && num <= std::numeric_limits<uint16_t>::max()){
+                    makerSizeMap[strVec.at(2)] = static_cast<uint16_t>(num);
+                } else {
+                    error_exit(basename(fl) + " contains invalid lines for marker gene!");
+                }
+            }
         } else {
             error_exit(basename(fl) + " contains invalid lines!");
         }

@@ -65,6 +65,7 @@ int main(int argc, char* argv[]) {
     opt->orthAno = joinpath(opt->db, "ogs_anno.tab.gz");
     opt->geneDNADup = joinpath(opt->db, "dna_duplicated.tab.gz");
     opt->geneProDup = joinpath(opt->db, "pro_duplicated.tab.gz");
+    opt->makerTaxa = joinpath(opt->db, "maker_taxa.tab.gz");
     opt->verbose = cmd.exist("verbose");
     opt->debug = cmd.exist("debug");
     opt->thread = cmd.get<int>("thread");

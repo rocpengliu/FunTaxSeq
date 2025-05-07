@@ -55,15 +55,15 @@ int main(int argc, char* argv[]) {
     //host search
     cmd.add<string>("hfmi", 0, "fmi index of host DNA database", false, "");
     cmd.add<string>("hmode", 0, "searching mode either GREEDY or MEM (maximum exactly match) in a host database. By default greedy", false, "GREEDY");
-    cmd.add<int>("hmismatch", 0, "number of mismatches in sequence comparison with host DNA database with default value 6", false, 6);
-    cmd.add<int>("hminlength", 0, "minimum matching length against host DNA database with default value 90", false, 90);
-    cmd.add<int>("hminscore", 0, "minimum matching score against host DNA database with default value 80", false, 80);
+    cmd.add<int>("hmismatch", 0, "number of mismatches in sequence comparison with host DNA database with default value 5", false, 5);
+    cmd.add<int>("hminlength", 0, "minimum matching length against host DNA database with default value 95", false, 95);
+    cmd.add<int>("hminscore", 0, "minimum matching score against host DNA database with default value 95", false, 95);
     //marker gene search
     cmd.add<string>("mfmi", 0, "fmi index of marker genes DNA database", false, "");
     cmd.add<string>("mmode", 0, "searching mode either GREEDY or MEM (maximum exactly match) in marker genes (16s, ITS) DNA database. By default greedy", false, "GREEDY");
-    cmd.add<int>("mmismatch", 0, "number of mismatches in sequence comparison with marker genes DNA database with default value 6", false, 6);
-    cmd.add<int>("mminlength", 0, "minimum matching length against marker genes DNA database with default value 90", false, 90);
-    cmd.add<int>("mminscore", 0, "minimum matching score against marker genes DNA database with default value 80", false, 80);
+    cmd.add<int>("mmismatch", 0, "number of mismatches in sequence comparison with marker genes DNA database with default value 3", false, 3);
+    cmd.add<int>("mminlength", 0, "minimum matching length against marker genes DNA database with default value 97", false, 97);
+    cmd.add<int>("mminscore", 0, "minimum matching score against marker genes DNA database with default value 95", false, 95);
 
     cmd.add("debug", 0, "If specified, print debug");
     // reporting
@@ -295,9 +295,9 @@ int main(int argc, char* argv[]) {
     }
     if(cmd.get<int>("hminlength") == 0){
         if (opt->mHostSearchOptions->comOptions.mode == GREEDY) {
-            opt->mHostSearchOptions->comOptions.minFragLength = 80;
+            opt->mHostSearchOptions->comOptions.minFragLength = 95;
         } else {
-            opt->mHostSearchOptions->comOptions.minFragLength = 70;
+            opt->mHostSearchOptions->comOptions.minFragLength = 90;
         }
     } else {
         opt->mHostSearchOptions->comOptions.minFragLength = cmd.get<int>("hminlength");
@@ -308,9 +308,9 @@ int main(int argc, char* argv[]) {
     }
     if(cmd.get<int>("mminlength") == 0){
         if (opt->mMarkerSearchOptions->comOptions.mode == GREEDY) {
-            opt->mMarkerSearchOptions->comOptions.minFragLength = 90;
+            opt->mMarkerSearchOptions->comOptions.minFragLength = 95;
         } else {
-            opt->mMarkerSearchOptions->comOptions.minFragLength = 80;
+            opt->mMarkerSearchOptions->comOptions.minFragLength = 90;
         }
     } else {
         opt->mMarkerSearchOptions->comOptions.minFragLength = cmd.get<int>("mminlength");

@@ -37,6 +37,8 @@ public:
     std::unordered_map<std::string, GeneNode*> orthAnoMap;
     std::unordered_map<std::string, std::string> geneDNADupMap;
     std::unordered_map<std::string, std::string> geneProDupMap;
+    std::unordered_map<std::string, std::string> makerTaxonMap;
+    std::unordered_map<std::string, uint16_t> makerSizeMap;
     std::unordered_map<std::string, int> genomeSizeMap;
     //std::unordered_map<std::string, int> geneSizeMap;
     std::shared_ptr<tree<std::string*>> taxonTree;

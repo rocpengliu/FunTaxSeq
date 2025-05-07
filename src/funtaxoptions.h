@@ -39,6 +39,8 @@ class PhyloOptions{
         std::string geneProDup;
         std::string sampleDir;
         std::string outTree;
+        std::string makerTaxa;
+        std::string host;
         bool verbose;
         bool debug;
         std::vector<std::string> samples;

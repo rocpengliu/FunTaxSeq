@@ -89,6 +89,8 @@ void FunTaxDecoder::readFunTax(){
                         id_set.clear();
                         if(split_vec[1] == "host"){
                             continue;
+                        } else if(split_vec[1] == "marker"){
+                            id_set = splitStrInt2<std::set, std::string>(split_vec.at(2));
                         } else if(split_vec[1] == "dna"){
                             split_vec2 = splitStr(split_vec.at(2));
                             id_set.insert(split_vec2.begin(), split_vec2.end());

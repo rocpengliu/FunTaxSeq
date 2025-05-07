@@ -322,9 +322,9 @@ public:
         comOptions.SEG = true;
         comOptions.useEvalue = false;
         comOptions.minEvalue = 0.01;
-        comOptions.lenper = 0.9;
-        comOptions.minFragLength = 90;
-        comOptions.misMatches = 6;
+        comOptions.lenper = 0.95;
+        comOptions.minFragLength = 95;
+        comOptions.misMatches = 5;
         comOptions.minScore = 80;
         comOptions.seedLength = 7;
         comOptions.max_matches_SI = 1000;
@@ -345,9 +345,9 @@ public:
         comOptions.SEG = true;
         comOptions.useEvalue = false;
         comOptions.minEvalue = 0.01;
-        comOptions.lenper = 0.9;
-        comOptions.minFragLength = 90;
-        comOptions.misMatches = 6;
+        comOptions.lenper = 0.97;
+        comOptions.minFragLength = 95;
+        comOptions.misMatches = 3;
         comOptions.minScore = 80;
         comOptions.seedLength = 7;
         comOptions.max_matches_SI = 1000000;

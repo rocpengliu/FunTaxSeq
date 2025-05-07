@@ -22,6 +22,8 @@
      samples.clear();
      thread = 4;
      outTree = "";
+     makerTaxa = "";
+     host = "";
      taxLevels = {"kindom", "phylum", "class", "order", "family", "genus", "species"};
  }
 

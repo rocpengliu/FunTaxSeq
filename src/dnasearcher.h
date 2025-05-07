@@ -35,7 +35,7 @@
 #include "common.h"
 
 extern "C" {
-#include "bwt/bwt.h"
+    #include "bwt/bwt.h"
 }
 
 // const double dLN_2 = 0.6931471805;

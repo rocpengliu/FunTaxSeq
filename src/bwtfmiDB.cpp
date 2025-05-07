@@ -330,11 +330,9 @@ void BwtFmiDBPair::init() {
     if(hThread.joinable()){
         hThread.join();
     }
-
     if(mThread.joinable()){
         mThread.join();
     }
-
     if(hostSearch){
         hBwtfmiDB->print();
     }
