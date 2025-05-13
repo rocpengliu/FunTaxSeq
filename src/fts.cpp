@@ -55,14 +55,16 @@ int main(int argc, char* argv[]) {
     //host search
     cmd.add<string>("hfmi", 0, "fmi index of host DNA database", false, "");
     cmd.add<string>("hmode", 0, "searching mode either GREEDY or MEM (maximum exactly match) in a host database. By default greedy", false, "GREEDY");
+    cmd.add<float>("hlenper", 0, "percentage of matching DNA in sequence comparison with default value 0.95", false, 0.95);
     cmd.add<int>("hmismatch", 0, "number of mismatches in sequence comparison with host DNA database with default value 5", false, 5);
     cmd.add<int>("hminlength", 0, "minimum matching length against host DNA database with default value 95", false, 95);
     cmd.add<int>("hminscore", 0, "minimum matching score against host DNA database with default value 95", false, 95);
     //marker gene search
     cmd.add<string>("mfmi", 0, "fmi index of marker genes DNA database", false, "");
     cmd.add<string>("mmode", 0, "searching mode either GREEDY or MEM (maximum exactly match) in marker genes (16s, ITS) DNA database. By default greedy", false, "GREEDY");
+    cmd.add<float>("mlenper", 0, "percentage of matching DNA in sequence comparison with default value 0.95", false, 0.97);
     cmd.add<int>("mmismatch", 0, "number of mismatches in sequence comparison with marker genes DNA database with default value 3", false, 3);
-    cmd.add<int>("mminlength", 0, "minimum matching length against marker genes DNA database with default value 97", false, 97);
+    cmd.add<int>("mminlength", 0, "minimum matching length against marker genes DNA database with default value 97", false, 95);
     cmd.add<int>("mminscore", 0, "minimum matching score against marker genes DNA database with default value 95", false, 95);
 
     cmd.add("debug", 0, "If specified, print debug");
@@ -293,11 +295,12 @@ int main(int argc, char* argv[]) {
     if(cmd.get<string>("hmode") == "MEM"){
         opt->mHostSearchOptions->comOptions.mode = MEM;
     }
+    opt->mHostSearchOptions->comOptions.lenper = cmd.get<float>("hlenper");
     if(cmd.get<int>("hminlength") == 0){
         if (opt->mHostSearchOptions->comOptions.mode == GREEDY) {
             opt->mHostSearchOptions->comOptions.minFragLength = 95;
         } else {
-            opt->mHostSearchOptions->comOptions.minFragLength = 90;
+            opt->mHostSearchOptions->comOptions.minFragLength = 95;
         }
     } else {
         opt->mHostSearchOptions->comOptions.minFragLength = cmd.get<int>("hminlength");
@@ -306,11 +309,12 @@ int main(int argc, char* argv[]) {
     if(cmd.get<string>("mmode") == "MEM"){
         opt->mMarkerSearchOptions->comOptions.mode = MEM;
     }
+    opt->mMarkerSearchOptions->comOptions.lenper = cmd.get<float>("mlenper");
     if(cmd.get<int>("mminlength") == 0){
         if (opt->mMarkerSearchOptions->comOptions.mode == GREEDY) {
             opt->mMarkerSearchOptions->comOptions.minFragLength = 95;
         } else {
-            opt->mMarkerSearchOptions->comOptions.minFragLength = 90;
+            opt->mMarkerSearchOptions->comOptions.minFragLength = 95;
         }
     } else {
         opt->mMarkerSearchOptions->comOptions.minFragLength = cmd.get<int>("mminlength");

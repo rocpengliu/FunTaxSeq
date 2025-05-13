@@ -52,6 +52,7 @@ int main(int argc, char* argv[]) {
     opt->db = cmd.get<string>("database");
     opt->prefix = cmd.get<string>("outprefix");
     opt->outTaxon =  opt->prefix + "_taxon_abundance.txt";
+    opt->outMarker = opt->prefix + "_marker_abundance.txt";
     opt->outFun = opt->prefix + "_raw_func_abundance.txt";
     opt->outPureFun = opt->prefix + "_gene_go_ko_func_abundance.txt";
     opt->outGeneFun = opt->prefix + "_gene_func_abundance.txt";
@@ -65,11 +66,15 @@ int main(int argc, char* argv[]) {
     opt->orthAno = joinpath(opt->db, "ogs_anno.tab.gz");
     opt->geneDNADup = joinpath(opt->db, "dna_duplicated.tab.gz");
     opt->geneProDup = joinpath(opt->db, "pro_duplicated.tab.gz");
-    opt->makerTaxa = joinpath(opt->db, "maker_taxa.tab.gz");
+    opt->markerTaxa = joinpath(opt->db, "marker_taxa.tab.gz");
+    opt->markerSize = joinpath(opt->db, "marker_size.tab.gz");
+    opt->mTree = joinpath(opt->db, "marker_tree.tre");
+
     opt->verbose = cmd.exist("verbose");
     opt->debug = cmd.exist("debug");
     opt->thread = cmd.get<int>("thread");
     opt->outTree = cmd.get<string>("otre");
+    opt->valid();
     opt->parseSample();
 
     FunTaxDecoder * ftDecoder = new FunTaxDecoder(opt);

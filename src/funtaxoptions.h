@@ -19,13 +19,16 @@ using namespace std;
 class PhyloOptions{
     public:
         PhyloOptions();
+        void valid();
         virtual ~PhyloOptions();
+
     public:
         void parseSample();
     public:
         std::string db;
         std::string prefix;
         std::string outTaxon;
+        std::string outMarker;
         std::string outFun;
         std::string outPureFun;
         std::string outGeneFun;
@@ -39,7 +42,10 @@ class PhyloOptions{
         std::string geneProDup;
         std::string sampleDir;
         std::string outTree;
-        std::string makerTaxa;
+        bool marker;
+        std::string markerTaxa;
+        std::string markerSize;
+        std::string mTree;
         std::string host;
         bool verbose;
         bool debug;

@@ -5,13 +5,14 @@ PhyloTree::PhyloTree(PhyloOptions *& mOptions) {
     geneTree = nullptr;
     geneNodeTree = nullptr;
     taxonTree = nullptr;
+    markerTree = nullptr;
     geneAnoMap.clear();
     orthAnoMap.clear();
     geneDNADupMap.clear();
     geneProDupMap.clear();
     genomeSizeMap.clear();
-    makerSizeMap.clear();
-    makerTaxonMap.clear();
+    markerSizeMap.clear();
+    markerTaxonMap.clear();
     // geneSizeMap.clear();
     init();
 }
@@ -32,6 +33,20 @@ PhyloTree::~PhyloTree() {
             }
         }
         if(mOptions->verbose) cerr << "taxon tree free finished" << "\n";
+    });
+
+    std::thread dMTreThread = std::thread([this](){
+        if (mOptions->verbose)
+            cerr << "start to free marker tree" << "\n";
+        if(markerTree){
+            for (auto it = markerTree->begin(); it != markerTree->end(); ++it){
+                if (it.node->data){
+                    delete it.node->data;
+                    it.node->data = nullptr;
+                }
+            }
+        }
+        if(mOptions->verbose) cerr << "marker tree free finished" << "\n";
     });
 
     std::thread dFTreThread;
@@ -107,6 +122,9 @@ PhyloTree::~PhyloTree() {
     if(dTTreThread.joinable()){
         dTTreThread.join();
     }
+    if(dMTreThread.joinable()){
+        dMTreThread.join();
+    }
     if(dFTreThread.joinable()){
         dFTreThread.join();
     }
@@ -144,8 +162,12 @@ void PhyloTree::init(){
         readGZ(mOptions->taxonGenomeSize, 't');
     });
 
-    std::thread makerTaxonThread = std::thread([this]{
-        readGZ(mOptions->makerTaxa, 'm');
+    std::thread markerTaxonThread = std::thread([this]{
+        readGZ(mOptions->markerTaxa, 'm');
+    });
+
+    std::thread markerSizeThread = std::thread([this]{
+        readGZ(mOptions->markerSize, 's');
     });
 
     if(readGenoThread.joinable()){
@@ -164,8 +186,8 @@ void PhyloTree::init(){
     if(taxonGenomeSizeThread.joinable()){
         taxonGenomeSizeThread.join();
     }
-    if(makerTaxonThread.joinable()){
-        makerTaxonThread.join();
+    if(markerTaxonThread.joinable()){
+        markerTaxonThread.join();
     }
     // if(orthGeneSizeThread.joinable()){
     //     orthGeneSizeThread.join();
@@ -191,23 +213,14 @@ void PhyloTree::init(){
         if(geneTree->size() < 1) error_exit("built gene tree size must be no less than 1: ");
         if(mOptions->verbose) cerr << "gene ortholog tree size is " << geneTree->size() << " and has " << geneTree->begin().number_of_descent() << " descents" << "\n";
     }
-    
-    //print_children_par(geneTree, "ogs_tree_par_children.txt");
-    //     tree<std::string*>::post_order_iterator locf;
-    //     locf = std::find_if(geneTree->begin_post(), geneTree->end_post(),
-    //                 [](std::string* & itp) {
-    //                     return *itp == "9807975at2";
-    //                 });
-    //     cCout("searching in a tree");
-    //     if (geneTree->is_valid(locf)) {
-    //         cCout("locf leaf is", *(locf.node->data), 'y');
-    //     }
-    //     for (tree<std::string*>::pre_order_iterator it = geneTree->begin(); it != geneTree->end(); it++) {
-    //        //if(tre.is_valid(it)){
-    //        if (it.node->data) {
-    //         cCout(*(it.node->data));
-    //        }
-    //    }
+
+    if(mOptions->marker){
+        if(mOptions->verbose) loginfo("start to build marker tree!");
+        markerTree = buildTreePtr(mOptions->mTree, "marker");
+        if(mOptions->verbose) loginfo("finished to build marker tree!");
+        if(geneTree->size() < 3) error_exit("built marker tree size must be no less than 3: ");
+        if(mOptions->verbose) cerr << "gene marker tree size is " << markerTree->size() << " and has " << markerTree->begin().number_of_descent() << " descents" << "\n";
+    }
 }
 
 std::shared_ptr<tree<std::string*>> PhyloTree::buildTreeLoopPtr(std::string* str) {
@@ -728,7 +741,7 @@ void PhyloTree::readGZ(std::string & fl, char type){
     char buffer[buffer_size];
     gzFile file = gzopen(fl.c_str(), "rb");
     if (!file){
-        if(type == 'm'){
+        if(type == 'm' || type == 's'){
             return;
         } else {
             error_exit("can not open annotation file: " + fl);
@@ -748,16 +761,10 @@ void PhyloTree::readGZ(std::string & fl, char type){
                 geneDNADupMap[strVec.at(0)] = strVec.at(1);
             } else if(type == 'p'){
                 geneProDupMap[strVec.at(0)] = strVec.at(1);
-            }
-        } else if(strVec.size() == 3){
-            if(type == 'm'){
-                makerTaxonMap[strVec.at(0)] = strVec.at(1);
-                int num = std::stoi(strVec.at(2));
-                if(num > 0 && num <= std::numeric_limits<uint16_t>::max()){
-                    makerSizeMap[strVec.at(2)] = static_cast<uint16_t>(num);
-                } else {
-                    error_exit(basename(fl) + " contains invalid lines for marker gene!");
-                }
+            } else if(type == 's'){
+                markerSizeMap[strVec.at(0)] = static_cast<uint16_t>(std::stoi(strVec.at(1)));
+            } else if(type == 'm'){
+                markerTaxonMap[strVec.at(0)] = strVec.at(1);
             }
         } else {
             error_exit(basename(fl) + " contains invalid lines!");

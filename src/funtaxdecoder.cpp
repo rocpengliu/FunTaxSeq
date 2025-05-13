@@ -16,8 +16,6 @@ FunTaxDecoder::FunTaxDecoder(PhyloOptions *& mOptions){
     mFunTaxFreq = new FunTaxFreq();
     mFunTaxPair.clear();
     uniqFuns.clear();
-    // uniqPureFuns.clear();
-    // uniqGeneFuns.clear();
     uniqTaxons.clear();
     pureFunSizeCountPairMap.clear();
     geneSizeCountPairMap.clear();
@@ -39,6 +37,9 @@ void FunTaxDecoder::process(){
     if(!totFTMap.empty()){
         loginfo("Number of unique funtax ids: " + std::to_string(ftSet.size()));
         decode();
+        if(!markerSet.empty()){
+            decodeMarker();
+        }
         decodeEach();
     }
 }
@@ -76,6 +77,8 @@ void FunTaxDecoder::readFunTax(){
                 if (!file) error_exit("Error: Failed to open file " + sample);
                 std::unordered_map<std::string, uint32> tmpMap;
                 std::unordered_set<std::string> tmpSet;
+                std::unordered_map<std::string, uint32> tmpMarkerMap;
+                std::unordered_set<std::string> tmpMarkerSet;
                 while (gzgets(file, buffer, buffer_size) != NULL){
                     line = buffer; // Output or process each line
                     if (line.size() > 0){
@@ -87,10 +90,11 @@ void FunTaxDecoder::readFunTax(){
                         }
                         split_vec2.clear();
                         id_set.clear();
-                        if(split_vec[1] == "host"){
+                        if(split_vec[1] == "host" || split_vec.at(2).empty()){
                             continue;
                         } else if(split_vec[1] == "marker"){
-                            id_set = splitStrInt2<std::set, std::string>(split_vec.at(2));
+                            //id_set = splitStrInt2<std::set, std::string>(split_vec.at(2));
+                            id = split_vec.at(2);
                         } else if(split_vec[1] == "dna"){
                             split_vec2 = splitStr(split_vec.at(2));
                             id_set.insert(split_vec2.begin(), split_vec2.end());
@@ -110,18 +114,25 @@ void FunTaxDecoder::readFunTax(){
                                 id_set.insert(tmp_id_set.begin(), tmp_id_set.end());
                             }
                         }
-                        id.clear();
-                        for(auto its = id_set.begin(); its != id_set.end(); ++its){
-                            id += (*its + ";");
+                        if(split_vec[1] == "marker"){
+                            tmpMarkerMap[id]++;
+                            tmpMarkerSet.insert(id);
+                        } else {
+                            id.clear();
+                            for(auto its = id_set.begin(); its != id_set.end(); ++its){
+                                id += (*its + ";");
+                            }
+                            tmpMap[id]++;
+                            tmpSet.insert(id);
                         }
-                        tmpMap[id]++;
-                        tmpSet.insert(id);
                     }
                 }
                 gzclose(file);
                 std::unique_lock<std::mutex> lock2(mtxTreW);
                 totFTMap[removeExtension(basename(sample), "_funtax.txt.gz")] = tmpMap;
                 ftSet.insert(tmpSet.begin(), tmpSet.end());
+                totMarkerMap[removeExtension(basename(sample), "_funtax.txt.gz")] = tmpMarkerMap;
+                markerSet.insert(tmpMarkerSet.begin(), tmpMarkerSet.end());
                 ++sample_id;
                 lock2.unlock();
                 loginfo("File " + std::to_string(sample_id) + "/" + std::to_string(tot_samples) + " " + removeExtension(basename(sample), "_funtax.txt.gz") + " readed");
@@ -207,6 +218,72 @@ void FunTaxDecoder::decode(){
     loginfo("Finished decoding: " + std::to_string(mFunTaxPair.size()));
 }
 
+void FunTaxDecoder::decodeMarker(){
+    int numThreads = std::min<int>(mOptions->thread, markerSet.size());
+    std::thread consumerThreads[numThreads];
+    for (const auto &itm : markerSet){
+        markerQueue.push(itm);
+    }
+    loginfo("Start to decode the funtax ids");
+    auto startTime = std::chrono::high_resolution_clock::now();
+    uint32 numIds = markerQueue.size();
+    for(int i = 0; i < numThreads; ++i){
+        consumerThreads[i] = std::thread([this, &i, &numIds, &startTime](){
+            std::unordered_set<std::string> locSet;
+            std::unordered_map<std::string, std::string> mMarkerTaxSub;
+            while(true){
+                std::unique_lock<std::mutex> lock(mtxTreR);
+                if (markerQueue.empty()) {
+                    lock.unlock();
+                    break;
+                }
+                std::string ft = markerQueue.front();
+                markerQueue.pop();
+                size_t decoded = numIds - markerQueue.size();
+                lock.unlock();
+                if (decoded % 1000 == 0){
+                    auto now = std::chrono::high_resolution_clock::now();
+                    std::chrono::duration<double> elapsed = now - startTime;
+                    double progress = static_cast<double>(decoded) / numIds;
+                    double timeElapsed = elapsed.count();
+                    double estimatedTotalTime = timeElapsed / progress;
+                    double remainingTime = estimatedTotalTime - timeElapsed;
+                    int remainingHours = static_cast<int>(remainingTime / 3600);
+                    int remainingMinutes = static_cast<int>((remainingTime - remainingHours * 3600) / 60);
+                    int remainingSeconds = static_cast<int>(remainingTime) % 60;
+                    loginfo("decoded " + std::to_string(decoded / 1000) + "k (" +
+                            std::to_string(getPer(decoded, numIds)) + "%) funtax ids. Estimated remaining time: " +
+                            std::to_string(remainingHours) + "h " +
+                            std::to_string(remainingMinutes) + "m " +
+                            std::to_string(remainingSeconds) + "s");
+                }
+                if(ft.empty())
+                    continue;
+                locSet.clear();
+                locSet = splitStr2(ft);
+                if(locSet.empty())
+                    continue;
+                auto pr = decodeMarkerTax(locSet);
+                if(pr.empty())
+                    continue;
+                mMarkerTaxSub[ft] = pr;
+            }
+            std::unique_lock<std::mutex> lock2(mtxTreW);
+            for(const auto & it : mMarkerTaxSub){
+                mMarkerTax[it.first] = it.second;
+                uniqMarkerTaxons.insert(it.second);
+            }
+            lock2.unlock();
+        });
+    }
+
+    for (int i = 0; i < numThreads; ++i) {
+        if (consumerThreads[i].joinable()) {
+            consumerThreads[i].join();
+        }
+    }
+    loginfo("Finished marker decoding: " + std::to_string(mMarkerTax.size()));
+}
 void FunTaxDecoder::decodeEach(){
     if(mOptions->verbose)
         loginfo("start to decode each sample");
@@ -243,6 +320,76 @@ void FunTaxDecoder::decodeEach(){
     if(dFunThread.joinable()) dFunThread.join();
     if(mOptions->verbose)
         loginfo("decode each sample done!");
+}
+
+void FunTaxDecoder::decodeEachMarker(){
+    if(mOptions->verbose)
+        loginfo("start to decode each marker sample");
+    std::ofstream *of = new std::ofstream();
+    of->open(mOptions->outMarker.c_str(), std::ofstream::out);
+    if(!of->is_open())
+        error_exit("can not open " + mOptions->outMarker);
+    *of << "#taxon" << "\t" << "marker_size" << "\t";
+    for (auto prt = totMarkerMap.begin(); prt != totMarkerMap.end(); ++prt){
+        *of << prt->first << (std::next(prt) == totMarkerMap.end() ? "\n" : "\t");
+    }
+    std::string taxon = "";
+    std::unordered_map<std::string, uint16_t>::iterator taxon_pair;
+    for(const auto & it : uniqMarkerTaxons){
+        *of << it << "\t";
+        taxon.clear();
+        taxon = getFirstLastElement(it, false, ';');
+        taxon_pair = mPhyloTree->markerSizeMap.find(taxon);
+        *of << (taxon_pair == mPhyloTree->markerSizeMap.end() ? 0 : taxon_pair->second) << "\t";
+        for (auto prt = totMarkerMap.begin(); prt != totMarkerMap.end(); ++prt){
+            auto prt2 = prt->second.find(it);
+            *of << (prt2 == prt->second.end() ? 0 : prt2->second) << (std::next(prt) == totMarkerMap.end() ? "\n" : "\t");
+        }
+    }
+    of->clear();
+    of->close();
+    if(of){
+        delete of;
+        of = nullptr;
+    }
+    for(int i = 0; i < mOptions->taxLevels.size(); ++i){
+        std::set<string> subUniqTaxon;
+        std::map<std::string, std::map<std::string, uint32>> subTaxMap;
+        for (const auto & it : totMarkerMap){
+            for(const auto & it2 : it.second){
+                std::string tax = getFirstNsSeps(it2.first, (i + 1));
+                if(tax.empty()) continue;
+                subTaxMap[it.first][tax] += it2.second;
+                subUniqTaxon.insert(tax);
+            }
+        }
+        std::ofstream *of = new std::ofstream();
+        of->open(mOptions->prefix + "_marker_abundance_" + mOptions->taxLevels.at(i) + ".txt", std::ofstream::out);
+        if(!of->is_open()) error_exit("can not open " + mOptions->prefix + "_marker_abundance_" + mOptions->taxLevels.at(i) + ".txt");
+        *of << "#taxon:" << mOptions->taxLevels.at(i) << "\t" << "marker_size" << "\t";
+        for(auto sam = subTaxMap.begin(); sam != subTaxMap.end(); ++sam){
+            *of << sam->first << (std::next(sam) == subTaxMap.end() ? "\n" : "\t");
+        }
+        for(const auto & it : subUniqTaxon) {
+            *of << it << "\t";
+            taxon.clear();
+            taxon = getFirstLastElement(it, false, ';');
+            taxon_pair = mPhyloTree->markerSizeMap.find(taxon);
+            *of << (taxon_pair == mPhyloTree->markerSizeMap.end() ? 0 : taxon_pair->second) << "\t";
+            for(auto sam = subTaxMap.begin(); sam != subTaxMap.end(); ++sam){
+                auto sam2 = sam->second.find(it);
+                *of << (sam2 == sam->second.end() ? 0 : sam2->second) << (std::next(sam) == subTaxMap.end() ? "\n" : "\t");
+            }
+        }
+        of->clear();
+        of->close();
+        if(of){
+            delete of;
+            of = nullptr;
+        }
+    }
+    if (mOptions->verbose)
+        loginfo("decode each marker sample done!");
 }
 
 void FunTaxDecoder::decodeTaxonSample(std::map<std::string, std::map<std::string, uint32>>& tTaxMap){
@@ -412,6 +559,41 @@ std::string FunTaxDecoder::decodeTax(std::unordered_set<std::string>& locSet) {
     return taxon;
 }
 
+std::string FunTaxDecoder::decodeMarkerTax(std::unordered_set<std::string>& locSet){
+    std::string taxon = "";
+    std::set<tree<std::string*>::iterator, tree<std::string*>::iterator_base_less> treItSet;
+    tree<std::string*>::leaf_iterator locf;
+    std::unordered_set<std::string> uniq_taxon_id_set;
+    for(const auto & it : locSet){
+        auto locIt = mPhyloTree->markerTaxonMap.find(it);
+        if(locIt == mPhyloTree->markerTaxonMap.end()){
+            continue;
+        }
+        uniq_taxon_id_set.insert(locIt->second);
+    }
+    if(uniq_taxon_id_set.empty()){
+        return taxon;
+    } else if(uniq_taxon_id_set.size() == 1){
+        return *(uniq_taxon_id_set.begin());
+    }
+    for(const auto & it : uniq_taxon_id_set){
+        locf = std::find_if(mPhyloTree->markerTree->begin_leaf(),
+            mPhyloTree->markerTree->end_leaf(),
+                [&it](std::string* & itp) {
+                    return *itp == it;
+                });
+        if (mPhyloTree->taxonTree->is_valid(locf)) {
+            treItSet.insert(locf);
+        }
+    }
+    if (!treItSet.empty()) {
+        //ftNode->taxLoc = mPhyloTree->taxonTree->lowest_common_ancestor(treItSet);
+        taxon = mPhyloTree->markerTree->lowest_common_ancestor_str(treItSet);
+        getTaxon(taxon);
+        treItSet.clear();
+    }
+    return taxon;
+}
 std::string FunTaxDecoder::decodeFun(std::unordered_set<std::string>& locSet) {
     std::unordered_map<std::string, int> gene_anno_map;
     std::string gene = "";

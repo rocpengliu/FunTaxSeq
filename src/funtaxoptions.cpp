@@ -5,6 +5,7 @@
      db = "";
      prefix = "";
      outTaxon = "";
+     outMarker = "";
      outFun = "";
      outGeneFun = "";
      outPureFun = "";
@@ -22,12 +23,24 @@
      samples.clear();
      thread = 4;
      outTree = "";
-     makerTaxa = "";
+     markerTaxa = "";
+     markerSize = "";
+     mTree = "";
+     marker = false;
      host = "";
      taxLevels = {"kindom", "phylum", "class", "order", "family", "genus", "species"};
  }
 
 PhyloOptions::~PhyloOptions(){
+}
+
+void PhyloOptions::valid(){
+    if(file_exists(mTree) && file_exists(markerSize) && file_exists(markerTaxa)){
+        marker = true;
+    }
+    if(!file_exists(tTree))
+        error_exit("no taxon tree file!");
+    
 }
 
 void PhyloOptions::parseSample(){

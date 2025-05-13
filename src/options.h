@@ -325,7 +325,7 @@ public:
         comOptions.lenper = 0.95;
         comOptions.minFragLength = 95;
         comOptions.misMatches = 5;
-        comOptions.minScore = 80;
+        comOptions.minScore = 95;
         comOptions.seedLength = 7;
         comOptions.max_matches_SI = 1000;
         comOptions.max_match_ids = 1000;
@@ -348,7 +348,7 @@ public:
         comOptions.lenper = 0.97;
         comOptions.minFragLength = 95;
         comOptions.misMatches = 3;
-        comOptions.minScore = 80;
+        comOptions.minScore = 95;
         comOptions.seedLength = 7;
         comOptions.max_matches_SI = 1000000;
         comOptions.max_match_ids = 1000000;

@@ -2,7 +2,6 @@
 #define COMMON_H
 
 #include <string>
-#include <map>
 #include <utility>
 
 #define FUNTAXSEQ_VER "0.0.0.1"
