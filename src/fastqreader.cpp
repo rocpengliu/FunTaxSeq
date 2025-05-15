@@ -184,8 +184,7 @@ Read* FastqReader::read(){
 	if (!mHasQuality){
 		string quality = string(sequence.length(), 'K');
 		return new Read(name, sequence, strand, quality, mPhred64);
-	}
-	else {
+	} else {
 		string quality = getLine();
 		if(quality.length() != sequence.length()) {
 			cerr << "ERROR: sequence and quality have different length:" << endl;

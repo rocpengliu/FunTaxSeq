@@ -62,7 +62,6 @@ HomoSearcher::~HomoSearcher() {
 void HomoSearcher::postProcess(){
     for(const auto & match : match_ids){
         if(match != nullptr){
-            //cCout("match id is", match, 'b');
             locus->append(match);
             locus->append(";");
         }
@@ -119,9 +118,6 @@ std::string* HomoSearcher::homoSearch(Read* & item, int & dnaReads, int & proRea
             }
         }
     }
-    // if(!match_ids.empty()){
-    //     postProcess();
-    // }
     return locus;
 }
 
@@ -196,9 +192,6 @@ std::string* HomoSearcher::homoSearch(Read* & item1, Read* & item2, int & dnaRea
             return locus;
         }
     }
-    // if(!match_ids.empty()){            
-    //     postProcess();
-    // }
     return locus;
 }
 void HomoSearcher::clearMatchedIds(){

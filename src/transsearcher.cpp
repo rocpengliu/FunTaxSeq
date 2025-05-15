@@ -1356,11 +1356,7 @@ std::set<char *>& TransSearcher::transSearchWuKong(Read* & item) {
     }
 
     clearFragments();
-    if (!match_ids.empty()) {
-        //postProcess();
-        //cCout(item->mName, match_str, 'd');
-    }
-    return (match_ids);
+    return match_ids;
 }
 
 std::set<char *>& TransSearcher::transSearchWuKong(Read* & item1, Read* & item2) {
@@ -1399,12 +1395,7 @@ std::set<char *>& TransSearcher::transSearchWuKong(Read* & item1, Read* & item2)
         assert(false);
     }
     clearFragments();
-
-    // if (!match_ids.empty()) {
-    //     //postProcess();
-    //     cCout(item1->mName, match_str, 'd');
-    // }
-    return (match_ids);
+    return match_ids;
 }
 
 void TransSearcher::ids_from_SI(SI *si) {

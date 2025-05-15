@@ -39,39 +39,34 @@ int main(int argc, char* argv[]) {
     cmd.add<string>("tfmi", 'd', "fmi index of Protein database", false, "");
     cmd.add<string>("tmode", 'K', "searching mode either GREEDY or MEM (maximum exactly match). By default greedy", false, "GREEDY");
     cmd.add<int>("tmismatch", 'E', "number of mismatched amino acid in sequence comparison with protein database with default value 3", false, 3);
-    cmd.add<float>("tlenper", 0, "percentage of matching amino acid in sequence comparison with default value 0.8", false, 0.8);
     cmd.add<int>("tminscore", 'j', "minimum matching score of amino acid sequence in comparison with protein database with default value 65", false, 65);
     cmd.add<int>("tminlength", 'J', "minimum matching length of amino acid sequence in comparison with protein database with default value 13 for GREEDY and 11 for MEM model", false, 0);
+    cmd.add<float>("tlenper", 0, "percentage of matching amino acid in sequence comparison with default value 0.8", false, 0.8);
     // cmd.add<int>("maxtranslength", 'm', "maximum cutoff of translated peptides, it must be no less than minlength, with default 60", false, 60);
     cmd.add<string>("codontable", 0, "select the codon table (same as blastx in NCBI), we provide 20 codon tables from 'https://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi#SG1'. By default is the codontable1 (Standard Code)", false, "codontable1");
-    //cmd.add<string>("dbDir", 0, "dir for internal database such as ko_fullname.txt", false, "");
     // DNA search
     cmd.add<string>("dfmi", 0, "fmi index of DNA database", false, "");
     cmd.add<string>("dmode", 0, "searching mode either GREEDY or MEM (maximum exactly match) in a DNA database. By default greedy", false, "GREEDY");
-    cmd.add<float>("dlenper", 0, "percentage of matching DNA in sequence comparison with default value 0.9", false, 0.9);
     cmd.add<int>("dmismatch", 0, "number of mismatches in sequence comparison with DNA database with default value 6", false, 6);
-    cmd.add<int>("dminlength", 0, "minimum matching length of DNA sequence in comparison with DNA database with default value 40", false, 60);
+    cmd.add<int>("dminlength", 0, "minimum matching length of DNA sequence in comparison with DNA database with default value 60", false, 60);
+    cmd.add<float>("dlenper", 0, "percentage of matching DNA in sequence comparison with default value 0.9", false, 0.9);
     cmd.add<int>("dminscore", 0, "minimum matching score of DNA sequence in comparison with DNA database with default value 50", false, 50);
     //host search
     cmd.add<string>("hfmi", 0, "fmi index of host DNA database", false, "");
     cmd.add<string>("hmode", 0, "searching mode either GREEDY or MEM (maximum exactly match) in a host database. By default greedy", false, "GREEDY");
-    cmd.add<float>("hlenper", 0, "percentage of matching DNA in sequence comparison with default value 0.95", false, 0.95);
     cmd.add<int>("hmismatch", 0, "number of mismatches in sequence comparison with host DNA database with default value 5", false, 5);
     cmd.add<int>("hminlength", 0, "minimum matching length against host DNA database with default value 95", false, 95);
+    cmd.add<float>("hlenper", 0, "percentage of matching DNA in sequence comparison with default value 0.95", false, 0.95);
     cmd.add<int>("hminscore", 0, "minimum matching score against host DNA database with default value 95", false, 95);
     //marker gene search
     cmd.add<string>("mfmi", 0, "fmi index of marker genes DNA database", false, "");
     cmd.add<string>("mmode", 0, "searching mode either GREEDY or MEM (maximum exactly match) in marker genes (16s, ITS) DNA database. By default greedy", false, "GREEDY");
-    cmd.add<float>("mlenper", 0, "percentage of matching DNA in sequence comparison with default value 0.95", false, 0.97);
     cmd.add<int>("mmismatch", 0, "number of mismatches in sequence comparison with marker genes DNA database with default value 3", false, 3);
-    cmd.add<int>("mminlength", 0, "minimum matching length against marker genes DNA database with default value 97", false, 95);
+    cmd.add<int>("mminlength", 0, "minimum matching length against marker genes DNA database with default value 95", false, 95);
+    cmd.add<float>("mlenper", 0, "percentage of matching DNA in sequence comparison with default value 0.95", false, 0.97);
     cmd.add<int>("mminscore", 0, "minimum matching score against marker genes DNA database with default value 95", false, 95);
 
     cmd.add("debug", 0, "If specified, print debug");
-    // reporting
-    //cmd.add<string>("json", 0, "the json format report file name", false, "fts.json");
-    //cmd.add<string>("html", 'h', "the html format report file name", false, "fts.html");
-    //cmd.add<string>("report_title", 'R', "should be quoted with \' or \", default is \"fts report\"", false, "fts report");
     // threading
     cmd.add<int>("thread", 'w', "worker thread number, default is 4", false, 4);
     // qother I/O
@@ -263,63 +258,44 @@ int main(int argc, char* argv[]) {
     opt->lengthFilter.enabled = !cmd.exist("disable_length_filtering");
     opt->lengthFilter.requiredLength = cmd.get<int>("length_required");
     opt->lengthFilter.maxLength = cmd.get<int>("length_limit");
-    //get trans mode first;
+
+    opt->mTransSearchOptions->comOptions.fmi = cmd.get<string>("tfmi");
     if(cmd.get<string>("tmode") == "MEM"){
         opt->mTransSearchOptions->comOptions.mode = MEM;
     }
+    opt->mTransSearchOptions->comOptions.misMatches = cmd.get<int>("tmismatch");
+    opt->mTransSearchOptions->comOptions.minFragLength = cmd.get<int>("tminlength");
+    opt->mTransSearchOptions->comOptions.minScore = cmd.get<int>("tminscore");
     opt->mTransSearchOptions->comOptions.lenper = cmd.get<float>("tlenper");
-    if (cmd.get<int>("tminlength") == 0) {
-        if (opt->mTransSearchOptions->comOptions.mode == GREEDY) {
-            opt->mTransSearchOptions->comOptions.minFragLength = 13;
-        } else {
-            opt->mTransSearchOptions->comOptions.minFragLength = 10;
-        }
-    } else {
-        opt->mTransSearchOptions->comOptions.minFragLength = cmd.get<int>("tminlength");
-    }
 
+    opt->mDNASearchOptions->comOptions.fmi = cmd.get<string>("dfmi");
     if(cmd.get<string>("dmode") == "MEM"){
         opt->mDNASearchOptions->comOptions.mode = MEM;
     }
+    opt->mDNASearchOptions->comOptions.misMatches = cmd.get<int>("dmismatch");
+    opt->mDNASearchOptions->comOptions.minFragLength = cmd.get<int>("dminlength");
+    opt->mDNASearchOptions->comOptions.minScore = cmd.get<int>("dminscore");
     opt->mDNASearchOptions->comOptions.lenper = cmd.get<float>("dlenper");
-    if(cmd.get<int>("dminlength") == 0){
-        if (opt->mDNASearchOptions->comOptions.mode == GREEDY) {
-            opt->mDNASearchOptions->comOptions.minFragLength = 60;
-        } else {
-            opt->mDNASearchOptions->comOptions.minFragLength = 50;
-        }
-    } else {
-        opt->mDNASearchOptions->comOptions.minFragLength = cmd.get<int>("dminlength");
-    }
 
+    opt->mHostSearchOptions->comOptions.fmi = cmd.get<string>("hfmi");
     if(cmd.get<string>("hmode") == "MEM"){
         opt->mHostSearchOptions->comOptions.mode = MEM;
     }
+    opt->mHostSearchOptions->comOptions.misMatches = cmd.get<int>("hmismatch");
+    opt->mHostSearchOptions->comOptions.minFragLength = cmd.get<int>("hminlength");
+    opt->mHostSearchOptions->comOptions.minScore = cmd.get<int>("hminscore");
     opt->mHostSearchOptions->comOptions.lenper = cmd.get<float>("hlenper");
-    if(cmd.get<int>("hminlength") == 0){
-        if (opt->mHostSearchOptions->comOptions.mode == GREEDY) {
-            opt->mHostSearchOptions->comOptions.minFragLength = 95;
-        } else {
-            opt->mHostSearchOptions->comOptions.minFragLength = 95;
-        }
-    } else {
-        opt->mHostSearchOptions->comOptions.minFragLength = cmd.get<int>("hminlength");
-    }
 
+    opt->mMarkerSearchOptions->comOptions.fmi = cmd.get<string>("mfmi");
     if(cmd.get<string>("mmode") == "MEM"){
         opt->mMarkerSearchOptions->comOptions.mode = MEM;
     }
+    opt->mMarkerSearchOptions->comOptions.misMatches = cmd.get<int>("mmismatch");
+    opt->mMarkerSearchOptions->comOptions.minFragLength = cmd.get<int>("mminlength");
+    opt->mMarkerSearchOptions->comOptions.minScore = cmd.get<int>("mminscore");
     opt->mMarkerSearchOptions->comOptions.lenper = cmd.get<float>("mlenper");
-    if(cmd.get<int>("mminlength") == 0){
-        if (opt->mMarkerSearchOptions->comOptions.mode == GREEDY) {
-            opt->mMarkerSearchOptions->comOptions.minFragLength = 95;
-        } else {
-            opt->mMarkerSearchOptions->comOptions.minFragLength = 95;
-        }
-    } else {
-        opt->mMarkerSearchOptions->comOptions.minFragLength = cmd.get<int>("mminlength");
-    }
-    opt->lengthFilter.requiredLength = max(opt->lengthFilter.requiredLength, static_cast<int> (opt->mTransSearchOptions->comOptions.minFragLength) * 3);
+
+    opt->lengthFilter.requiredLength = opt->lengthFilter.requiredLength;
     opt->lengthFilter.maxLength = cmd.get<int>("length_limit");
     // low complexity filter
     opt->complexityFilter.enabled = !cmd.exist("disable_low_complexity_filter");
@@ -383,29 +359,6 @@ int main(int argc, char* argv[]) {
     //translated search
     opt->mTransSearchOptions->tCodonTable = cmd.get<string>("codontable");
     opt->deterCodonTable();
-
-    opt->mTransSearchOptions->comOptions.fmi = cmd.get<string>("tfmi");
-    opt->mTransSearchOptions->comOptions.misMatches = cmd.get<int>("tmismatch");
-    opt->mTransSearchOptions->comOptions.minFragLength = cmd.get<int>("tminlength");
-    opt->mTransSearchOptions->comOptions.minScore = cmd.get<int>("tminscore");
-    // opt->mTransSearchOptions->maxTransLength = cmd.get<int>("maxtranslength");
-    // opt->mTransSearchOptions->maxTransLength = max(opt->mTransSearchOptions->maxTransLength, opt->mTransSearchOptions->minAAFragLength);
-    // opt->mTransSearchOptions->maxTransLength = min((unsigned) 60, opt->mTransSearchOptions->maxTransLength);
-
-    opt->mDNASearchOptions->comOptions.fmi = cmd.get<string>("dfmi");
-    opt->mDNASearchOptions->comOptions.misMatches = cmd.get<int>("dmismatch");
-    opt->mDNASearchOptions->comOptions.minFragLength = cmd.get<int>("dminlength");
-    opt->mDNASearchOptions->comOptions.minScore = cmd.get<int>("dminscore");
-
-    opt->mHostSearchOptions->comOptions.fmi = cmd.get<string>("hfmi");
-    opt->mHostSearchOptions->comOptions.misMatches = cmd.get<int>("hmismatch");
-    opt->mHostSearchOptions->comOptions.minFragLength = cmd.get<int>("hminlength");
-    opt->mHostSearchOptions->comOptions.minScore = cmd.get<int>("hminscore");
-
-    opt->mMarkerSearchOptions->comOptions.fmi = cmd.get<string>("mfmi");
-    opt->mMarkerSearchOptions->comOptions.misMatches = cmd.get<int>("mmismatch");
-    opt->mMarkerSearchOptions->comOptions.minFragLength = cmd.get<int>("mminlength");
-    opt->mMarkerSearchOptions->comOptions.minScore = cmd.get<int>("mminscore");
 
     BwtFmiDBPair* mBwtfmiDBPair = new BwtFmiDBPair(opt);
     for(int i = 0; i < opt->samVec.size(); ++i){
