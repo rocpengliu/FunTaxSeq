@@ -43,9 +43,7 @@ class PhyloOptions{
         std::string sampleDir;
         std::string outTree;
         bool marker;
-        std::string markerTaxa;
-        std::string markerSize;
-        std::string mTree;
+        std::string markerTaxonSize;
         std::string host;
         bool verbose;
         bool debug;

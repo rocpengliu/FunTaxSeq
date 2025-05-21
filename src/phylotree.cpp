@@ -5,14 +5,14 @@ PhyloTree::PhyloTree(PhyloOptions *& mOptions) {
     geneTree = nullptr;
     geneNodeTree = nullptr;
     taxonTree = nullptr;
-    markerTree = nullptr;
+    //markerTree = nullptr;
     geneAnoMap.clear();
     orthAnoMap.clear();
     geneDNADupMap.clear();
     geneProDupMap.clear();
     genomeSizeMap.clear();
-    markerSizeMap.clear();
-    markerTaxonMap.clear();
+    //markerSizeMap.clear();
+    markerTaxonSizeMap.clear();
     // geneSizeMap.clear();
     init();
 }
@@ -35,19 +35,19 @@ PhyloTree::~PhyloTree() {
         if(mOptions->verbose) cerr << "taxon tree free finished" << "\n";
     });
 
-    std::thread dMTreThread = std::thread([this](){
-        if (mOptions->verbose)
-            cerr << "start to free marker tree" << "\n";
-        if(markerTree){
-            for (auto it = markerTree->begin(); it != markerTree->end(); ++it){
-                if (it.node->data){
-                    delete it.node->data;
-                    it.node->data = nullptr;
-                }
-            }
-        }
-        if(mOptions->verbose) cerr << "marker tree free finished" << "\n";
-    });
+    // std::thread dMTreThread = std::thread([this](){
+    //     if (mOptions->verbose)
+    //         cerr << "start to free marker tree" << "\n";
+    //     if(markerTree){
+    //         for (auto it = markerTree->begin(); it != markerTree->end(); ++it){
+    //             if (it.node->data){
+    //                 delete it.node->data;
+    //                 it.node->data = nullptr;
+    //             }
+    //         }
+    //     }
+    //     if(mOptions->verbose) cerr << "marker tree free finished" << "\n";
+    // });
 
     std::thread dFTreThread;
     if(!mOptions->gTree.empty()){
@@ -122,9 +122,9 @@ PhyloTree::~PhyloTree() {
     if(dTTreThread.joinable()){
         dTTreThread.join();
     }
-    if(dMTreThread.joinable()){
-        dMTreThread.join();
-    }
+    // if(dMTreThread.joinable()){
+    //     dMTreThread.join();
+    // }
     if(dFTreThread.joinable()){
         dFTreThread.join();
     }
@@ -163,11 +163,7 @@ void PhyloTree::init(){
     });
 
     std::thread markerTaxonThread = std::thread([this]{
-        readGZ(mOptions->markerTaxa, 'm');
-    });
-
-    std::thread markerSizeThread = std::thread([this]{
-        readGZ(mOptions->markerSize, 's');
+        readGZ(mOptions->markerTaxonSize, 'm');
     });
 
     if(readGenoThread.joinable()){
@@ -214,13 +210,13 @@ void PhyloTree::init(){
         if(mOptions->verbose) cerr << "gene ortholog tree size is " << geneTree->size() << " and has " << geneTree->begin().number_of_descent() << " descents" << "\n";
     }
 
-    if(mOptions->marker){
-        if(mOptions->verbose) loginfo("start to build marker tree!");
-        markerTree = buildTreePtr(mOptions->mTree, "marker");
-        if(mOptions->verbose) loginfo("finished to build marker tree!");
-        if(geneTree->size() < 3) error_exit("built marker tree size must be no less than 3: ");
-        if(mOptions->verbose) cerr << "gene marker tree size is " << markerTree->size() << " and has " << markerTree->begin().number_of_descent() << " descents" << "\n";
-    }
+    // if(mOptions->marker){
+    //     if(mOptions->verbose) loginfo("start to build marker tree!");
+    //     markerTree = buildTreePtr(mOptions->mTree, "marker");
+    //     if(mOptions->verbose) loginfo("finished to build marker tree!");
+    //     if(geneTree->size() < 3) error_exit("built marker tree size must be no less than 3: ");
+    //     if(mOptions->verbose) cerr << "gene marker tree size is " << markerTree->size() << " and has " << markerTree->begin().number_of_descent() << " descents" << "\n";
+    // }
 }
 
 std::shared_ptr<tree<std::string*>> PhyloTree::buildTreeLoopPtr(std::string* str) {
@@ -761,10 +757,10 @@ void PhyloTree::readGZ(std::string & fl, char type){
                 geneDNADupMap[strVec.at(0)] = strVec.at(1);
             } else if(type == 'p'){
                 geneProDupMap[strVec.at(0)] = strVec.at(1);
-            } else if(type == 's'){
-                markerSizeMap[strVec.at(0)] = static_cast<uint16_t>(std::stoi(strVec.at(1)));
-            } else if(type == 'm'){
-                markerTaxonMap[strVec.at(0)] = strVec.at(1);
+            }
+        } else if(strVec.size() == 3){
+            if(type == 'm'){
+                markerTaxonSizeMap[strVec.at(0)] = std::make_pair(strVec.at(1), static_cast<uint16_t>(std::stoi(strVec.at(2))));
             }
         } else {
             error_exit(basename(fl) + " contains invalid lines!");

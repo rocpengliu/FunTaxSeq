@@ -423,7 +423,6 @@ string Stats::list2string2(std::vector<int> & x_vec, int top) {
 }
 
 string Stats::list2string(std::map< std::string, std::vector<int>> & stackMap, int top) {
-    
     std::vector<std::string> v;
     v.reserve(stackMap.size());
     for(const auto & it : stackMap){

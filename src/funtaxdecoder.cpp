@@ -41,6 +41,9 @@ void FunTaxDecoder::process(){
             decodeMarker();
         }
         decodeEach();
+        if(!markerSet.empty()){
+            decodeEachMarker();
+        }
     }
 }
 
@@ -334,13 +337,13 @@ void FunTaxDecoder::decodeEachMarker(){
         *of << prt->first << (std::next(prt) == totMarkerMap.end() ? "\n" : "\t");
     }
     std::string taxon = "";
-    std::unordered_map<std::string, uint16_t>::iterator taxon_pair;
+    std::unordered_map<std::string, std::pair<std::string, uint16_t>>::iterator taxon_pair;
     for(const auto & it : uniqMarkerTaxons){
         *of << it << "\t";
-        taxon.clear();
-        taxon = getFirstLastElement(it, false, ';');
-        taxon_pair = mPhyloTree->markerSizeMap.find(taxon);
-        *of << (taxon_pair == mPhyloTree->markerSizeMap.end() ? 0 : taxon_pair->second) << "\t";
+        // taxon.clear();
+        // taxon = getFirstLastElement(it, false, ';');
+        taxon_pair = mPhyloTree->markerTaxonSizeMap.find(it);
+        *of << it << "\t" << (taxon_pair == mPhyloTree->markerTaxonSizeMap.end() ? 0 : taxon_pair->second.second) << "\t";
         for (auto prt = totMarkerMap.begin(); prt != totMarkerMap.end(); ++prt){
             auto prt2 = prt->second.find(it);
             *of << (prt2 == prt->second.end() ? 0 : prt2->second) << (std::next(prt) == totMarkerMap.end() ? "\n" : "\t");
@@ -372,10 +375,8 @@ void FunTaxDecoder::decodeEachMarker(){
         }
         for(const auto & it : subUniqTaxon) {
             *of << it << "\t";
-            taxon.clear();
-            taxon = getFirstLastElement(it, false, ';');
-            taxon_pair = mPhyloTree->markerSizeMap.find(taxon);
-            *of << (taxon_pair == mPhyloTree->markerSizeMap.end() ? 0 : taxon_pair->second) << "\t";
+            taxon_pair = mPhyloTree->markerTaxonSizeMap.find(it);
+            *of << (taxon_pair == mPhyloTree->markerTaxonSizeMap.end() ? 0 : taxon_pair->second.second) << "\t";
             for(auto sam = subTaxMap.begin(); sam != subTaxMap.end(); ++sam){
                 auto sam2 = sam->second.find(it);
                 *of << (sam2 == sam->second.end() ? 0 : sam2->second) << (std::next(sam) == subTaxMap.end() ? "\n" : "\t");
@@ -561,37 +562,34 @@ std::string FunTaxDecoder::decodeTax(std::unordered_set<std::string>& locSet) {
 
 std::string FunTaxDecoder::decodeMarkerTax(std::unordered_set<std::string>& locSet){
     std::string taxon = "";
-    std::set<tree<std::string*>::iterator, tree<std::string*>::iterator_base_less> treItSet;
-    tree<std::string*>::leaf_iterator locf;
     std::unordered_set<std::string> uniq_taxon_id_set;
     for(const auto & it : locSet){
-        auto locIt = mPhyloTree->markerTaxonMap.find(it);
-        if(locIt == mPhyloTree->markerTaxonMap.end()){
+        auto locIt = mPhyloTree->markerTaxonSizeMap.find(it);
+        if(locIt == mPhyloTree->markerTaxonSizeMap.end()){
             continue;
         }
-        uniq_taxon_id_set.insert(locIt->second);
+        uniq_taxon_id_set.insert(locIt->second.first);
     }
     if(uniq_taxon_id_set.empty()){
-        return taxon;
     } else if(uniq_taxon_id_set.size() == 1){
-        return *(uniq_taxon_id_set.begin());
-    }
-    for(const auto & it : uniq_taxon_id_set){
-        locf = std::find_if(mPhyloTree->markerTree->begin_leaf(),
-            mPhyloTree->markerTree->end_leaf(),
-                [&it](std::string* & itp) {
-                    return *itp == it;
-                });
-        if (mPhyloTree->taxonTree->is_valid(locf)) {
-            treItSet.insert(locf);
+        taxon = *(uniq_taxon_id_set.begin());
+    } else {
+        std::unordered_set<std::string> tmp_set;
+        while(uniq_taxon_id_set.size() > 1){
+            for(const auto & it : uniq_taxon_id_set){
+                auto locIt = mPhyloTree->markerTaxonSizeMap.find(it);
+                if(locIt == mPhyloTree->markerTaxonSizeMap.end()){
+                    continue;
+                }
+                tmp_set.insert(locIt->second.first);
+            }
+            std::swap(tmp_set, uniq_taxon_id_set);
+            tmp_set.clear();
         }
+        taxon = *(uniq_taxon_id_set.begin());
     }
-    if (!treItSet.empty()) {
-        //ftNode->taxLoc = mPhyloTree->taxonTree->lowest_common_ancestor(treItSet);
-        taxon = mPhyloTree->markerTree->lowest_common_ancestor_str(treItSet);
-        getTaxon(taxon);
-        treItSet.clear();
-    }
+    if(taxon == "root")
+        taxon = "";
     return taxon;
 }
 std::string FunTaxDecoder::decodeFun(std::unordered_set<std::string>& locSet) {

@@ -66,9 +66,8 @@ int main(int argc, char* argv[]) {
     opt->orthAno = joinpath(opt->db, "ogs_anno.tab.gz");
     opt->geneDNADup = joinpath(opt->db, "dna_duplicated.tab.gz");
     opt->geneProDup = joinpath(opt->db, "pro_duplicated.tab.gz");
-    opt->markerTaxa = joinpath(opt->db, "marker_taxa.tab.gz");
-    opt->markerSize = joinpath(opt->db, "marker_size.tab.gz");
-    opt->mTree = joinpath(opt->db, "marker_tree.tre");
+    opt->markerTaxonSize = joinpath(opt->db, "marker_kid_par_len.tab.gz");
+    //opt->mTree = joinpath(opt->db, "marker_tree.tre");
 
     opt->verbose = cmd.exist("verbose");
     opt->debug = cmd.exist("debug");

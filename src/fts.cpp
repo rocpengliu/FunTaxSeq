@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
     cmd.add<string>("hmode", 0, "searching mode either GREEDY or MEM (maximum exactly match) in a host database. By default greedy", false, "GREEDY");
     cmd.add<int>("hmismatch", 0, "number of mismatches in sequence comparison with host DNA database with default value 5", false, 5);
     cmd.add<int>("hminlength", 0, "minimum matching length against host DNA database with default value 95", false, 95);
-    cmd.add<float>("hlenper", 0, "percentage of matching DNA in sequence comparison with default value 0.95", false, 0.95);
+    cmd.add<float>("hlenper", 0, "percentage of matching DNA in sequence comparison with default value 0.90", false, 0.90);
     cmd.add<int>("hminscore", 0, "minimum matching score against host DNA database with default value 95", false, 95);
     //marker gene search
     cmd.add<string>("mfmi", 0, "fmi index of marker genes DNA database", false, "");
