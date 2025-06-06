@@ -210,6 +210,8 @@ void PhyloTree::init(){
         if(mOptions->verbose) cerr << "gene ortholog tree size is " << geneTree->size() << " and has " << geneTree->begin().number_of_descent() << " descents" << "\n";
     }
 
+    if (mOptions->verbose)
+        loginfo("all the initiation completed!");
     // if(mOptions->marker){
     //     if(mOptions->verbose) loginfo("start to build marker tree!");
     //     markerTree = buildTreePtr(mOptions->mTree, "marker");
