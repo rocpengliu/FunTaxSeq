@@ -1,5 +1,4 @@
-# FunTaxSeq
-## a unified platform for simultaneous taxonomic and functional profilings based on tiered search from metagenomic sequence data!
+# FunTaxSeq: <small>a unified platform for simultaneous taxonomic and functional profilings based on tiered search from metagenomic sequence data.</small>
 
 ### Download and build funtaxseq
 ```shell
@@ -25,7 +24,10 @@ out_fts/sim_rep3    raw/sim_rep3.R1_sub.fastq.gz    raw/sim_rep3.R2_sub.fastq.gz
 
 ## first try
 ```
+#step 1: mapping reads against DNA and protein databases based on tiered search
 FunTaxSeq/bin/fts --samtable sample.txt --dfmi db/dna_sub.fmi --tfmi db/pro_sub.fmi -w 12 -V
+
+#step2: decoding for taxonomic and functional profilings
 FunTaxSeq/bin/ftd --samdir out_fts -b db/ -o out_ftd/out_ftd -w 12 -V
 ```
 
@@ -126,7 +128,7 @@ options:
   -?, --help                             print this message
 ```
 
-### all options for ftd to decode the output of FunTaxSeq to taxonomic and functional profilings.
+### all options for ftd
 ```
 usage: ./ftd [options] ...
 options:
