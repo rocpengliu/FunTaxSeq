@@ -3,7 +3,7 @@
 
  PhyloOptions::PhyloOptions(){
      db = "";
-     prefix = "";
+     prefix = "out_ftd/out_ftd";
      outTaxon = "";
      outMarker = "";
      outFun = "";

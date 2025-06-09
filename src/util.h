@@ -604,6 +604,26 @@ inline void check_file_writable(const string& s) {
     }
 }
 
+inline void make_dir(const std::string& path) {
+    std::string d_path = "";
+    std::string::size_type pos = path.find_last_of('/');
+    if( pos == std::string::npos){
+        return;
+    } else {
+        d_path = path.substr(0, pos + 1);
+    }
+    if (!file_exists(d_path)) {
+        #ifdef _WIN32
+                _mkdir(path.c_str());
+        #else
+                mkdir(d_path.c_str(), 0755); // rwxr-xr-x permissions
+        #endif
+    } else {
+        if (!is_directory(d_path)) {
+            std::cerr << "Path exists but is not a directory: " << d_path;
+        }
+    }
+}
 // Remove non alphabetic characters from a string
 
 inline string str_keep_alpha(const string& s) {

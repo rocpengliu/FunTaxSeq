@@ -120,8 +120,10 @@ bool Options::validate() {
     
     if(prefix.empty()){
         cerr << "you must provide a prefix" << endl;
+    } else {
+        make_dir(prefix);
     }
-    
+
     htmlFile = prefix + ".html";
     jsonFile = prefix + ".json";
 
@@ -399,7 +401,7 @@ void Options::parseSampleTable(){
     std::string msg = "Reading sample table from file " + sampleTable;
     loginfo(msg);
     ifstream infile(sampleTable.c_str(), ifstream::in);
-    if(!infile.is_open()) error_exit("can not open gene ortholog tree: " + sampleTable);
+    if(!infile.is_open()) error_exit("can not open sample table: " + sampleTable);
     std::string line = "";
     std::vector<std::string> strVec;
     while(std::getline(infile, line)){

@@ -26,10 +26,9 @@ int main(int argc, char* argv[]) {
         return 0;
     }
     cmdline::parser cmd;
-    cmd.add<string>("samdir", 's', "sample directory", false, "");
-    cmd.add<string>("outprefix", 'o', "output file prefix", false, "");
-    cmd.add<string>("otre", 't', "output tree par kid file", false, "");
-    cmd.add<string>("database", 'b', "datbase directory", false, "");
+    cmd.add<string>("samdir", 's', "sample directory", true, "");
+    cmd.add<string>("outprefix", 'o', "output file prefix", true, "out_ftd/out_ftd");
+    cmd.add<string>("database", 'b', "datbase directory", true, "");
     cmd.add("useogtree", 'g', "If specified, using ortholog tree(slow)");
     cmd.add<int>("thread", 'w', "worker thread number, default is 4", false, 4);
     cmd.add("debug", 'd', "If specified, print debug");
@@ -51,7 +50,8 @@ int main(int argc, char* argv[]) {
     opt->sampleDir = cmd.get<string>("samdir");
     opt->db = cmd.get<string>("database");
     opt->prefix = cmd.get<string>("outprefix");
-    opt->outTaxon =  opt->prefix + "_taxon_abundance.txt";
+    make_dir(opt->prefix);
+    opt->outTaxon = opt->prefix + "_taxon_abundance.txt";
     opt->outMarker = opt->prefix + "_marker_abundance.txt";
     opt->outFun = opt->prefix + "_raw_func_abundance.txt";
     opt->outPureFun = opt->prefix + "_gene_go_ko_func_abundance.txt";
@@ -72,7 +72,7 @@ int main(int argc, char* argv[]) {
     opt->verbose = cmd.exist("verbose");
     opt->debug = cmd.exist("debug");
     opt->thread = cmd.get<int>("thread");
-    opt->outTree = cmd.get<string>("otre");
+    //opt->outTree = cmd.get<string>("otre");
     opt->valid();
     opt->parseSample();
 
