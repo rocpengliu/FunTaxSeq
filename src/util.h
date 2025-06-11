@@ -50,6 +50,11 @@
 using namespace std;
 extern mutex logmtx;
 
+inline void error_exit(const string& msg) {
+    cerr << "ERROR: " << msg << endl;
+    exit(-1);
+}
+
 inline void loginfo(const string & s, bool next = true) {
     logmtx.lock();
     time_t tt = time(NULL);
@@ -566,9 +571,9 @@ inline bool is_directory(const string& path) {
     struct stat status;
     // visual studion use _S_IFDIR instead of S_IFDIR
     // http://msdn.microsoft.com/en-us/library/14h5k7ff.aspx
-#ifdef _MSC_VER
-#define S_IFDIR _S_IFDIR
-#endif
+    #ifdef _MSC_VER
+    #define S_IFDIR _S_IFDIR
+    #endif
     stat(path.c_str(), &status);
     if (status.st_mode & S_IFDIR) {
         isdir = true;
@@ -618,9 +623,16 @@ inline void make_dir(const std::string& path) {
         #else
                 mkdir(d_path.c_str(), 0755); // rwxr-xr-x permissions
         #endif
+        if (is_directory(d_path)) {
+            std::cerr << "output directory created: " << d_path;
+        } else {
+            error_exit("output directory failed: " + d_path);
+        }
     } else {
         if (!is_directory(d_path)) {
             std::cerr << "Path exists but is not a directory: " << d_path;
+        } else {
+            std::cerr << "Path already exists: " << d_path;
         }
     }
 }
@@ -678,11 +690,6 @@ inline char num2qual(int num) {
 
     char c = num + 33;
     return c;
-}
-
-inline void error_exit(const string& msg) {
-    cerr << "ERROR: " << msg << endl;
-    exit(-1);
 }
 
 inline string trimName(string& str) {
