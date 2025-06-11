@@ -295,6 +295,10 @@ void FunTaxDecoder::decodeEach(){
     std::map<std::string, std::map<std::string, uint32>> tPureFunMap; // sample, only fun, count;
     std::map<std::string, std::map<std::string, uint32>> tGeneFunMap;
     for(const auto & it : totFTMap){
+        if(mOptions->verbose){
+            loginfo("starting to decode sample: " + it.first);
+        }
+        int i = 0;
         for(const auto & it2 : it.second) {
             auto it3 = mFunTaxPair.find(it2.first);
             if(it3 == mFunTaxPair.end())
@@ -315,6 +319,13 @@ void FunTaxDecoder::decodeEach(){
                 geneSizeCountPairMap[pure_gene_count.first].first += pure_gene_count.second;
                 geneSizeCountPairMap[pure_gene_count.first].second++;
             }
+            if(mOptions->verbose){
+                loginfo("decode sample: " + it.first + " and line: " + std::to_string(i));
+            }
+            ++i;
+        }
+        if(mOptions->verbose){
+            loginfo("finish decode sample: " + it.first);
         }
     }
     std::thread dTaxThread = std::thread(&FunTaxDecoder::decodeTaxonSample, this, std::ref(tTaxMap));
@@ -394,6 +405,8 @@ void FunTaxDecoder::decodeEachMarker(){
 }
 
 void FunTaxDecoder::decodeTaxonSample(std::map<std::string, std::map<std::string, uint32>>& tTaxMap){
+    if(mOptions->verbose)
+        loginfo("starting to write raw taxon!");
     std::ofstream *of = new std::ofstream();
     of->open(mOptions->outTaxon.c_str(), std::ofstream::out);
     if(!of->is_open()) error_exit("can not open " + mOptions->outTaxon);
@@ -420,8 +433,12 @@ void FunTaxDecoder::decodeTaxonSample(std::map<std::string, std::map<std::string
         delete of;
         of = nullptr;
     }
+    if(mOptions->verbose)
+        loginfo("finish to write raw taxon!");
 
     for(int i = 0; i < mOptions->taxLevels.size(); ++i){
+        if(mOptions->verbose)
+            loginfo("starting to write taxon table for " + mOptions->taxLevels.at(i));
         std::set<string> subUniqTaxon;
         std::map<std::string, std::map<std::string, uint32>> subTaxMap;
         for (const auto & it : tTaxMap){
@@ -456,12 +473,16 @@ void FunTaxDecoder::decodeTaxonSample(std::map<std::string, std::map<std::string
             delete of;
             of = nullptr;
         }
+        if(mOptions->verbose)
+            loginfo("starting to write taxon table for " + mOptions->taxLevels.at(i));
     }
 }
 
 void FunTaxDecoder::decodeFunSample(std::map<std::string, std::map<std::string, uint32>>& tFunMap, 
     std::map<std::string, std::map<std::string, uint32>>& tPureFunMap, 
     std::map<std::string, std::map<std::string, uint32>>& tGeneFunMap){
+    if(mOptions->verbose)
+        loginfo("starting to write raw functional file");
     std::ofstream* otf = new std::ofstream();
     otf->open(mOptions->outFun.c_str(), std::ofstream::out);
     if(!otf->is_open()) error_exit("can not open " + mOptions->outFun);
@@ -481,6 +502,8 @@ void FunTaxDecoder::decodeFunSample(std::map<std::string, std::map<std::string, 
     otf->flush();
     otf->clear();
     otf->close();
+    if(mOptions->verbose)
+        loginfo("finish to write raw functional file");
 
     otf->open(mOptions->outGeneFun.c_str(), std::ofstream::out);
     if(!otf->is_open()) error_exit("can not open " + mOptions->outGeneFun);
@@ -498,6 +521,8 @@ void FunTaxDecoder::decodeFunSample(std::map<std::string, std::map<std::string, 
     otf->flush();
     otf->clear();
     otf->close();
+    if(mOptions->verbose)
+        loginfo("finish to write full functional file");
 
     otf->open(mOptions->outPureFun.c_str(), std::ofstream::out);
     if(!otf->is_open()) error_exit("can not open " + mOptions->outPureFun);
@@ -515,6 +540,8 @@ void FunTaxDecoder::decodeFunSample(std::map<std::string, std::map<std::string, 
     otf->flush();
     otf->clear();
     otf->close();
+    if(mOptions->verbose)
+        loginfo("finish to write pure functional file");
 
     if(otf){
         delete otf;
