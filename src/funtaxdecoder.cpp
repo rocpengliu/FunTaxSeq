@@ -319,13 +319,10 @@ void FunTaxDecoder::decodeEach(){
                 geneSizeCountPairMap[pure_gene_count.first].first += pure_gene_count.second;
                 geneSizeCountPairMap[pure_gene_count.first].second++;
             }
-            if(mOptions->verbose){
-                loginfo("decode sample: " + it.first + " and line: " + std::to_string(i));
-            }
-            ++i;
         }
+        ++i;
         if(mOptions->verbose){
-            loginfo("finish decode sample: " + it.first);
+            loginfo("finish decode sample: " + it.first + " " + std::to_string(i));
         }
     }
     std::thread dTaxThread = std::thread(&FunTaxDecoder::decodeTaxonSample, this, std::ref(tTaxMap));
