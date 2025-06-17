@@ -502,9 +502,9 @@ void FunTaxDecoder::decodeFunSample(std::map<std::string, std::map<std::string, 
     if(mOptions->verbose)
         loginfo("finish to write raw functional file");
 
-    otf->open(mOptions->outGeneFun.c_str(), std::ofstream::out);
+    otf->open(mOptions->outPureFun.c_str(), std::ofstream::out);
     if(!otf->is_open()) error_exit("can not open " + mOptions->outGeneFun);
-    *otf << "#ortholog" << "\t" << "GO" << "\t" << "KO" << "\t" << "gene_size" << "\t";
+    *otf << "#ortholog" << "\t" << "gene_size" << "\t";
     for(auto prt = tPureFunMap.begin(); prt != tPureFunMap.end(); ++prt){
         *otf << prt->first << (std::next(prt) == tPureFunMap.end() ? "\n" : "\t");
     }
@@ -521,9 +521,10 @@ void FunTaxDecoder::decodeFunSample(std::map<std::string, std::map<std::string, 
     if(mOptions->verbose)
         loginfo("finish to write full functional file");
 
-    otf->open(mOptions->outPureFun.c_str(), std::ofstream::out);
-    if(!otf->is_open()) error_exit("can not open " + mOptions->outPureFun);
-    *otf << "#ortholog" << "\t" << "gene_size" << "\t";
+    otf->open(mOptions->outGeneFun.c_str(), std::ofstream::out);
+    if(!otf->is_open())
+        error_exit("can not open " + mOptions->outPureFun);
+    *otf << "#ortholog" << "\t" << "GO" << "\t" << "KO" << "\t" << "gene_size" << "\t";
     for(auto prt = tGeneFunMap.begin(); prt != tGeneFunMap.end(); ++prt){
         *otf << prt->first << (std::next(prt) == tGeneFunMap.end() ? "\n" : "\t");
     }
