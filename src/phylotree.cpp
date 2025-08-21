@@ -200,7 +200,8 @@ void PhyloTree::init(){
     if(mOptions->verbose) loginfo("finished to build taxon tree!");
     if(taxonTree->size() < 3) error_exit("built taxon tree size must be no less than 2: ");
     if(mOptions->verbose) cerr << "taxon tree size is " << taxonTree->size() << " and has " << taxonTree->begin().number_of_descent() << " descents" << "\n";
-    //print_children_par(taxonTree, "taxon_tree_par_children.txt");
+    
+    //print_children_par(taxonTree, joinpath(mOptions->db, "taxon_tree_par_children.txt"));
 
     if(!mOptions->gTree.empty()){
         if(mOptions->verbose) loginfo("start to build gene ortholog tree!");
@@ -546,6 +547,7 @@ void PhyloTree::readAnno(std::queue<std::string>& annoQueue, char type){
     std::thread consumerThreads[numThreads];
     for(int i = 0; i < numThreads; ++i){
         consumerThreads[i] = std::thread([this, &annoQueue, &type, &i](){
+            std::unordered_map<std::string, GeneNode*> tmpMap;
             while(true){
                 std::unique_lock<std::mutex> lock(mtxTreR);
                 if(annoQueue.empty()){
@@ -576,9 +578,14 @@ void PhyloTree::readAnno(std::queue<std::string>& annoQueue, char type){
                     if (strVec[6] != "0"){
                         tmp->koSet = splitStrInt<std::set, uint16_t>(strVec[6], 'k');
                     }
-                    std::unique_lock<std::mutex> lock2(mtxTreW);
-                    geneAnoMap[strVec[0]] = tmp;
-                    lock2.unlock();
+                    tmpMap[strVec[0]] = tmp;
+                    if(tmpMap.size() % 100000 == 0){
+                        std::unique_lock<std::mutex> lock2(mtxTreW);
+                        //geneAnoMap[strVec[0]] = tmp;
+                        geneAnoMap.insert(tmpMap.begin(), tmpMap.end());
+                        lock2.unlock();
+                        tmpMap.clear();
+                    }
                 } else if(strVec.size() == 8 && type == 'o'){
                     GeneNode *tmp = new GeneNode();
                     tmp->id = strVec[0];
@@ -593,9 +600,14 @@ void PhyloTree::readAnno(std::queue<std::string>& annoQueue, char type){
                     if (strVec[7] != "0"){
                         tmp->koSet = splitStrInt<std::set, uint16_t>(strVec[7], 'k');
                     }
-                    std::unique_lock<std::mutex> lock2(mtxTreW);
-                    orthAnoMap[strVec[0]] = tmp;
-                    lock2.unlock();
+                    tmpMap[strVec[0]] = tmp;
+                    if(tmpMap.size() % 100000 == 0){
+                        std::unique_lock<std::mutex> lock2(mtxTreW);
+                        //orthAnoMap[strVec[0]] = tmp;
+                        orthAnoMap.insert(tmpMap.begin(), tmpMap.end());
+                        lock2.unlock();
+                        tmpMap.clear();
+                    }
                 } else {
                     error_exit(type + " file contain non valid line!");
                 }

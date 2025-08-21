@@ -186,7 +186,7 @@ void FunTaxDecoder::decode(){
                             std::to_string(getPer(decoded, numIds)) + "%) funtax ids. Estimated remaining time: " +
                             std::to_string(remainingHours) + "h " +
                             std::to_string(remainingMinutes) + "m " +
-                            std::to_string(remainingSeconds) + "s");
+                            std::to_string(remainingSeconds) + "s", false);
                 }
                 if(ft.empty())
                     continue;
@@ -258,7 +258,7 @@ void FunTaxDecoder::decodeMarker(){
                             std::to_string(getPer(decoded, numIds)) + "%) funtax ids. Estimated remaining time: " +
                             std::to_string(remainingHours) + "h " +
                             std::to_string(remainingMinutes) + "m " +
-                            std::to_string(remainingSeconds) + "s");
+                            std::to_string(remainingSeconds) + "s", false);
                 }
                 if(ft.empty())
                     continue;
