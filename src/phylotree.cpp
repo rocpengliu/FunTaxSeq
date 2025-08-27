@@ -612,6 +612,16 @@ void PhyloTree::readAnno(std::queue<std::string>& annoQueue, char type){
                     error_exit(type + " file contain non valid line!");
                 }
             }
+            if(!tmpMap.empty()){
+                std::unique_lock<std::mutex> lock2(mtxTreW);
+                if (type == 'g'){
+                    geneAnoMap.insert(tmpMap.begin(), tmpMap.end());
+                } else if (type == '0'){
+                    orthAnoMap.insert(tmpMap.begin(), tmpMap.end());
+                }
+                lock2.unlock();
+                tmpMap.clear();
+            }
         });
     }
     for(int i = 0; i < numThreads; i++){
